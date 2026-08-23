@@ -1,0 +1,125 @@
+<?php
+require __DIR__ . '/config/db.php';
+require __DIR__ . '/includes/auth.php';
+require __DIR__ . '/services/ai.php';
+exigirLogin();
+$usuario = usuarioAtual($pdo);
+$erroIA = '';
+$conteudosGerados = false;
+$materiaId = (int)($_GET['materia_id'] ?? 0);
+$stmt = $pdo->prepare("SELECT * FROM materias WHERE id = ?");
+$stmt->execute([$materiaId]);
+$materia = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$materia) {
+    header('Location: materias.php');
+    exit;
+}
+$stmt = $pdo->prepare("SELECT * FROM conteudos WHERE materia_id = ? ORDER BY dificuldade, ordem, id");
+$stmt->execute([$materiaId]);
+$conteudos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+function salvarConteudosGerados(PDO $pdo, int $materiaId, array $gerados, int $dificuldade, int $ordemInicial, array $titulosExistentes): int
+{
+    $stmtInsert = $pdo->prepare("INSERT INTO conteudos (materia_id, titulo, status, corpo, dificuldade, ordem) VALUES (?, ?, ?, ?, ?, ?)");
+    $salvos = 0;
+    $titulosNormalizados = [];
+
+    foreach ($titulosExistentes as $tituloExistente) {
+        $titulosNormalizados[mb_strtolower(trim($tituloExistente))] = true;
+    }
+
+    foreach ($gerados as $conteudoGerado) {
+        $titulo = trim($conteudoGerado['titulo'] ?? '');
+        $corpo = trim($conteudoGerado['corpo'] ?? '');
+        $normalizado = mb_strtolower($titulo);
+
+        if ($titulo !== '' && $corpo !== '' && empty($titulosNormalizados[$normalizado])) {
+            $stmtInsert->execute([$materiaId, $titulo, 'Gerado pela IA', $corpo, $dificuldade, $ordemInicial + $salvos]);
+            $titulosNormalizados[$normalizado] = true;
+            $salvos++;
+        }
+    }
+
+    return $salvos;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'gerar_mais') {
+    try {
+        $titulosExistentes = array_column($conteudos, 'titulo');
+        $maiorDificuldade = (int)($pdo->query("SELECT COALESCE(MAX(dificuldade), 0) FROM conteudos WHERE materia_id = " . $materiaId)->fetchColumn());
+        $maiorOrdem = (int)($pdo->query("SELECT COALESCE(MAX(ordem), 0) FROM conteudos WHERE materia_id = " . $materiaId)->fetchColumn());
+        $proximoNivel = $maiorDificuldade + 1;
+
+        $gerados = gerarConteudos($materia['nome'], trim($usuario['gostos'] ?? ''), $titulosExistentes, $proximoNivel);
+        $salvos = salvarConteudosGerados($pdo, $materiaId, $gerados, $proximoNivel, $maiorOrdem + 1, $titulosExistentes);
+
+        if ($salvos === 0) {
+            throw new Exception('A IA nao retornou conteudos novos o suficiente. Tente novamente.');
+        }
+
+        $stmt->execute([$materiaId]);
+        $conteudos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $conteudosGerados = true;
+    } catch (Exception $e) {
+        $erroIA = $e->getMessage();
+    }
+}
+if (!$conteudos) {
+    try {
+        $gerados = gerarConteudos($materia['nome'], trim($usuario['gostos'] ?? ''), [], 1);
+        salvarConteudosGerados($pdo, $materiaId, $gerados, 1, 1, []);
+        $stmt->execute([$materiaId]);
+        $conteudos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        $erroIA = $e->getMessage();
+    }
+}
+$tituloPagina = $materia['nome'];
+$paginaAtual  = 'materias';
+require __DIR__ . '/includes/head.php';
+?>
+<?php require __DIR__ . '/includes/sidebar.php'; ?>
+<main class="main">
+    <header class="topbar">
+        <div>
+            <span class="eyebrow">NEOMIND • PLATAFORMA DE ESTUDOS</span>
+            <h1><?= htmlspecialchars($materia['nome']) ?></h1>
+        </div>
+        <a href="config.php" class="profile"><?= htmlspecialchars(strtoupper(substr($usuario['nome'], 0, 1))) ?></a>
+    </header>
+    <div class="back-row">
+        <a href="materias.php" class="back">← Voltar para matérias</a>
+    </div>
+    <div class="section-title">
+        <span><?= htmlspecialchars($materia['nome']) ?></span>
+        <small>Conteúdos disponíveis</small>
+    </div>
+    <div class="action-row content-actions">
+        <form method="post">
+            <input type="hidden" name="acao" value="gerar_mais">
+            <button type="submit" class="primary">Gerar mais conteúdos</button>
+        </form>
+    </div>
+    <div class="content-list">
+        <?php if ($conteudosGerados): ?>
+            <div class="msg-ok">✓ Mais 6 conteudos foram gerados e salvos na progressao da materia.</div>
+        <?php endif; ?>
+
+        <?php if ($erroIA): ?>
+            <div class="error">Nao foi possivel gerar os conteudos agora: <?= htmlspecialchars($erroIA) ?></div>
+        <?php endif; ?>
+
+        <?php if (!$conteudos): ?>
+            <p class="empty">Nenhum conteudo disponivel nessa materia ainda.</p>
+        <?php endif; ?>
+
+        <?php foreach ($conteudos as $i => $c): ?>
+            <a class="content-row" href="livro.php?conteudo_id=<?= (int)$c['id'] ?>">
+                <b><?= str_pad($i + 1, 2, '0', STR_PAD_LEFT) ?></b>
+                <span><?= htmlspecialchars($c['titulo']) ?></span>
+                <em>Nível <?= (int)($c['dificuldade'] ?? 1) ?></em>
+            </a>
+        <?php endforeach; ?>
+    </div>
+</main>
+</body>
+</html>
