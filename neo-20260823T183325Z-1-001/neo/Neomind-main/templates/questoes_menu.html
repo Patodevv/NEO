@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trilha de {{ materia }} — NeoMind</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,600;0,800;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard-fut.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='questoes-fut.css') }}">
+</head>
+<body class="nm-body fut-body">
+<canvas id="fut-particles" class="fut-particles-canvas"></canvas>
+<div class="fut-transition-overlay" id="fut-transition"></div>
+<div class="nm-blob nm-blob-1"></div>
+<div class="nm-blob nm-blob-2"></div>
+
+<nav class="fut-nav">
+    <div class="fut-nav-logo"><span class="fut-nav-logo-icon">⚡</span>Neo<span>Mind</span></div>
+    <div class="fut-nav-center"><span class="fut-nav-badge">TRILHA · {{ materia|upper }}</span></div>
+    <div class="fut-nav-right">
+        <div class="fut-nav-user">
+            <div class="fut-nav-user-dot"></div>
+            <span class="fut-nav-username">{{ usuario.usuario }}</span>
+        </div>
+        <a href="/logout" class="fut-nav-exit">SAIR ⏏</a>
+    </div>
+</nav>
+
+<div class="qfut-status-bar">
+    <span class="qfut-status-dot"></span>
+    <span>{{ materia|upper }} · SELECIONE O MÓDULO</span>
+</div>
+
+<div class="qfut-wrapper" style="position:relative;z-index:1;">
+    <div class="qfut-page-header">
+        <a href="/materias" class="qfut-breadcrumb">← Matérias</a>
+        <div class="qfut-eyebrow" style="margin-top:1rem;">
+            <span class="qfut-eyebrow-dot"></span>
+            TRILHA DE ESTUDO
+            <span class="qfut-eyebrow-line"></span>
+        </div>
+        <h1 class="qfut-page-title">{{ materia }}</h1>
+        <p class="qfut-page-sub">
+            Progresso: <strong>{{ usuario.pontos }} XP</strong>
+            &nbsp;·&nbsp;
+            Nível: <strong>{{ usuario.nivel.upper() }}</strong>
+        </p>
+    </div>
+
+    <div class="qfut-topics-list">
+
+        <!-- NOVATO — sempre disponível -->
+        <div class="qfut-topic-card">
+            <div class="qfut-topic-card-header">
+                <div class="qfut-topic-icon">🌱</div>
+                <div>
+                    <h2 class="qfut-topic-title">Módulo Iniciante</h2>
+                    <p class="qfut-topic-hint">Conceitos fundamentais para começar.</p>
+                </div>
+            </div>
+            <div class="qfut-topic-levels">
+                <a href="/questoes/{{ materia }}/novato" class="qfut-level-btn qfut-level-btn-novato">
+                    <span class="qfut-level-btn-icon">🌱</span>
+                    <span class="qfut-level-btn-text"><strong>Estudar Novato</strong><small>Nível de entrada</small></span>
+                    <span class="qfut-level-btn-arrow">→</span>
+                </a>
+            </div>
+        </div>
+
+        {% if 'intermediario' in niveis_liberados %}
+        <div class="qfut-topic-card">
+            <div class="qfut-topic-card-header">
+                <div class="qfut-topic-icon">⚔️</div>
+                <div>
+                    <h2 class="qfut-topic-title">Módulo Intermediário</h2>
+                    <p class="qfut-topic-hint">Conteúdo avançado para evoluir.</p>
+                </div>
+            </div>
+            <div class="qfut-topic-levels">
+                <a href="/questoes/{{ materia }}/intermediario" class="qfut-level-btn qfut-level-btn-inter">
+                    <span class="qfut-level-btn-icon">⚔️</span>
+                    <span class="qfut-level-btn-text"><strong>Estudar Intermediário</strong><small>Nível avançado</small></span>
+                    <span class="qfut-level-btn-arrow">→</span>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if 'pro' in niveis_liberados %}
+        <div class="qfut-topic-card">
+            <div class="qfut-topic-card-header">
+                <div class="qfut-topic-icon">👑</div>
+                <div>
+                    <h2 class="qfut-topic-title">Módulo Pro</h2>
+                    <p class="qfut-topic-hint">Desafio supremo para os mestres.</p>
+                </div>
+            </div>
+            <div class="qfut-topic-levels">
+                <a href="/questoes/{{ materia }}/pro" class="qfut-level-btn qfut-level-btn-pro">
+                    <span class="qfut-level-btn-icon">👑</span>
+                    <span class="qfut-level-btn-text"><strong>Estudar PRO</strong><small>Elite</small></span>
+                    <span class="qfut-level-btn-arrow">→</span>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <div class="qfut-back-link" style="margin-top:2.5rem;">
+        <a href="/materias" class="qfut-breadcrumb">← Voltar para Matérias</a>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+<script src="{{ url_for('static', filename='dashboard-fut.js') }}"></script>
+<script src="{{ url_for('static', filename='questoes-fut.js') }}"></script>
+</body>
+</html>

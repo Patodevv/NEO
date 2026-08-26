@@ -49,6 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'gerar_l
 }
 $tituloPagina = $conteudo['titulo'];
 $paginaAtual  = 'materias';
+$usaSidebar = true;
+$cssPaginas = ['livro'];
 require __DIR__ . '/includes/head.php';
 ?>
 <?php require __DIR__ . '/includes/sidebar.php'; ?>

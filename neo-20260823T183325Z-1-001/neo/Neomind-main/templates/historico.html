@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico — NeoMind</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,600;0,800;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard-fut.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='historico-fut.css') }}">
+</head>
+<body class="nm-body fut-body">
+<canvas id="fut-particles" class="fut-particles-canvas"></canvas>
+<div class="fut-transition-overlay" id="fut-transition"></div>
+<div class="nm-blob nm-blob-1"></div>
+<div class="nm-blob nm-blob-2"></div>
+
+<nav class="fut-nav">
+    <div class="fut-nav-logo"><span class="fut-nav-logo-icon">⚡</span>Neo<span>Mind</span></div>
+    <div class="fut-nav-center"><span class="fut-nav-badge">LOG DE BATALHAS</span></div>
+    <div class="fut-nav-right">
+        <div class="fut-nav-user">
+            <div class="fut-nav-user-dot"></div>
+            <span class="fut-nav-username">{{ usuario }}</span>
+        </div>
+        <a href="/logout" class="fut-nav-exit">SAIR ⏏</a>
+    </div>
+</nav>
+
+<div class="hfut-status-bar">
+    <span class="hfut-status-dot"></span>
+    <span>LOG DE BATALHAS · HISTÓRICO DE DESEMPENHO</span>
+</div>
+
+<div class="hfut-wrapper">
+
+    <!-- PAGE HEADER -->
+    <div class="hfut-page-header">
+        <a href="/dashboard" class="hfut-breadcrumb">← Dashboard</a>
+        <div class="hfut-eyebrow">
+            <span class="hfut-eyebrow-dot"></span>
+            REGISTRO DE ATIVIDADE
+            <span class="hfut-eyebrow-line"></span>
+        </div>
+        <h1 class="hfut-page-title">Log de <em>Batalhas</em></h1>
+        <p class="hfut-page-sub">Reveja suas questões respondidas e monitore sua evolução.</p>
+    </div>
+
+    {% if not historicos %}
+
+    <!-- EMPTY STATE -->
+    <div class="hfut-empty">
+        <span class="hfut-empty-icon">📭</span>
+        <h3 class="hfut-empty-title">Sem histórico ainda</h3>
+        <p class="hfut-empty-text">Responda questões para ver seu desempenho registrado aqui!</p>
+        <a href="/materias" class="hfut-empty-btn">⚡ Começar a Estudar →</a>
+    </div>
+
+    {% else %}
+    {% set total   = historicos|length %}
+    {% set acertos = historicos|selectattr('resultado', 'equalto', 'Acertou!')|list|length %}
+    {% set taxa    = (acertos / total * 100)|round|int if total > 0 else 0 %}
+
+    <!-- STATS GRID -->
+    <div class="hfut-stats-grid">
+        <div class="hfut-stat-card hfut-stat-total">
+            <span class="hfut-stat-icon">📊</span>
+            <span class="hfut-stat-num" data-target="{{ total }}">{{ total }}</span>
+            <span class="hfut-stat-label">TOTAL DE QUESTÕES</span>
+        </div>
+        <div class="hfut-stat-card hfut-stat-win">
+            <span class="hfut-stat-icon">🏆</span>
+            <span class="hfut-stat-num" data-target="{{ acertos }}">{{ acertos }}</span>
+            <span class="hfut-stat-label">ACERTOS</span>
+        </div>
+        <div class="hfut-stat-card hfut-stat-fail">
+            <span class="hfut-stat-icon">💀</span>
+            <span class="hfut-stat-num" data-target="{{ total - acertos }}">{{ total - acertos }}</span>
+            <span class="hfut-stat-label">ERROS</span>
+        </div>
+        <div class="hfut-stat-card hfut-stat-rate">
+            <span class="hfut-stat-icon">⚡</span>
+            <span class="hfut-stat-num" data-target="{{ taxa }}" data-suffix="%">{{ taxa }}%</span>
+            <span class="hfut-stat-label">TAXA DE ACERTO</span>
+        </div>
+    </div>
+
+    <!-- PROGRESS BAR -->
+    <div class="hfut-progress-wrap">
+        <div class="hfut-progress-label">
+            <span>TAXA DE ACERTO GERAL</span>
+            <span>{{ taxa }}%</span>
+        </div>
+        <div class="hfut-progress-track">
+            <div class="hfut-progress-fill" data-width="{{ taxa }}%"></div>
+            <div class="hfut-progress-shine"></div>
+        </div>
+    </div>
+
+    <!-- FEED HEADER -->
+    <div class="hfut-section-header">
+        <span class="hfut-section-label">REGISTRO DE QUESTÕES</span>
+        <span class="hfut-section-line"></span>
+        <span class="hfut-section-count">{{ total }} ENTRADAS</span>
+    </div>
+
+    <!-- HISTORY FEED -->
+    <div class="hfut-feed">
+        {% for item in historicos|reverse %}
+        <div class="hfut-card {% if 'Acertou' in item.resultado %}hfut-card-win{% else %}hfut-card-lose{% endif %}">
+            <div class="hfut-card-shine"></div>
+            <div class="hfut-card-icon">
+                {% if 'Acertou' in item.resultado %}🏆{% else %}💀{% endif %}
+            </div>
+            <div class="hfut-card-body">
+                <span class="hfut-card-tag">QUESTÃO RESPONDIDA</span>
+                <p class="hfut-card-question">{{ item.pergunta }}</p>
+            </div>
+            <div class="hfut-card-result">
+                {% if 'Acertou' in item.resultado %}ACERTOU{% else %}ERROU{% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% endif %}
+
+</div>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+<script src="{{ url_for('static', filename='dashboard-fut.js') }}"></script>
+<script src="{{ url_for('static', filename='historico-fut.js') }}"></script>
+</body>
+</html>

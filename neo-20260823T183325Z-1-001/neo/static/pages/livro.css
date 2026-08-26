@@ -1,0 +1,31 @@
+.reader {
+    width: min(100%, 820px);
+    margin: 0 auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 36px;
+    background: var(--surface);
+}
+
+.reader-title {
+    margin-bottom: 20px;
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.reader article p {
+    margin-bottom: 16px;
+    color: #d6d6d6;
+    line-height: 1.65;
+    white-space: pre-line;
+}
+
+.question-btn {
+    margin-top: 0;
+}
+
+@media (max-width: 640px) {
+    .reader {
+        padding: 24px;
+    }
+}

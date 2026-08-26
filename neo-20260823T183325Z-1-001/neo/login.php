@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 $tituloPagina = 'Login';
+$cssPaginas = ['auth'];
 require __DIR__ . '/includes/head.php';
 ?>
 <div class="auth-wrap">

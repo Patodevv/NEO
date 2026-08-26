@@ -7,8 +7,10 @@ $totalQuestoes = $pdo->prepare("SELECT COUNT(*), COALESCE(SUM(acertos),0), COALE
 $totalQuestoes->execute([$usuario['id']]);
 [$qtdHistorico, $somaAcertos, $somaTotal] = $totalQuestoes->fetch(PDO::FETCH_NUM);
 $desempenho = $somaTotal > 0 ? round(($somaAcertos / $somaTotal) * 100) : 0;
-$tituloPagina = 'Dashboard';
-$paginaAtual  = 'dashboard';
+$tituloPagina = 'Início';
+$paginaAtual  = 'inicio';
+$usaSidebar = true;
+$cssPaginas = ['dashboard'];
 require __DIR__ . '/includes/head.php';
 ?>
 <?php require __DIR__ . '/includes/sidebar.php'; ?>
@@ -16,7 +18,7 @@ require __DIR__ . '/includes/head.php';
     <header class="topbar">
         <div>
             <span class="eyebrow">NEOMIND</span>
-            <h1>Dashboard</h1>
+            <h1>Início</h1>
         </div>
         <a href="config.php" class="profile"><?= htmlspecialchars(strtoupper(substr($usuario['nome'], 0, 1))) ?></a>
     </header>
@@ -72,5 +74,6 @@ require __DIR__ . '/includes/head.php';
         </div>
     </div>
 </main>
+
 </body>
 </html>

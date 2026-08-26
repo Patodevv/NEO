@@ -15,6 +15,8 @@ $stmt->execute([$usuario['id']]);
 $historico = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $tituloPagina = 'Histórico';
 $paginaAtual  = 'historico';
+$usaSidebar = true;
+$cssPaginas = ['historico'];
 require __DIR__ . '/includes/head.php';
 ?>
 <?php require __DIR__ . '/includes/sidebar.php'; ?>

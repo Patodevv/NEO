@@ -12,6 +12,8 @@ $materias = $pdo->query("
 ")->fetchAll(PDO::FETCH_ASSOC);
 $tituloPagina = 'Matérias';
 $paginaAtual  = 'materias';
+$usaSidebar = true;
+$cssPaginas = ['materias'];
 require __DIR__ . '/includes/head.php';
 ?>
 <?php require __DIR__ . '/includes/sidebar.php'; ?>

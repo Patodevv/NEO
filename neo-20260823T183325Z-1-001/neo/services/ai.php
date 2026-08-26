@@ -25,59 +25,78 @@ function groqApiKey(): string
 
 function chamarGroq(array $messages, array $schema, string $schemaName): array
 {
-    $dados = [
-        'model' => 'openai/gpt-oss-20b',
-        'messages' => $messages,
-        'temperature' => 0.7,
-        'response_format' => [
-            'type' => 'json_schema',
-            'json_schema' => [
-                'name' => $schemaName,
-                'strict' => true,
-                'schema' => $schema
+    $tentativas = [0.4, 0.1];
+    $ultimoErro = '';
+
+    foreach ($tentativas as $temperatura) {
+        $dados = [
+            'model' => 'openai/gpt-oss-20b',
+            'messages' => $messages,
+            'temperature' => $temperatura,
+            'response_format' => [
+                'type' => 'json_schema',
+                'json_schema' => [
+                    'name' => $schemaName,
+                    'strict' => true,
+                    'schema' => $schema
+                ]
             ]
-        ]
-    ];
+        ];
 
-    $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST => true,
-        CURLOPT_HTTPHEADER => [
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . groqApiKey()
-        ],
-        CURLOPT_POSTFIELDS => json_encode($dados, JSON_UNESCAPED_UNICODE),
-        CURLOPT_TIMEOUT => 120
-    ]);
+        $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . groqApiKey()
+            ],
+            CURLOPT_POSTFIELDS => json_encode($dados, JSON_UNESCAPED_UNICODE),
+            CURLOPT_TIMEOUT => 120
+        ]);
 
-    $resposta = curl_exec($ch);
-    if ($resposta === false) {
-        $erro = curl_error($ch);
-        curl_close($ch);
-        throw new Exception('Erro ao conectar com a Groq: ' . $erro);
-    }
-
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    $dadosResposta = json_decode($resposta, true);
-    if ($httpCode < 200 || $httpCode >= 300) {
-        $mensagem = $dadosResposta['error']['message'] ?? 'Erro desconhecido na API da Groq.';
-        if ($httpCode === 401) {
-            throw new Exception('A chave da API da Groq esta invalida ou expirou. Atualize a chave em config/groq.php ou na variavel GROQ_API_KEY.');
+        $resposta = curl_exec($ch);
+        if ($resposta === false) {
+            $erro = curl_error($ch);
+            curl_close($ch);
+            throw new Exception('Erro ao conectar com a Groq: ' . $erro);
         }
 
-        throw new Exception("Erro da Groq ({$httpCode}): {$mensagem}");
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $dadosResposta = json_decode($resposta, true);
+        if ($httpCode < 200 || $httpCode >= 300) {
+            $mensagem = $dadosResposta['error']['message'] ?? 'Erro desconhecido na API da Groq.';
+            $ultimoErro = "Erro da Groq ({$httpCode}): {$mensagem}";
+
+            if ($httpCode === 401) {
+                throw new Exception('A chave da API da Groq esta invalida ou expirou. Atualize a chave em config/groq.php ou na variavel GROQ_API_KEY.');
+            }
+
+            if (
+                $httpCode === 400 &&
+                (
+                    stripos($mensagem, 'Failed to generate JSON') !== false ||
+                    stripos($mensagem, 'Failed to validate JSON') !== false
+                )
+            ) {
+                continue;
+            }
+
+            throw new Exception($ultimoErro);
+        }
+
+        $json = $dadosResposta['choices'][0]['message']['content'] ?? '';
+        $resultado = json_decode($json, true);
+        if (is_array($resultado)) {
+            return $resultado;
+        }
+
+        $ultimoErro = 'A resposta da IA possui formato invalido.';
     }
 
-    $json = $dadosResposta['choices'][0]['message']['content'] ?? '';
-    $resultado = json_decode($json, true);
-    if (!is_array($resultado)) {
-        throw new Exception('A resposta da IA possui formato invalido.');
-    }
-
-    return $resultado;
+    throw new Exception($ultimoErro ?: 'A IA nao conseguiu gerar JSON valido.');
 }
 
 function gerarConteudos(string $materia, string $gostos = '', array $titulosExistentes = [], int $proximoNivel = 1): array
@@ -87,8 +106,6 @@ function gerarConteudos(string $materia, string $gostos = '', array $titulosExis
         'properties' => [
             'conteudos' => [
                 'type' => 'array',
-                'minItems' => 6,
-                'maxItems' => 6,
                 'items' => [
                     'type' => 'object',
                     'properties' => [
@@ -105,7 +122,8 @@ function gerarConteudos(string $materia, string $gostos = '', array $titulosExis
     ];
 
     $preferencias = $gostos !== '' ? "Preferencias do estudante: {$gostos}" : 'Sem preferencias informadas.';
-    $existentes = $titulosExistentes ? implode('; ', array_map('trim', $titulosExistentes)) : 'Nenhum conteudo existente.';
+    $titulosLimitados = array_slice(array_values(array_filter(array_map('trim', $titulosExistentes))), -30);
+    $existentes = $titulosLimitados ? implode('; ', $titulosLimitados) : 'Nenhum conteudo existente.';
 
     $resultado = chamarGroq([
         [
@@ -114,7 +132,7 @@ function gerarConteudos(string $materia, string $gostos = '', array $titulosExis
         ],
         [
             'role' => 'user',
-            'content' => "Materia: {$materia}\n{$preferencias}\nConteudos ja existentes: {$existentes}\nNivel desta nova leva: {$proximoNivel}\nCrie exatamente 6 novos conteudos em progressao, continuando depois dos conteudos existentes. Se ja houver conteudos basicos, avance para temas intermediarios; se ja houver intermediarios, avance para temas mais dificeis; se ja houver avancados, aprofunde com topicos mais especificos. Nao repita nem reescreva nenhum titulo ja existente. Os titulos devem ser nomes serios, especificos e academicos de topicos reais da materia, como Energia potencial gravitacional, Cinematica escalar, Estequiometria, Funcoes quadraticas ou Concordancia verbal. Evite titulos genericos, infantis ou em forma de pergunta. Cada conteudo deve ter titulo e corpo completo, com explicacao em formato de mini-livro, exemplos e linguagem adaptada as preferencias do estudante."
+            'content' => "Materia: {$materia}\n{$preferencias}\nConteudos ja existentes: {$existentes}\nNivel desta nova leva: {$proximoNivel}\nCrie exatamente 6 novos conteudos em progressao, continuando depois dos conteudos existentes. Nao repita nem reescreva nenhum titulo ja existente. Os titulos devem ser serios, especificos e academicos, como Energia potencial gravitacional, Cinematica escalar, Estequiometria, Funcoes quadraticas ou Concordancia verbal. Evite titulos genericos, infantis ou em forma de pergunta. Cada corpo deve ter 3 a 5 paragrafos objetivos, com explicacao clara e exemplo. Retorne apenas JSON valido no schema pedido."
         ]
     ], $schema, 'geracao_conteudos');
 

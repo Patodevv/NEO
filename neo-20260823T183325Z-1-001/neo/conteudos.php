@@ -42,6 +42,48 @@ function salvarConteudosGerados(PDO $pdo, int $materiaId, array $gerados, int $d
     return $salvos;
 }
 
+function gerarSeisConteudos(string $materia, string $gostos, array $titulosExistentes, int $nivel): array
+{
+    $conteudos = [];
+    $titulosUsados = $titulosExistentes;
+
+    for ($tentativa = 0; $tentativa < 3 && count($conteudos) < 6; $tentativa++) {
+        $gerados = gerarConteudos($materia, $gostos, $titulosUsados, $nivel);
+
+        foreach ($gerados as $conteudoGerado) {
+            $titulo = trim($conteudoGerado['titulo'] ?? '');
+            $corpo = trim($conteudoGerado['corpo'] ?? '');
+
+            if ($titulo === '' || $corpo === '') {
+                continue;
+            }
+
+            $jaExiste = false;
+            foreach ($titulosUsados as $tituloUsado) {
+                if (mb_strtolower(trim($tituloUsado)) === mb_strtolower($titulo)) {
+                    $jaExiste = true;
+                    break;
+                }
+            }
+
+            if (!$jaExiste) {
+                $conteudos[] = ['titulo' => $titulo, 'corpo' => $corpo];
+                $titulosUsados[] = $titulo;
+            }
+
+            if (count($conteudos) >= 6) {
+                break 2;
+            }
+        }
+    }
+
+    if (count($conteudos) < 6) {
+        throw new Exception('A IA gerou menos de 6 conteudos novos. Tente novamente.');
+    }
+
+    return array_slice($conteudos, 0, 6);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'gerar_mais') {
     try {
         $titulosExistentes = array_column($conteudos, 'titulo');
@@ -49,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'gerar_m
         $maiorOrdem = (int)($pdo->query("SELECT COALESCE(MAX(ordem), 0) FROM conteudos WHERE materia_id = " . $materiaId)->fetchColumn());
         $proximoNivel = $maiorDificuldade + 1;
 
-        $gerados = gerarConteudos($materia['nome'], trim($usuario['gostos'] ?? ''), $titulosExistentes, $proximoNivel);
+        $gerados = gerarSeisConteudos($materia['nome'], trim($usuario['gostos'] ?? ''), $titulosExistentes, $proximoNivel);
         $salvos = salvarConteudosGerados($pdo, $materiaId, $gerados, $proximoNivel, $maiorOrdem + 1, $titulosExistentes);
 
         if ($salvos === 0) {
@@ -65,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'gerar_m
 }
 if (!$conteudos) {
     try {
-        $gerados = gerarConteudos($materia['nome'], trim($usuario['gostos'] ?? ''), [], 1);
+        $gerados = gerarSeisConteudos($materia['nome'], trim($usuario['gostos'] ?? ''), [], 1);
         salvarConteudosGerados($pdo, $materiaId, $gerados, 1, 1, []);
         $stmt->execute([$materiaId]);
         $conteudos = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -75,6 +117,8 @@ if (!$conteudos) {
 }
 $tituloPagina = $materia['nome'];
 $paginaAtual  = 'materias';
+$usaSidebar = true;
+$cssPaginas = ['conteudos'];
 require __DIR__ . '/includes/head.php';
 ?>
 <?php require __DIR__ . '/includes/sidebar.php'; ?>

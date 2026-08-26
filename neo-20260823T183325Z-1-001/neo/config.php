@@ -17,6 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 $tituloPagina = 'Configurações';
 $paginaAtual  = 'config';
+$usaSidebar = true;
+$cssPaginas = ['config'];
 require __DIR__ . '/includes/head.php';
 ?>
 <?php require __DIR__ . '/includes/sidebar.php'; ?>

@@ -1,0 +1,42 @@
+.history-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.history-item {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    background: var(--surface);
+    display: grid;
+    grid-template-columns: 60px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+}
+
+.history-item .date,
+.history-item small {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.history-item small {
+    display: block;
+    margin-top: 2px;
+}
+
+.history-item strong {
+    color: var(--primary);
+    font-size: 18px;
+}
+
+@media (max-width: 560px) {
+    .history-item {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .history-item .date {
+        grid-column: 1 / -1;
+    }
+}

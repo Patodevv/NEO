@@ -31,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 $tituloPagina = 'Criar conta';
+$cssPaginas = ['auth'];
 require __DIR__ . '/includes/head.php';
 ?>
 <div class="auth-wrap">

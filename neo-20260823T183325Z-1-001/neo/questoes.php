@@ -98,6 +98,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $acao === 'responder' && $questoes)
 }
 $tituloPagina = 'Questões';
 $paginaAtual  = 'materias';
+$usaSidebar = true;
+$cssPaginas = ['questoes'];
 require __DIR__ . '/includes/head.php';
 ?>
 <?php require __DIR__ . '/includes/sidebar.php'; ?>
