@@ -3,13 +3,15 @@ require __DIR__ . '/config/db.php';
 require __DIR__ . '/includes/auth.php';
 exigirLogin();
 $usuario = usuarioAtual($pdo);
-$materias = $pdo->query("
+$stmtMaterias = $pdo->prepare("
     SELECT m.id, m.nome, COUNT(c.id) AS total
     FROM materias m
-    LEFT JOIN conteudos c ON c.materia_id = m.id
+    LEFT JOIN conteudos c ON c.materia_id = m.id AND c.user_id = ?
     GROUP BY m.id
     ORDER BY m.nome
-")->fetchAll(PDO::FETCH_ASSOC);
+");
+$stmtMaterias->execute([$usuario['id']]);
+$materias = $stmtMaterias->fetchAll(PDO::FETCH_ASSOC);
 $tituloPagina = 'Matérias';
 $paginaAtual  = 'materias';
 $usaSidebar = true;
@@ -19,11 +21,18 @@ require __DIR__ . '/includes/head.php';
 <?php require __DIR__ . '/includes/sidebar.php'; ?>
 <main class="main">
     <header class="topbar">
-        <div>
+        <div class="user-heading">
             <span class="eyebrow">NEOMIND • PLATAFORMA DE ESTUDOS</span>
-            <h1>Matérias</h1>
+            <strong><?= htmlspecialchars($usuario['nome']) ?></strong>
+            <span class="page-title">Matérias</span>
         </div>
-        <a href="config.php" class="profile"><?= htmlspecialchars(strtoupper(substr($usuario['nome'], 0, 1))) ?></a>
+        <a href="perfil.php" class="profile">
+            <?php if (!empty($usuario['foto'])): ?>
+                <img src="<?= htmlspecialchars($usuario['foto']) ?>" alt="">
+            <?php else: ?>
+                <?= htmlspecialchars(strtoupper(substr($usuario['nome'], 0, 1))) ?>
+            <?php endif; ?>
+        </a>
     </header>
     <div class="section-title">
         <span>Matérias</span>

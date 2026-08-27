@@ -8,10 +8,10 @@ $stmt = $pdo->prepare("
     FROM historico h
     JOIN conteudos c ON c.id = h.conteudo_id
     JOIN materias m ON m.id = c.materia_id
-    WHERE h.user_id = ?
+    WHERE h.user_id = ? AND c.user_id = ?
     ORDER BY h.data DESC
 ");
-$stmt->execute([$usuario['id']]);
+$stmt->execute([$usuario['id'], $usuario['id']]);
 $historico = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $tituloPagina = 'Histórico';
 $paginaAtual  = 'historico';
@@ -22,11 +22,18 @@ require __DIR__ . '/includes/head.php';
 <?php require __DIR__ . '/includes/sidebar.php'; ?>
 <main class="main">
     <header class="topbar">
-        <div>
+        <div class="user-heading">
             <span class="eyebrow">NEOMIND • PLATAFORMA DE ESTUDOS</span>
-            <h1>Histórico</h1>
+            <strong><?= htmlspecialchars($usuario['nome']) ?></strong>
+            <span class="page-title">Histórico</span>
         </div>
-        <a href="config.php" class="profile"><?= htmlspecialchars(strtoupper(substr($usuario['nome'], 0, 1))) ?></a>
+        <a href="perfil.php" class="profile">
+            <?php if (!empty($usuario['foto'])): ?>
+                <img src="<?= htmlspecialchars($usuario['foto']) ?>" alt="">
+            <?php else: ?>
+                <?= htmlspecialchars(strtoupper(substr($usuario['nome'], 0, 1))) ?>
+            <?php endif; ?>
+        </a>
     </header>
     <div class="section-title">
         <span>Histórico</span>

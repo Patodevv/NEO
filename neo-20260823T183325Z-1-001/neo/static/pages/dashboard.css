@@ -31,26 +31,58 @@
     align-self: flex-start;
 }
 
-.store-card {
+.shop-banner {
     min-height: 260px;
-    border: 1px solid var(--border);
+    border: 1px solid color-mix(in srgb, #ffd84a 45%, var(--border));
     border-radius: 8px;
     padding: 30px;
-    background: var(--surface);
+    background:
+        linear-gradient(135deg, rgba(255, 216, 74, .2), rgba(8, 120, 255, .12)),
+        var(--surface);
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 8px;
+    position: relative;
+    overflow: hidden;
 }
 
-.store-icon {
-    color: var(--primary);
-    font-size: 22px;
+.shop-banner::after {
+    content: '';
+    position: absolute;
+    right: -42px;
+    bottom: -54px;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: rgba(255, 216, 74, .16);
 }
 
-.store-card p {
+.shop-kicker {
+    color: #ffd84a;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.shop-banner h3,
+.shop-banner p,
+.shop-banner-footer {
+    position: relative;
+    z-index: 1;
+}
+
+.shop-banner p {
     margin-bottom: 12px;
     color: var(--muted-strong);
+}
+
+.shop-banner-footer {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
 }
 
 .stats {
@@ -147,7 +179,7 @@
     }
 
     .hero-card,
-    .store-card,
+    .shop-banner,
     .progress-card {
         padding: 22px;
     }

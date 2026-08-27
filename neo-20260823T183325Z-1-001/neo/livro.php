@@ -11,9 +11,9 @@ $stmt = $pdo->prepare("
     SELECT c.*, m.nome AS materia_nome, m.id AS materia_id
     FROM conteudos c
     JOIN materias m ON m.id = c.materia_id
-    WHERE c.id = ?
+    WHERE c.id = ? AND c.user_id = ?
 ");
-$stmt->execute([$conteudoId]);
+$stmt->execute([$conteudoId, $usuario['id']]);
 $conteudo = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$conteudo) {
     header('Location: materias.php');
@@ -24,23 +24,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'gerar_l
         $novoLivro = gerarLivro(
             $conteudo['materia_nome'],
             $conteudo['titulo'],
-            trim($usuario['gostos'] ?? '')
+            trim($usuario['gostos'] ?? ''),
+            (int)($usuario['nivel'] ?? 1)
         );
         $novoTitulo = trim($novoLivro['titulo'] ?? '');
         $novoCorpo = trim($novoLivro['corpo'] ?? '');
         if ($novoCorpo === '') {
             throw new Exception('A IA nao retornou um livro valido.');
         }
-        $stmtUpdate = $pdo->prepare("UPDATE conteudos SET titulo = ?, corpo = ?, status = ? WHERE id = ?");
+        $stmtUpdate = $pdo->prepare("UPDATE conteudos SET titulo = ?, corpo = ?, status = ? WHERE id = ? AND user_id = ?");
         $stmtUpdate->execute([
             $novoTitulo !== '' ? $novoTitulo : $conteudo['titulo'],
             $novoCorpo,
             'Livro gerado pela IA',
-            $conteudoId
+            $conteudoId,
+            $usuario['id']
         ]);
-        $stmtDelete = $pdo->prepare("DELETE FROM questoes WHERE conteudo_id = ?");
-        $stmtDelete->execute([$conteudoId]);
-        $stmt->execute([$conteudoId]);
+        $stmtDelete = $pdo->prepare("DELETE FROM questoes WHERE conteudo_id = ? AND user_id = ?");
+        $stmtDelete->execute([$conteudoId, $usuario['id']]);
+        $stmt->execute([$conteudoId, $usuario['id']]);
         $conteudo = $stmt->fetch(PDO::FETCH_ASSOC);
         $livroAtualizado = true;
     } catch (Exception $e) {
@@ -56,11 +58,18 @@ require __DIR__ . '/includes/head.php';
 <?php require __DIR__ . '/includes/sidebar.php'; ?>
 <main class="main">
     <header class="topbar">
-        <div>
+        <div class="user-heading">
             <span class="eyebrow">NEOMIND • <?= htmlspecialchars(strtoupper($conteudo['materia_nome'])) ?></span>
-            <h1>Livro do conteúdo</h1>
+            <strong><?= htmlspecialchars($usuario['nome']) ?></strong>
+            <span class="page-title">Livro do conteúdo</span>
         </div>
-        <a href="config.php" class="profile"><?= htmlspecialchars(strtoupper(substr($usuario['nome'], 0, 1))) ?></a>
+        <a href="perfil.php" class="profile">
+            <?php if (!empty($usuario['foto'])): ?>
+                <img src="<?= htmlspecialchars($usuario['foto']) ?>" alt="">
+            <?php else: ?>
+                <?= htmlspecialchars(strtoupper(substr($usuario['nome'], 0, 1))) ?>
+            <?php endif; ?>
+        </a>
     </header>
     <div class="back-row">
         <a href="conteudos.php?materia_id=<?= (int)$conteudo['materia_id'] ?>" class="back">← Voltar para conteúdos</a>

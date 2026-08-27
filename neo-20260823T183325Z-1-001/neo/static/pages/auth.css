@@ -48,3 +48,19 @@
     font-weight: 700;
     text-decoration: none;
 }
+
+.admin-corner {
+    position: fixed;
+    right: 12px;
+    bottom: 10px;
+    color: rgba(245, 245, 245, .22);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-decoration: none;
+    transition: color .2s ease;
+}
+
+.admin-corner:hover {
+    color: rgba(245, 245, 245, .78);
+}

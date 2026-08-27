@@ -14,12 +14,12 @@ if (!$materia) {
     header('Location: materias.php');
     exit;
 }
-$stmt = $pdo->prepare("SELECT * FROM conteudos WHERE materia_id = ? ORDER BY dificuldade, ordem, id");
-$stmt->execute([$materiaId]);
+$stmt = $pdo->prepare("SELECT * FROM conteudos WHERE materia_id = ? AND user_id = ? ORDER BY dificuldade, ordem, id");
+$stmt->execute([$materiaId, $usuario['id']]);
 $conteudos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-function salvarConteudosGerados(PDO $pdo, int $materiaId, array $gerados, int $dificuldade, int $ordemInicial, array $titulosExistentes): int
+function salvarConteudosGerados(PDO $pdo, int $userId, int $materiaId, array $gerados, int $dificuldade, int $ordemInicial, array $titulosExistentes): int
 {
-    $stmtInsert = $pdo->prepare("INSERT INTO conteudos (materia_id, titulo, status, corpo, dificuldade, ordem) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmtInsert = $pdo->prepare("INSERT INTO conteudos (user_id, materia_id, titulo, status, corpo, dificuldade, ordem) VALUES (?, ?, ?, ?, ?, ?, ?)");
     $salvos = 0;
     $titulosNormalizados = [];
 
@@ -33,7 +33,7 @@ function salvarConteudosGerados(PDO $pdo, int $materiaId, array $gerados, int $d
         $normalizado = mb_strtolower($titulo);
 
         if ($titulo !== '' && $corpo !== '' && empty($titulosNormalizados[$normalizado])) {
-            $stmtInsert->execute([$materiaId, $titulo, 'Gerado pela IA', $corpo, $dificuldade, $ordemInicial + $salvos]);
+            $stmtInsert->execute([$userId, $materiaId, $titulo, 'Gerado pela IA', $corpo, $dificuldade, $ordemInicial + $salvos]);
             $titulosNormalizados[$normalizado] = true;
             $salvos++;
         }
@@ -87,18 +87,19 @@ function gerarSeisConteudos(string $materia, string $gostos, array $titulosExist
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'gerar_mais') {
     try {
         $titulosExistentes = array_column($conteudos, 'titulo');
-        $maiorDificuldade = (int)($pdo->query("SELECT COALESCE(MAX(dificuldade), 0) FROM conteudos WHERE materia_id = " . $materiaId)->fetchColumn());
-        $maiorOrdem = (int)($pdo->query("SELECT COALESCE(MAX(ordem), 0) FROM conteudos WHERE materia_id = " . $materiaId)->fetchColumn());
+        $stmtMax = $pdo->prepare("SELECT COALESCE(MAX(dificuldade), 0), COALESCE(MAX(ordem), 0) FROM conteudos WHERE materia_id = ? AND user_id = ?");
+        $stmtMax->execute([$materiaId, $usuario['id']]);
+        [$maiorDificuldade, $maiorOrdem] = array_map('intval', $stmtMax->fetch(PDO::FETCH_NUM));
         $proximoNivel = $maiorDificuldade + 1;
 
         $gerados = gerarSeisConteudos($materia['nome'], trim($usuario['gostos'] ?? ''), $titulosExistentes, $proximoNivel);
-        $salvos = salvarConteudosGerados($pdo, $materiaId, $gerados, $proximoNivel, $maiorOrdem + 1, $titulosExistentes);
+        $salvos = salvarConteudosGerados($pdo, (int)$usuario['id'], $materiaId, $gerados, $proximoNivel, $maiorOrdem + 1, $titulosExistentes);
 
         if ($salvos === 0) {
             throw new Exception('A IA nao retornou conteudos novos o suficiente. Tente novamente.');
         }
 
-        $stmt->execute([$materiaId]);
+        $stmt->execute([$materiaId, $usuario['id']]);
         $conteudos = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $conteudosGerados = true;
     } catch (Exception $e) {
@@ -108,8 +109,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'gerar_m
 if (!$conteudos) {
     try {
         $gerados = gerarSeisConteudos($materia['nome'], trim($usuario['gostos'] ?? ''), [], 1);
-        salvarConteudosGerados($pdo, $materiaId, $gerados, 1, 1, []);
-        $stmt->execute([$materiaId]);
+        salvarConteudosGerados($pdo, (int)$usuario['id'], $materiaId, $gerados, 1, 1, []);
+        $stmt->execute([$materiaId, $usuario['id']]);
         $conteudos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (Exception $e) {
         $erroIA = $e->getMessage();
@@ -124,11 +125,18 @@ require __DIR__ . '/includes/head.php';
 <?php require __DIR__ . '/includes/sidebar.php'; ?>
 <main class="main">
     <header class="topbar">
-        <div>
+        <div class="user-heading">
             <span class="eyebrow">NEOMIND • PLATAFORMA DE ESTUDOS</span>
-            <h1><?= htmlspecialchars($materia['nome']) ?></h1>
+            <strong><?= htmlspecialchars($usuario['nome']) ?></strong>
+            <span class="page-title"><?= htmlspecialchars($materia['nome']) ?></span>
         </div>
-        <a href="config.php" class="profile"><?= htmlspecialchars(strtoupper(substr($usuario['nome'], 0, 1))) ?></a>
+        <a href="perfil.php" class="profile">
+            <?php if (!empty($usuario['foto'])): ?>
+                <img src="<?= htmlspecialchars($usuario['foto']) ?>" alt="">
+            <?php else: ?>
+                <?= htmlspecialchars(strtoupper(substr($usuario['nome'], 0, 1))) ?>
+            <?php endif; ?>
+        </a>
     </header>
     <div class="back-row">
         <a href="materias.php" class="back">← Voltar para matérias</a>

@@ -12,20 +12,20 @@ $stmt = $pdo->prepare("
     SELECT c.*, m.nome AS materia_nome
     FROM conteudos c
     JOIN materias m ON m.id = c.materia_id
-    WHERE c.id = ?
+    WHERE c.id = ? AND c.user_id = ?
 ");
-$stmt->execute([$conteudoId]);
+$stmt->execute([$conteudoId, $usuario['id']]);
 $conteudo = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$conteudo) {
     header('Location: materias.php');
     exit;
 }
-function salvarQuestoesGeradas(PDO $pdo, int $conteudoId, array $geradas): void
+function salvarQuestoesGeradas(PDO $pdo, int $userId, int $conteudoId, array $geradas): void
 {
     $stmtInsert = $pdo->prepare("
         INSERT INTO questoes
-        (conteudo_id, enunciado, opcao_a, opcao_b, opcao_c, opcao_d, correta)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        (user_id, conteudo_id, enunciado, opcao_a, opcao_b, opcao_c, opcao_d, correta)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ");
     foreach ($geradas as $questaoGerada) {
         $correta = strtoupper(trim($questaoGerada['correta'] ?? ''));
@@ -40,7 +40,7 @@ function salvarQuestoesGeradas(PDO $pdo, int $conteudoId, array $geradas): void
         if ($enunciado === '' || $opcaoA === '' || $opcaoB === '' || $opcaoC === '' || $opcaoD === '') {
             continue;
         }
-        $stmtInsert->execute([$conteudoId, $enunciado, $opcaoA, $opcaoB, $opcaoC, $opcaoD, $correta]);
+        $stmtInsert->execute([$userId, $conteudoId, $enunciado, $opcaoA, $opcaoB, $opcaoC, $opcaoD, $correta]);
     }
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $acao === 'novas_questoes') {
@@ -49,21 +49,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $acao === 'novas_questoes') {
             $conteudo['materia_nome'],
             $conteudo['titulo'],
             $conteudo['corpo'] ?? '',
-            trim($usuario['gostos'] ?? '')
+            trim($usuario['gostos'] ?? ''),
+            (int)($usuario['nivel'] ?? 1)
         );
         if (!$geradas) {
             throw new Exception('A IA nao retornou questoes validas.');
         }
-        $stmtDelete = $pdo->prepare("DELETE FROM questoes WHERE conteudo_id = ?");
-        $stmtDelete->execute([$conteudoId]);
-        salvarQuestoesGeradas($pdo, $conteudoId, $geradas);
+        $stmtDelete = $pdo->prepare("DELETE FROM questoes WHERE conteudo_id = ? AND user_id = ?");
+        $stmtDelete->execute([$conteudoId, $usuario['id']]);
+        salvarQuestoesGeradas($pdo, (int)$usuario['id'], $conteudoId, $geradas);
         $questoesAtualizadas = true;
     } catch (Exception $e) {
         $erroIA = $e->getMessage();
     }
 }
-$stmt = $pdo->prepare("SELECT * FROM questoes WHERE conteudo_id = ? ORDER BY id");
-$stmt->execute([$conteudoId]);
+$stmt = $pdo->prepare("SELECT * FROM questoes WHERE conteudo_id = ? AND user_id = ? ORDER BY id");
+$stmt->execute([$conteudoId, $usuario['id']]);
 $questoes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 if (!$questoes) {
     try {
@@ -71,12 +72,13 @@ if (!$questoes) {
             $conteudo['materia_nome'],
             $conteudo['titulo'],
             $conteudo['corpo'] ?? '',
-            trim($usuario['gostos'] ?? '')
+            trim($usuario['gostos'] ?? ''),
+            (int)($usuario['nivel'] ?? 1)
         );
 
-        salvarQuestoesGeradas($pdo, $conteudoId, $geradas);
+        salvarQuestoesGeradas($pdo, (int)$usuario['id'], $conteudoId, $geradas);
 
-        $stmt->execute([$conteudoId]);
+        $stmt->execute([$conteudoId, $usuario['id']]);
         $questoes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (Exception $e) {
         $erroIA = $e->getMessage();
@@ -94,7 +96,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $acao === 'responder' && $questoes)
     $total = count($questoes);
     $stmt = $pdo->prepare("INSERT INTO historico (user_id, conteudo_id, acertos, total) VALUES (?, ?, ?, ?)");
     $stmt->execute([$usuario['id'], $conteudoId, $acertos, $total]);
-    $resultado = ['acertos' => $acertos, 'total' => $total];
+    $recompensa = recompensarUsuario($pdo, (int)$usuario['id'], $acertos, $total);
+    $usuario = usuarioAtual($pdo);
+    $resultado = ['acertos' => $acertos, 'total' => $total, 'recompensa' => $recompensa];
 }
 $tituloPagina = 'Questões';
 $paginaAtual  = 'materias';
@@ -105,11 +109,18 @@ require __DIR__ . '/includes/head.php';
 <?php require __DIR__ . '/includes/sidebar.php'; ?>
 <main class="main">
     <header class="topbar">
-        <div>
+        <div class="user-heading">
             <span class="eyebrow">NEOMIND • <?= htmlspecialchars(strtoupper($conteudo['materia_nome'])) ?></span>
-            <h1>Questões</h1>
+            <strong><?= htmlspecialchars($usuario['nome']) ?></strong>
+            <span class="page-title">Questões</span>
         </div>
-        <a href="config.php" class="profile"><?= htmlspecialchars(strtoupper(substr($usuario['nome'], 0, 1))) ?></a>
+        <a href="perfil.php" class="profile">
+            <?php if (!empty($usuario['foto'])): ?>
+                <img src="<?= htmlspecialchars($usuario['foto']) ?>" alt="">
+            <?php else: ?>
+                <?= htmlspecialchars(strtoupper(substr($usuario['nome'], 0, 1))) ?>
+            <?php endif; ?>
+        </a>
     </header>
     <div class="back-row">
         <a href="livro.php?conteudo_id=<?= (int)$conteudo['id'] ?>" class="back">← Voltar para conteúdo</a>
@@ -130,6 +141,10 @@ require __DIR__ . '/includes/head.php';
         <?php if ($resultado): ?>
             <div class="msg-ok">
                 ✓ Você acertou <?= $resultado['acertos'] ?> de <?= $resultado['total'] ?> questão(ões). Resultado salvo no histórico.
+                +<?= (int)$resultado['recompensa']['xp'] ?> XP e +<?= (int)$resultado['recompensa']['cossas'] ?> coças.
+                <?php if (!empty($resultado['recompensa']['subiu_nivel'])): ?>
+                    Level <?= (int)$resultado['recompensa']['nivel'] ?> desbloqueado.
+                <?php endif; ?>
             </div>
         <?php endif; ?>
         <form method="post">

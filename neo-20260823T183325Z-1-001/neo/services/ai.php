@@ -139,7 +139,7 @@ function textoErroIa(Exception $e): string
     return $mensagem;
 }
 
-function conteudosFallback(string $materia, int $nivel = 1, array $titulosExistentes = []): array
+function conteudosFallback(string $materia, int $nivel = 1, array $titulosExistentes = [], string $gostos = ''): array
 {
     $bases = [
         'Fundamentos de ' . $materia,
@@ -166,7 +166,7 @@ function conteudosFallback(string $materia, int $nivel = 1, array $titulosExiste
 
         $conteudos[] = [
             'titulo' => $titulo,
-            'corpo' => livroFallback($materia, $titulo)['corpo'],
+            'corpo' => livroFallback($materia, $titulo, $gostos)['corpo'],
         ];
 
         if (count($conteudos) === 6) {
@@ -177,19 +177,24 @@ function conteudosFallback(string $materia, int $nivel = 1, array $titulosExiste
     return $conteudos;
 }
 
-function livroFallback(string $materia, string $titulo): array
+function livroFallback(string $materia, string $titulo, string $gostos = ''): array
 {
+    $exemplo = trim($gostos) !== ''
+        ? "Use os interesses informados pelo estudante ({$gostos}) como ponto de partida para criar exemplos, mas sem fugir do conteudo."
+        : 'Use exemplos simples e proximos da rotina de um estudante.';
+
     return [
         'titulo' => $titulo,
-        'corpo' => "Este material apresenta uma introducao organizada ao tema {$titulo}, dentro da materia {$materia}. Comece identificando os conceitos principais, as definicoes mais importantes e a relacao entre elas.\n\nEm seguida, observe como o tema aparece em situacoes praticas. Uma boa forma de estudar e transformar cada definicao em um exemplo simples, depois comparar esse exemplo com casos mais completos.\n\nPara fixar, releia os pontos centrais, escreva um pequeno resumo com suas palavras e resolva questoes sobre o assunto. Se errar, volte ao trecho correspondente e procure entender o motivo do erro antes de tentar novamente.",
+        'corpo' => "Este material apresenta uma explicacao organizada sobre {$titulo}, dentro da materia {$materia}. Primeiro, entenda o conceito central, as palavras-chave e o tipo de problema em que ele costuma aparecer.\n\n{$exemplo} A ideia e transformar o tema em uma situacao concreta, depois voltar para a definicao formal e comparar as duas coisas.\n\nPara fixar, escreva um resumo com suas palavras, crie um exemplo proprio e resolva questoes em ordem crescente de dificuldade. Se errar, volte ao ponto especifico do erro antes de tentar novamente.",
     ];
 }
 
-function questoesFallback(string $materia, string $titulo): array
+function questoesFallback(string $materia, string $titulo, string $gostos = ''): array
 {
+    $contexto = trim($gostos) !== '' ? " considerando exemplos ligados a {$gostos}" : '';
     return [
         [
-            'enunciado' => "Qual e a melhor primeira atitude ao estudar {$titulo} em {$materia}?",
+            'enunciado' => "Qual e a melhor primeira atitude ao estudar {$titulo} em {$materia}{$contexto}?",
             'opcao_a' => 'Memorizar frases soltas sem entender o contexto.',
             'opcao_b' => 'Identificar conceitos principais e exemplos de aplicacao.',
             'opcao_c' => 'Ignorar definicoes e ir direto para assuntos avancados.',
@@ -261,25 +266,25 @@ function gerarConteudos(string $materia, string $gostos = '', array $titulosExis
         $resultado = chamarGroq([
             [
                 'role' => 'system',
-                'content' => 'Voce cria conteudos educacionais serios, especificos e didaticos para estudantes do ensino medio brasileiro. Responda somente um objeto JSON valido, sem markdown, sem comentarios e sem texto fora do JSON.'
+                'content' => 'Voce cria conteudos educacionais serios, especificos e didaticos para um unico estudante. Os gostos informados pertencem somente ao usuario atual. Nunca use preferencias que nao estejam nesta conversa. Responda somente um objeto JSON valido, sem markdown, sem comentarios e sem texto fora do JSON.'
             ],
             [
                 'role' => 'user',
-                'content' => "Materia: {$materia}\n{$preferencias}\nConteudos ja existentes: {$existentes}\nNivel desta nova leva: {$proximoNivel}\nCrie exatamente 6 novos conteudos em progressao, continuando depois dos conteudos existentes. Nao repita nem reescreva nenhum titulo ja existente. Os titulos devem ser serios, especificos e academicos. Cada corpo deve ter 3 a 5 paragrafos objetivos, com explicacao clara e exemplo. O objeto deve ter exatamente a chave conteudos, contendo uma lista de objetos com titulo e corpo."
+                'content' => "Materia: {$materia}\n{$preferencias}\nConteudos ja existentes deste mesmo usuario: {$existentes}\nNivel desta nova leva: {$proximoNivel}\nCrie exatamente 6 novos conteudos em progressao, continuando depois dos conteudos existentes. Nao repita nem reescreva nenhum titulo ja existente. Os titulos devem ser serios, especificos e academicos. Cada corpo deve ter 4 a 6 paragrafos objetivos, com explicacao clara, exemplo adaptado aos gostos do usuario quando houver gostos e mini orientacao de estudo. O objeto deve ter exatamente a chave conteudos, contendo uma lista de objetos com titulo e corpo."
             ]
         ], $schema, 'geracao_conteudos');
     } catch (Exception $e) {
-        return conteudosFallback($materia, $proximoNivel, $titulosExistentes);
+        return conteudosFallback($materia, $proximoNivel, $titulosExistentes, $gostos);
     }
 
     if (empty($resultado['conteudos']) || !is_array($resultado['conteudos'])) {
-        return conteudosFallback($materia, $proximoNivel, $titulosExistentes);
+        return conteudosFallback($materia, $proximoNivel, $titulosExistentes, $gostos);
     }
 
     return $resultado['conteudos'];
 }
 
-function gerarQuestoes(string $materia, string $titulo, string $corpo, string $gostos = ''): array
+function gerarQuestoes(string $materia, string $titulo, string $corpo, string $gostos = '', int $nivel = 1): array
 {
     $schema = [
         'type' => 'object',
@@ -313,25 +318,25 @@ function gerarQuestoes(string $materia, string $titulo, string $corpo, string $g
         $resultado = chamarGroq([
             [
                 'role' => 'system',
-                'content' => 'Voce cria questoes objetivas para estudo. Cada questao deve ter uma unica alternativa correta. Responda somente um objeto JSON valido, sem markdown, sem comentarios e sem texto fora do JSON.'
+                'content' => 'Voce cria questoes objetivas para um unico estudante. Use somente os gostos informados para este usuario. Cada questao deve ter uma unica alternativa correta. Responda somente um objeto JSON valido, sem markdown, sem comentarios e sem texto fora do JSON.'
             ],
             [
                 'role' => 'user',
-                'content' => "Materia: {$materia}\nConteudo: {$titulo}\n{$preferencias}\nTexto base:\n{$corpo}\n\nCrie de 5 a 8 questoes sobre esse conteudo, adaptando exemplos ao gosto do estudante quando fizer sentido. O objeto deve ter exatamente a chave questoes."
+                'content' => "Materia: {$materia}\nConteudo: {$titulo}\n{$preferencias}\nNivel do estudante: {$nivel}\nTexto base:\n{$corpo}\n\nCrie de 5 a 8 questoes sobre esse conteudo. Pelo menos metade das questoes deve usar situacoes, exemplos ou analogias ligadas aos gostos do estudante quando eles existirem. Quanto maior o nivel, mais interpretativas e exigentes devem ser as questoes. O objeto deve ter exatamente a chave questoes."
             ]
         ], $schema, 'geracao_questoes');
     } catch (Exception $e) {
-        return questoesFallback($materia, $titulo);
+        return questoesFallback($materia, $titulo, $gostos);
     }
 
     if (empty($resultado['questoes']) || !is_array($resultado['questoes'])) {
-        return questoesFallback($materia, $titulo);
+        return questoesFallback($materia, $titulo, $gostos);
     }
 
     return $resultado['questoes'];
 }
 
-function gerarLivro(string $materia, string $titulo, string $gostos = ''): array
+function gerarLivro(string $materia, string $titulo, string $gostos = '', int $nivel = 1): array
 {
     $schema = [
         'type' => 'object',
@@ -349,21 +354,21 @@ function gerarLivro(string $materia, string $titulo, string $gostos = ''): array
         $resultado = chamarGroq([
             [
                 'role' => 'system',
-                'content' => 'Voce escreve livros curtos, claros e didaticos para estudantes do ensino medio brasileiro. Responda somente um objeto JSON valido, sem markdown, sem comentarios e sem texto fora do JSON.'
+                'content' => 'Voce escreve livros didaticos para um unico estudante do ensino medio brasileiro. Use somente os gostos informados para o usuario atual. O livro precisa parecer personalizado, nao generico. Responda somente um objeto JSON valido, sem markdown, sem comentarios e sem texto fora do JSON.'
             ],
             [
                 'role' => 'user',
-                'content' => "Materia: {$materia}\nConteudo desejado: {$titulo}\n{$preferencias}\nGere uma nova versao completa do livro desse conteudo. Mantenha o foco no tema, explique passo a passo, use exemplos e adapte a linguagem aos gostos do estudante. O objeto deve ter exatamente as chaves titulo e corpo."
+                'content' => "Materia: {$materia}\nConteudo desejado: {$titulo}\n{$preferencias}\nNivel do estudante: {$nivel}\nGere uma versao completa e personalizada do livro desse conteudo. Escreva de 7 a 10 paragrafos. Explique passo a passo, inclua exemplos concretos ligados aos gostos do usuario quando houver gostos, inclua um erro comum e uma forma de revisar. Nao faca texto generico. O objeto deve ter exatamente as chaves titulo e corpo."
             ]
         ], $schema, 'geracao_livro');
 
         if (empty($resultado['corpo']) || !is_string($resultado['corpo'])) {
-            return livroFallback($materia, $titulo);
+            return livroFallback($materia, $titulo, $gostos);
         }
 
         return $resultado;
     } catch (Exception $e) {
-        return livroFallback($materia, $titulo);
+        return livroFallback($materia, $titulo, $gostos);
     }
 }
 

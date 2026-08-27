@@ -29,6 +29,7 @@ $cssPaginas = ['auth'];
 require __DIR__ . '/includes/head.php';
 ?>
 <div class="auth-wrap">
+    <a href="adm_login.php" class="admin-corner" aria-label="Admin" title="Admin">ADM</a>
     <div class="auth-box">
         <div class="logo">NEOMIND</div>
         <h1>Entrar</h1>

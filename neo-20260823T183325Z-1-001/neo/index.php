@@ -16,11 +16,18 @@ require __DIR__ . '/includes/head.php';
 <?php require __DIR__ . '/includes/sidebar.php'; ?>
 <main class="main">
     <header class="topbar">
-        <div>
+        <div class="user-heading">
             <span class="eyebrow">NEOMIND</span>
-            <h1>Início</h1>
+            <strong><?= htmlspecialchars($usuario['nome']) ?></strong>
+            <span class="page-title">Início</span>
         </div>
-        <a href="config.php" class="profile"><?= htmlspecialchars(strtoupper(substr($usuario['nome'], 0, 1))) ?></a>
+        <a href="perfil.php" class="profile">
+            <?php if (!empty($usuario['foto'])): ?>
+                <img src="<?= htmlspecialchars($usuario['foto']) ?>" alt="">
+            <?php else: ?>
+                <?= htmlspecialchars(strtoupper(substr($usuario['nome'], 0, 1))) ?>
+            <?php endif; ?>
+        </a>
     </header>
     <div class="hero-grid">
         <div class="hero-card">
@@ -29,11 +36,15 @@ require __DIR__ . '/includes/head.php';
             <p>Retome seus estudos de onde parou e mantenha o ritmo.</p>
             <a href="materias.php" class="primary">Ver matérias →</a>
         </div>
-        <div class="store-card">
-            <div class="store-icon">↗</div>
-            <h3>Histórico completo</h3>
-            <p>Veja seu desempenho em todas as questões respondidas.</p>
-            <a href="historico.php" class="ghost">Ver histórico</a>
+        <div class="shop-banner">
+            <span class="shop-kicker">LOJA NEO</span>
+            <h3>Decorações de perfil</h3>
+            <p>Use coças para desbloquear molduras, efeitos e detalhes visuais para o seu perfil.</p>
+            <div class="shop-banner-footer">
+                <span class="coin"></span>
+                <b><?= saldoCossasVisual($usuario) ?> coças</b>
+                <a href="loja.php" class="ghost">Abrir loja</a>
+            </div>
         </div>
     </div>
     <div class="stats">

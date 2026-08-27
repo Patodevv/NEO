@@ -19,12 +19,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (persist) localStorage.setItem(STORAGE_KEY, '0');
     }
 
-    // Restaura o estado da sidebar (aberta/fechada) entre navegações de página
     if (localStorage.getItem(STORAGE_KEY) === '1') {
-        // Abre sem animação de entrada ao carregar a página
         sidebar.style.transition = 'none';
         openSidebar(false);
-        // Reativa as transições no próximo frame
         requestAnimationFrame(function () {
             requestAnimationFrame(function () {
                 sidebar.style.transition = '';
@@ -35,7 +32,6 @@ document.addEventListener('DOMContentLoaded', function () {
     toggle.addEventListener('click', function () { openSidebar(); });
     closeBtn.addEventListener('click', function () { closeSidebar(); });
 
-    // Fecha ao pressionar ESC
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && sidebar.classList.contains('open')) {
             closeSidebar();
