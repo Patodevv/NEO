@@ -1,0 +1,195 @@
+.hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.8fr);
+    gap: 26px;
+    margin-bottom: 26px;
+}
+
+.hero-card {
+    min-height: 260px;
+    border: 1px solid color-mix(in srgb, var(--primary) 45%, transparent);
+    border-radius: 8px;
+    padding: 42px;
+    background: color-mix(in srgb, var(--primary) 25%, #1f1f1f);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.hero-card h2 {
+    margin: 14px 0 10px;
+    font-size: 28px;
+}
+
+.hero-card p {
+    max-width: 420px;
+    margin-bottom: 22px;
+    color: #cfcfcf;
+}
+
+.hero-card .primary {
+    align-self: flex-start;
+}
+
+.shop-banner {
+    min-height: 260px;
+    border: 1px solid color-mix(in srgb, #ffd84a 45%, var(--border));
+    border-radius: 8px;
+    padding: 30px;
+    background:
+        linear-gradient(135deg, rgba(255, 216, 74, .2), rgba(8, 120, 255, .12)),
+        var(--surface);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.shop-banner::after {
+    content: '';
+    position: absolute;
+    right: -42px;
+    bottom: -54px;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: rgba(255, 216, 74, .16);
+}
+
+.shop-kicker {
+    color: #ffd84a;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.shop-banner h3,
+.shop-banner p,
+.shop-banner-footer {
+    position: relative;
+    z-index: 1;
+}
+
+.shop-banner p {
+    margin-bottom: 12px;
+    color: var(--muted-strong);
+}
+
+.shop-banner-footer {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 26px;
+}
+
+.stat {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    background: var(--surface);
+    text-align: center;
+}
+
+.stat strong {
+    display: block;
+    color: var(--primary);
+    font-size: 26px;
+}
+
+.stat span {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.progress-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.progress-card > div:first-child {
+    flex: 1;
+}
+
+.progress-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 10px;
+}
+
+.progress {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 6px;
+    background: var(--border-soft);
+}
+
+.progress i {
+    display: block;
+    height: 100%;
+    background: var(--primary);
+}
+
+.mini-info {
+    text-align: right;
+}
+
+.mini-info b {
+    display: block;
+    color: var(--success);
+    font-size: 18px;
+}
+
+.mini-info span {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+@media (max-width: 900px) {
+    .hero-grid,
+    .stats {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .hero-card {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 640px) {
+    .hero-grid,
+    .stats {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-card,
+    .shop-banner,
+    .progress-card {
+        padding: 22px;
+    }
+
+    .progress-card {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .mini-info {
+        text-align: left;
+    }
+}

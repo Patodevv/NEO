@@ -1,0 +1,96 @@
+.store-hero {
+    min-height: 240px;
+    border: 1px solid color-mix(in srgb, #ffd84a 48%, var(--border));
+    border-radius: 8px;
+    padding: 34px;
+    background:
+        linear-gradient(135deg, rgba(255, 216, 74, .22), rgba(8, 120, 255, .16)),
+        var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.store-hero h1 {
+    margin: 8px 0;
+    font-size: 34px;
+}
+
+.store-hero p {
+    max-width: 520px;
+    color: var(--muted-strong);
+}
+
+.shop-kicker {
+    color: #ffd84a;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.wallet-pill,
+.price-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wallet-pill {
+    border: 1px solid rgba(255, 216, 74, .45);
+    border-radius: 8px;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, .18);
+}
+
+.store-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.store-item {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.store-item span {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.store-item h2 {
+    font-size: 19px;
+}
+
+.item-preview {
+    height: 120px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #ffd84a, #d99b00);
+}
+
+.store-item.neon .item-preview {
+    background: linear-gradient(135deg, #0878ff, #40e0ff);
+}
+
+.store-item.focus .item-preview {
+    background: linear-gradient(135deg, #38d16a, #1f1f1f);
+}
+
+@media (max-width: 860px) {
+    .store-hero,
+    .store-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .store-hero {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}

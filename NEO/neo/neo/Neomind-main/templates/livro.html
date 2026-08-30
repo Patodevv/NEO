@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titulo_topico }} — NeoMind</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,600;0,800;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard-fut.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='livro-fut.css') }}">
+</head>
+<body class="nm-body fut-body">
+
+<!-- Particle canvas -->
+<canvas id="fut-particles" class="fut-particles-canvas"></canvas>
+
+<!-- Page transition overlay -->
+<div id="liv-transition"></div>
+
+<!-- ── NAV ── -->
+<nav class="fut-nav">
+    <div class="fut-nav-logo">
+        <span class="fut-nav-logo-icon">⚡</span>Neo<span>Mind</span>
+    </div>
+    <div class="fut-nav-center">
+        <span class="fut-nav-badge">{{ nivel | upper }} · LEITURA</span>
+    </div>
+    <div class="fut-nav-right">
+        <div class="fut-nav-user">
+            <div class="fut-nav-user-dot"></div>
+            <span class="fut-nav-username">{{ usuario.usuario }}</span>
+        </div>
+        <a href="/logout" class="fut-nav-exit">SAIR ⏏</a>
+    </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<main style="position:relative; z-index:1;">
+<div class="liv-page">
+
+    <!-- Breadcrumb -->
+    <nav class="liv-breadcrumb-row" aria-label="breadcrumb">
+        <a href="/materias"                  class="liv-breadcrumb">Matérias</a>
+        <span class="liv-breadcrumb-sep">›</span>
+        <a href="/questoes/{{ materia }}"    class="liv-breadcrumb">{{ materia }}</a>
+        <span class="liv-breadcrumb-sep">›</span>
+        <span class="liv-breadcrumb-current">{{ titulo_topico }}</span>
+    </nav>
+
+    <!-- Header -->
+    <header class="liv-header">
+        <div class="liv-eyebrow">
+            <span class="liv-eyebrow-dot"></span>
+            CAPÍTULO DE LEITURA
+        </div>
+        <h1 class="liv-title">{{ titulo_topico }}</h1>
+        <div class="liv-meta-row">
+            <span class="liv-tag liv-tag-{{ nivel }}">{{ nivel | upper }}</span>
+            <span class="liv-tag liv-tag-materia">{{ materia }}</span>
+            <span class="liv-tag-student">Estudante: <strong>{{ usuario.usuario }}</strong></span>
+        </div>
+    </header>
+
+    <!-- Layout: article + sidebar -->
+    <div class="liv-layout">
+
+        <!-- Article -->
+        <article class="liv-article">
+            <div class="liv-article-topbar">
+                <span class="liv-article-label">CONTEÚDO GERADO POR IA · {{ materia | upper }}</span>
+                <div class="liv-article-dots">
+                    <span class="liv-article-dot"></span>
+                    <span class="liv-article-dot"></span>
+                    <span class="liv-article-dot"></span>
+                </div>
+            </div>
+            <div class="liv-text" id="liv-book-text">
+                {{ texto_livro | replace('\n', '<br>') | safe }}
+            </div>
+        </article>
+
+        <!-- Sidebar -->
+        <aside class="liv-sidebar">
+
+            <!-- Status card -->
+            <div class="liv-sidebar-card">
+                <span class="liv-sc-label">SEU STATUS</span>
+                <div class="liv-sc-stat-row">
+                    <div class="liv-sc-stat">
+                        <span class="liv-sc-stat-icon">⚡</span>
+                        <div class="liv-sc-stat-info">
+                            <span class="liv-sc-stat-key">XP TOTAL</span>
+                            <span class="liv-sc-stat-val xp">{{ usuario.pontos }} XP</span>
+                        </div>
+                    </div>
+                    <div class="liv-sc-stat">
+                        <span class="liv-sc-stat-icon">🎖️</span>
+                        <div class="liv-sc-stat-info">
+                            <span class="liv-sc-stat-key">NÍVEL ATUAL</span>
+                            <span class="liv-sc-stat-val lvl-{{ usuario.nivel }}">{{ usuario.nivel | upper }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tip card -->
+            <div class="liv-sidebar-card liv-sidebar-tip">
+                <span class="liv-sc-label">💡 DICA</span>
+                <p class="liv-tip-text">Leia com atenção. A IA usará este conteúdo como base para gerar suas questões!</p>
+            </div>
+
+            <!-- Reading progress card -->
+            <div class="liv-sidebar-card liv-progress-card">
+                <span class="liv-sc-label">PROGRESSO DA LEITURA</span>
+                <div class="liv-progress-nums">
+                    <span class="liv-progress-pct" id="liv-progress-pct">0%</span>
+                    <span class="liv-progress-sub">LIDO</span>
+                </div>
+                <div class="liv-progress-track">
+                    <div class="liv-progress-fill" id="liv-progress-fill"></div>
+                    <div class="liv-progress-track-shine"></div>
+                </div>
+            </div>
+
+        </aside>
+    </div>
+
+    <!-- CTA box -->
+    <div class="liv-cta-box">
+        <div class="liv-cta-glow"></div>
+        <div class="liv-cta-content">
+            <span class="liv-cta-icon">⚔️</span>
+            <div>
+                <div class="liv-cta-text-title">Pronto para o Desafio?</div>
+                <div class="liv-cta-text-sub">Ao confirmar, a IA irá gerar uma questão inédita baseada neste capítulo.</div>
+            </div>
+        </div>
+        <form method="POST" id="liv-cta-form">
+            <button type="submit" class="liv-cta-btn">
+                CONCLUÍ A LEITURA — IR PARA AS QUESTÕES ⚡
+            </button>
+        </form>
+    </div>
+
+    <!-- Back link -->
+    <div class="liv-back-row">
+        <a href="/questoes/{{ materia }}" class="liv-back-link">← Desistir e voltar aos módulos</a>
+    </div>
+
+</div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script>
+// KaTeX render — runs immediately after KaTeX loads
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof renderMathInElement === 'function') {
+        renderMathInElement(document.getElementById('liv-book-text'), {
+            delimiters: [
+                { left: '$$', right: '$$', display: true  },
+                { left: '$',  right: '$',  display: false }
+            ]
+        });
+    }
+});
+</script>
+<script src="{{ url_for('static', filename='dashboard-fut.js') }}"></script>
+<script src="{{ url_for('static', filename='livro-fut.js') }}"></script>
+</body>
+</html>

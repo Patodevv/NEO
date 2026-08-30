@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Questão — NeoMind</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,600;0,800;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard-fut.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='questoes-fut.css') }}">
+</head>
+<body class="nm-body fut-body">
+<canvas id="fut-particles" class="fut-particles-canvas"></canvas>
+<div class="fut-transition-overlay" id="fut-transition"></div>
+<div class="nm-blob nm-blob-1"></div>
+<div class="nm-blob nm-blob-2"></div>
+
+<nav class="fut-nav">
+    <div class="fut-nav-logo"><span class="fut-nav-logo-icon">⚡</span>Neo<span>Mind</span></div>
+    <div class="fut-nav-center"><span class="fut-nav-badge">MODO COMBATE</span></div>
+    <div class="fut-nav-right">
+        <div class="fut-nav-user">
+            <div class="fut-nav-user-dot"></div>
+            <span class="fut-nav-username">{{ usuario.usuario }}</span>
+        </div>
+        <a href="/logout" class="fut-nav-exit">SAIR ⏏</a>
+    </div>
+</nav>
+
+<div class="qfut-status-bar">
+    <span class="qfut-status-dot"></span>
+    <span>MODO COMBATE · {{ materia|upper }} · {{ nivel|upper }} · IA ATIVA</span>
+</div>
+
+<div class="qfut-quiz-wrapper">
+
+    <!-- HEADER -->
+    <div class="qfut-quiz-header">
+        <div class="qfut-meta-row" style="justify-content:center;">
+            <span class="qfut-badge qfut-badge-ai">🤖 IA GERADA</span>
+            <span class="qfut-badge qfut-badge-{{ nivel }}">{{ nivel|upper }}</span>
+            <span class="qfut-badge">{{ materia }}</span>
+        </div>
+        <h1 class="qfut-quiz-title">Modo Combate — Questão Inédita</h1>
+        <p class="qfut-quiz-context">Contexto Personalizado: <strong>{{ usuario.interesse|capitalize }}</strong></p>
+    </div>
+
+    <!-- QUESTION CARD -->
+    <div class="qfut-question-card">
+        <div class="qfut-question-card-header">
+            <div class="qfut-question-num-line">
+                <span class="qfut-question-num-dot"></span>
+                <span class="qfut-question-num">QUESTÃO</span>
+            </div>
+            <span class="qfut-xp-badge">+10 XP ao acertar</span>
+        </div>
+        <form method="POST" id="quiz-form">
+            <div class="qfut-question-text" id="question-text">{{ pergunta.titulo }}</div>
+            <div class="qfut-alternatives">
+                {% for letter in ['a', 'b', 'c', 'd'] %}
+                <label class="qfut-alt-label {% if resultado %}{% if letter == pergunta.correta %}qfut-alt-correct nm-alt-correct{% elif request.form.get('resposta') == letter and resultado != 'Acertou!' %}qfut-alt-wrong nm-alt-wrong{% endif %}{% endif %}" for="resp-{{ letter }}">
+                    <input type="radio" class="qfut-alt-radio nm-alt-radio" name="resposta" id="resp-{{ letter }}" value="{{ letter }}" {% if resultado %}disabled{% endif %} required>
+                    <span class="qfut-alt-letter">{{ letter|upper }}</span>
+                    <span class="qfut-alt-text">{{ pergunta[letter] }}</span>
+                    {% if resultado and letter == pergunta.correta %}
+                    <span class="qfut-alt-checkmark">✓</span>
+                    {% endif %}
+                </label>
+                {% endfor %}
+            </div>
+            {% if not resultado %}
+            <button type="submit" class="qfut-btn-submit">⚡ CONFIRMAR RESPOSTA</button>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- RESULT PANEL -->
+    {% if resultado %}
+    <div class="qfut-result-panel {% if resultado == 'Acertou!' %}qfut-result-win{% else %}qfut-result-lose{% endif %}">
+        <div class="qfut-result-header">
+            <span class="qfut-result-icon">{% if resultado == 'Acertou!' %}🏆{% else %}💀{% endif %}</span>
+            <div>
+                <h2 class="qfut-result-title">{{ resultado }}</h2>
+                {% if pontos_ganhos > 0 %}
+                <div class="qfut-xp-pop">+{{ pontos_ganhos }} XP</div>
+                {% endif %}
+            </div>
+        </div>
+        {% if explicacao_ia %}
+        <div class="qfut-ai-explanation">
+            <div class="qfut-ai-explanation-header">
+                <span>🤖</span>
+                <span>EXPLICAÇÃO DA IA</span>
+            </div>
+            <div class="qfut-ai-explanation-text" id="ai-text">{{ explicacao_ia }}</div>
+        </div>
+        {% endif %}
+        <a href="/questoes/{{ materia }}/{{ topico }}/{{ nivel }}/questoes" class="qfut-btn-next">
+            🔄 NOVA QUESTÃO INÉDITA →
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- BACK LINK -->
+    <div class="qfut-back-link">
+        <a href="/questoes/{{ materia }}" class="qfut-breadcrumb">← Voltar aos módulos de {{ materia }}</a>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    ['question-text', 'ai-text'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el && typeof renderMathInElement !== 'undefined') {
+            renderMathInElement(el, {
+                delimiters: [{left:"$$",right:"$$",display:true},{left:"$",right:"$",display:false}]
+            });
+        }
+    });
+});
+</script>
+<script src="{{ url_for('static', filename='dashboard-fut.js') }}"></script>
+<script src="{{ url_for('static', filename='questoes-fut.js') }}"></script>
+</body>
+</html>

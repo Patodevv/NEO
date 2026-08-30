@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ materia }} · {{ nivel|upper }} — NeoMind</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,600;0,800;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard-fut.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='questoes-fut.css') }}">
+</head>
+<body class="nm-body fut-body">
+<canvas id="fut-particles" class="fut-particles-canvas"></canvas>
+<div class="fut-transition-overlay" id="fut-transition"></div>
+<div class="nm-blob nm-blob-1"></div>
+<div class="nm-blob nm-blob-2"></div>
+
+<nav class="fut-nav">
+    <div class="fut-nav-logo"><span class="fut-nav-logo-icon">⚡</span>Neo<span>Mind</span></div>
+    <div class="fut-nav-center"><span class="fut-nav-badge">{{ materia|upper }} · {{ nivel|upper }}</span></div>
+    <div class="fut-nav-right">
+        <div class="fut-nav-user">
+            <div class="fut-nav-user-dot"></div>
+            <span class="fut-nav-username">{{ usuario.usuario }}</span>
+        </div>
+        <a href="/logout" class="fut-nav-exit">SAIR ⏏</a>
+    </div>
+</nav>
+
+<div class="qfut-status-bar">
+    <span class="qfut-status-dot"></span>
+    <span>{{ materia|upper }} · MODO {{ nivel|upper }} · CONTEXTO: {{ usuario.interesse|upper }}</span>
+</div>
+
+<div class="qfut-quiz-wrapper">
+
+    <!-- HEADER -->
+    <div class="qfut-quiz-header">
+        <div class="qfut-meta-row" style="justify-content:center;">
+            <span class="qfut-badge qfut-badge-{{ nivel }}">{{ nivel|upper }}</span>
+            <span class="qfut-badge">{{ materia }}</span>
+            <span class="qfut-badge">{{ usuario.interesse|capitalize }}</span>
+        </div>
+        <h1 class="qfut-quiz-title">{{ materia }} — Modo {{ nivel|upper }}</h1>
+        <p class="qfut-quiz-context">Foco de Contexto: <strong>{{ usuario.interesse|capitalize }}</strong></p>
+    </div>
+
+    <!-- QUESTION CARD -->
+    <div class="qfut-question-card">
+        <div class="qfut-question-card-header">
+            <div class="qfut-question-num-line">
+                <span class="qfut-question-num-dot"></span>
+                <span class="qfut-question-num">QUESTÃO</span>
+            </div>
+            <span class="qfut-xp-badge">+10 XP ao acertar</span>
+        </div>
+        <form method="POST" id="quiz-form">
+            <div class="qfut-question-text" id="question-text">{{ pergunta.titulo }}</div>
+            <div class="qfut-alternatives">
+                {% for letter in ['a', 'b', 'c', 'd'] %}
+                <label class="qfut-alt-label" for="resp-{{ letter }}">
+                    <input type="radio" class="qfut-alt-radio nm-alt-radio" name="resposta" id="resp-{{ letter }}" value="{{ letter }}" required>
+                    <span class="qfut-alt-letter">{{ letter|upper }}</span>
+                    <span class="qfut-alt-text">{{ pergunta[letter] }}</span>
+                </label>
+                {% endfor %}
+            </div>
+            {% if not resultado %}
+            <button type="submit" class="qfut-btn-submit">⚡ ENVIAR RESPOSTA</button>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- RESULT PANEL -->
+    {% if resultado %}
+    <div class="qfut-result-panel {% if 'Acertou' in resultado %}qfut-result-win{% else %}qfut-result-lose{% endif %}">
+        <div class="qfut-result-header">
+            <span class="qfut-result-icon">{% if 'Acertou' in resultado %}🏆{% else %}💀{% endif %}</span>
+            <div>
+                <h2 class="qfut-result-title">{{ resultado }}</h2>
+                {% if pontos_ganhos > 0 %}
+                <div class="qfut-xp-pop">+{{ pontos_ganhos }} XP (Total: {{ usuario.pontos }} XP)</div>
+                {% endif %}
+            </div>
+        </div>
+        <a href="/questoes/{{ materia }}/{{ nivel }}" class="qfut-btn-next">🔄 PRÓXIMA QUESTÃO →</a>
+    </div>
+    {% endif %}
+
+    <!-- BACK LINK -->
+    <div class="qfut-back-link">
+        <a href="/questoes/{{ materia }}" class="qfut-breadcrumb">← Voltar para a Árvore de Módulos</a>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var el = document.getElementById("question-text");
+    if (el && typeof renderMathInElement !== 'undefined') {
+        renderMathInElement(el, {
+            delimiters: [{left:"$$",right:"$$",display:true},{left:"$",right:"$",display:false}]
+        });
+    }
+});
+</script>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+<script src="{{ url_for('static', filename='dashboard-fut.js') }}"></script>
+<script src="{{ url_for('static', filename='questoes-fut.js') }}"></script>
+</body>
+</html>

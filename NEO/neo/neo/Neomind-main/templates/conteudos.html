@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trilha de {{ materia }} — NeoMind</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,600;0,800;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard-fut.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='conteudos-fut.css') }}">
+</head>
+<body class="nm-body fut-body">
+
+<!-- Particle canvas -->
+<canvas id="fut-particles" class="fut-particles-canvas"></canvas>
+
+<!-- Page transition overlay -->
+<div id="con-transition"></div>
+
+<!-- ── NAV (identical structure to dashboard) ── -->
+<nav class="fut-nav">
+    <div class="fut-nav-logo">
+        <span class="fut-nav-logo-icon">⚡</span>Neo<span>Mind</span>
+    </div>
+    <div class="fut-nav-center">
+        <span class="fut-nav-badge">TRILHA · {{ materia | upper }}</span>
+    </div>
+    <div class="fut-nav-right">
+        <div class="fut-nav-user">
+            <div class="fut-nav-user-dot"></div>
+            <span class="fut-nav-username">{{ usuario.usuario }}</span>
+        </div>
+        <a href="/logout" class="fut-nav-exit">SAIR ⏏</a>
+    </div>
+</nav>
+
+<!-- ── MAIN CONTENT ── -->
+<main style="position:relative; z-index:1;">
+<div class="con-page">
+
+    <!-- Header -->
+    <header class="con-header">
+        <a href="/materias" class="con-breadcrumb">← MATÉRIAS</a>
+        <div class="con-eyebrow">
+            <span class="con-eyebrow-dot"></span>
+            TRILHA DE ESTUDOS
+        </div>
+        <h1 class="con-title">{{ materia }}</h1>
+
+        <!-- XP / level status -->
+        <div class="con-status-row">
+            <div class="con-status-item">
+                <span class="con-status-icon">⚡</span>
+                <div>
+                    <span class="con-status-label">XP TOTAL</span>
+                    <span class="con-status-val xp">{{ usuario.pontos }} XP</span>
+                </div>
+            </div>
+            <div class="con-status-divider"></div>
+            <div class="con-status-item">
+                <span class="con-status-icon">🎖️</span>
+                <div>
+                    <span class="con-status-label">NÍVEL ATUAL</span>
+                    <span class="con-status-val lvl-{{ usuario.nivel }}">{{ usuario.nivel | upper }}</span>
+                </div>
+            </div>
+            <div class="con-status-divider"></div>
+            <div class="con-status-item">
+                <span class="con-status-icon">📚</span>
+                <div>
+                    <span class="con-status-label">MÓDULOS</span>
+                    <span class="con-status-val">{{ topicos | length }} TÓPICOS</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Section label -->
+    <div class="con-section-head">
+        <span class="con-section-label">SELECIONE O MÓDULO</span>
+        <div class="con-section-line"></div>
+        <span class="con-topic-count">{{ topicos | length }} DISPONÍVEIS</span>
+    </div>
+
+    <!-- Topics list -->
+    <div class="con-topics-list">
+
+        {% set topic_icons = [
+            '📖','🔬','⚗️','🌍','📐','🧩','🏛️','🔭','🧬','⚙️'
+        ] %}
+
+        {% for topico_id, dados_topico in topicos.items() %}
+        <div class="con-topic-card">
+
+            <!-- Decorative layers -->
+            <div class="con-topic-card-shine"></div>
+            <div class="con-topic-card-glow"></div>
+
+            <!-- Card header -->
+            <div class="con-topic-head">
+                <div class="con-topic-icon-wrap">
+                    {{ topic_icons[loop.index0 % topic_icons|length] }}
+                </div>
+                <div class="con-topic-meta">
+                    <span class="con-topic-num">MÓDULO {{ '%02d' % loop.index }}</span>
+                    <div class="con-topic-title">{{ dados_topico.titulo_exibicao }}</div>
+                    <div class="con-topic-hint">Escolha o nível de profundidade para iniciar a missão teórica.</div>
+                </div>
+            </div>
+
+            <!-- Level buttons -->
+            <div class="con-level-row">
+
+                <!-- NOVATO — always unlocked -->
+                <a href="/questoes/{{ materia }}/{{ topico_id }}/novato/livro"
+                   class="con-level-btn con-level-novato">
+                    <div class="con-level-btn-shine"></div>
+                    <span class="con-level-btn-icon">🌱</span>
+                    ESTUDAR NOVATO
+                </a>
+
+                <!-- INTERMEDIÁRIO -->
+                {% if usuario.nivel in ['intermediario', 'pro'] %}
+                <a href="/questoes/{{ materia }}/{{ topico_id }}/intermediario/livro"
+                   class="con-level-btn con-level-inter">
+                    <div class="con-level-btn-shine"></div>
+                    <span class="con-level-btn-icon">⚔️</span>
+                    ESTUDAR INTERMEDIÁRIO
+                </a>
+                {% else %}
+                <div class="con-level-btn con-level-locked"
+                     title="Bloqueado: Requer Nível Intermediário (50 XP)">
+                    <span class="con-level-btn-icon">🔒</span>
+                    INTERMEDIÁRIO
+                    <span class="con-locked-hint">50 XP</span>
+                </div>
+                {% endif %}
+
+                <!-- PRO -->
+                {% if usuario.nivel == 'pro' %}
+                <a href="/questoes/{{ materia }}/{{ topico_id }}/pro/livro"
+                   class="con-level-btn con-level-pro">
+                    <div class="con-level-btn-shine"></div>
+                    <span class="con-level-btn-icon">👑</span>
+                    ESTUDAR PRO
+                </a>
+                {% else %}
+                <div class="con-level-btn con-level-locked"
+                     title="Bloqueado: Requer Nível PRO (100 XP)">
+                    <span class="con-level-btn-icon">🔒</span>
+                    MÓDULO PRO
+                    <span class="con-locked-hint">100 XP</span>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+
+    <!-- Back link -->
+    <div class="con-back-row">
+        <a href="/materias" class="con-back-link">← VOLTAR PARA MATÉRIAS</a>
+    </div>
+
+</div>
+</main>
+
+<script src="{{ url_for('static', filename='dashboard-fut.js') }}"></script>
+<script src="{{ url_for('static', filename='conteudos-fut.js') }}"></script>
+</body>
+</html>
