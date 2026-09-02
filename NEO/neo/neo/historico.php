@@ -49,7 +49,10 @@ require __DIR__ . '/includes/head.php';
                 <span class="date"><?= date('d/m', strtotime($h['data'])) ?></span>
                 <div>
                     <b><?= htmlspecialchars($h['conteudo_titulo']) ?></b>
-                    <small><?= htmlspecialchars($h['materia_nome']) ?> • <?= (int)$h['acertos'] ?>/<?= (int)$h['total'] ?> questões</small>
+                    <small>
+                        <?= htmlspecialchars($h['materia_nome']) ?> • <?= (int)$h['acertos'] ?>/<?= (int)$h['total'] ?> questões
+                        <?php if (!empty($h['recompensado'])): ?> • +<?= (int)$h['exp_ganho'] ?> EXP • +<?= (int)$h['cossas_ganhas'] ?> coças<?php endif; ?>
+                    </small>
                 </div>
                 <strong><?= $pct ?>%</strong>
             </div>

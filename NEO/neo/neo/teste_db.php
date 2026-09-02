@@ -1,3 +1,3 @@
 <?php
-require __DIR__ . '/config/db.php';
-echo "Banco conectad";
+http_response_code(404);
+exit;

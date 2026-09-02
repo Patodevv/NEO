@@ -19,33 +19,41 @@ if (!$conteudo) {
     header('Location: materias.php');
     exit;
 }
+$pdo->prepare("UPDATE conteudos SET status = 'Em andamento' WHERE id = ? AND user_id = ? AND status <> 'Concluído'")
+    ->execute([$conteudoId, $usuario['id']]);
+$conteudo['status'] = $conteudo['status'] === 'Concluído' ? 'Concluído' : 'Em andamento';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'gerar_livro') {
+    validarCsrf();
     try {
+        $nivelAdaptativo = dificuldadeAdaptativa($pdo, (int)$usuario['id'], (int)$conteudo['materia_id']);
         $novoLivro = gerarLivro(
             $conteudo['materia_nome'],
             $conteudo['titulo'],
             trim($usuario['gostos'] ?? ''),
-            (int)($usuario['nivel'] ?? 1)
+            $nivelAdaptativo
         );
         $novoTitulo = trim($novoLivro['titulo'] ?? '');
         $novoCorpo = trim($novoLivro['corpo'] ?? '');
         if ($novoCorpo === '') {
             throw new Exception('A IA nao retornou um livro valido.');
         }
+        registrarAuditoriaIA($pdo, (int)$usuario['id'], 'livro', $conteudo['materia_nome'] . ':' . $conteudo['titulo']);
+        $pdo->beginTransaction();
         $stmtUpdate = $pdo->prepare("UPDATE conteudos SET titulo = ?, corpo = ?, status = ? WHERE id = ? AND user_id = ?");
         $stmtUpdate->execute([
-            $novoTitulo !== '' ? $novoTitulo : $conteudo['titulo'],
-            $novoCorpo,
-            'Livro gerado pela IA',
-            $conteudoId,
-            $usuario['id']
+            $novoTitulo !== '' ? $novoTitulo : $conteudo['titulo'], $novoCorpo,
+            'Livro gerado pela IA', $conteudoId, $usuario['id']
         ]);
-        $stmtDelete = $pdo->prepare("DELETE FROM questoes WHERE conteudo_id = ? AND user_id = ?");
-        $stmtDelete->execute([$conteudoId, $usuario['id']]);
+        $pdo->prepare("DELETE FROM questoes WHERE conteudo_id = ? AND user_id = ?")
+            ->execute([$conteudoId, $usuario['id']]);
+        $pdo->commit();
         $stmt->execute([$conteudoId, $usuario['id']]);
         $conteudo = $stmt->fetch(PDO::FETCH_ASSOC);
         $livroAtualizado = true;
     } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         $erroIA = $e->getMessage();
     }
 }
@@ -91,6 +99,7 @@ require __DIR__ . '/includes/head.php';
             <a href="questoes.php?conteudo_id=<?= (int)$conteudo['id'] ?>" class="primary question-btn">Responder questões →</a>
 
             <form method="post">
+                <?= campoCsrf() ?>
                 <input type="hidden" name="conteudo_id" value="<?= (int)$conteudo['id'] ?>">
                 <input type="hidden" name="acao" value="gerar_livro">
                 <button type="submit" class="ghost">Gerar novo livro</button>

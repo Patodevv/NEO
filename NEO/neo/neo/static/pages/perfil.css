@@ -166,6 +166,13 @@
     border-radius: 8px;
     margin-bottom: 12px;
     background: linear-gradient(135deg, #ffd84a, #d99b00);
+    overflow: hidden;
+}
+
+.inventory-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .inventory-item.neon .inventory-preview {

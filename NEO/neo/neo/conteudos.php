@@ -22,24 +22,42 @@ function salvarConteudosGerados(PDO $pdo, int $userId, int $materiaId, array $ge
     $stmtInsert = $pdo->prepare("INSERT INTO conteudos (user_id, materia_id, titulo, status, corpo, dificuldade, ordem) VALUES (?, ?, ?, ?, ?, ?, ?)");
     $salvos = 0;
     $titulosNormalizados = [];
+    $iniciouTransacao = !$pdo->inTransaction();
 
-    foreach ($titulosExistentes as $tituloExistente) {
-        $titulosNormalizados[mb_strtolower(trim($tituloExistente))] = true;
+    if ($iniciouTransacao) {
+        $pdo->beginTransaction();
     }
 
-    foreach ($gerados as $conteudoGerado) {
-        $titulo = trim($conteudoGerado['titulo'] ?? '');
-        $corpo = trim($conteudoGerado['corpo'] ?? '');
-        $normalizado = mb_strtolower($titulo);
-
-        if ($titulo !== '' && $corpo !== '' && empty($titulosNormalizados[$normalizado])) {
-            $stmtInsert->execute([$userId, $materiaId, $titulo, 'Gerado pela IA', $corpo, $dificuldade, $ordemInicial + $salvos]);
-            $titulosNormalizados[$normalizado] = true;
-            $salvos++;
+    try {
+        foreach ($titulosExistentes as $tituloExistente) {
+            $titulosNormalizados[mb_strtolower(trim($tituloExistente))] = true;
         }
-    }
 
-    return $salvos;
+        foreach ($gerados as $conteudoGerado) {
+            $titulo = trim($conteudoGerado['titulo'] ?? '');
+            $corpo = trim($conteudoGerado['corpo'] ?? '');
+            $normalizado = mb_strtolower($titulo);
+
+            if ($titulo !== '' && $corpo !== '' && empty($titulosNormalizados[$normalizado])) {
+                $stmtInsert->execute([$userId, $materiaId, $titulo, 'Gerado pela IA', $corpo, $dificuldade, $ordemInicial + $salvos]);
+                $titulosNormalizados[$normalizado] = true;
+                $salvos++;
+            }
+        }
+
+        if ($salvos !== count($gerados)) {
+            throw new RuntimeException('Nem todos os conteúdos passaram pela validação de unicidade.');
+        }
+        if ($iniciouTransacao) {
+            $pdo->commit();
+        }
+        return $salvos;
+    } catch (Throwable $e) {
+        if ($iniciouTransacao && $pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
 }
 
 function gerarSeisConteudos(string $materia, string $gostos, array $titulosExistentes, int $nivel): array
@@ -85,6 +103,7 @@ function gerarSeisConteudos(string $materia, string $gostos, array $titulosExist
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'gerar_mais') {
+    validarCsrf();
     try {
         $titulosExistentes = array_column($conteudos, 'titulo');
         $stmtMax = $pdo->prepare("SELECT COALESCE(MAX(dificuldade), 0), COALESCE(MAX(ordem), 0) FROM conteudos WHERE materia_id = ? AND user_id = ?");
@@ -93,6 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'gerar_m
         $proximoNivel = $maiorDificuldade + 1;
 
         $gerados = gerarSeisConteudos($materia['nome'], trim($usuario['gostos'] ?? ''), $titulosExistentes, $proximoNivel);
+        registrarAuditoriaIA($pdo, (int)$usuario['id'], 'conteudos', $materia['nome'] . ':' . $proximoNivel);
         $salvos = salvarConteudosGerados($pdo, (int)$usuario['id'], $materiaId, $gerados, $proximoNivel, $maiorOrdem + 1, $titulosExistentes);
 
         if ($salvos === 0) {
@@ -109,6 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'gerar_m
 if (!$conteudos) {
     try {
         $gerados = gerarSeisConteudos($materia['nome'], trim($usuario['gostos'] ?? ''), [], 1);
+        registrarAuditoriaIA($pdo, (int)$usuario['id'], 'conteudos', $materia['nome'] . ':1');
         salvarConteudosGerados($pdo, (int)$usuario['id'], $materiaId, $gerados, 1, 1, []);
         $stmt->execute([$materiaId, $usuario['id']]);
         $conteudos = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -147,6 +168,7 @@ require __DIR__ . '/includes/head.php';
     </div>
     <div class="action-row content-actions">
         <form method="post">
+            <?= campoCsrf() ?>
             <input type="hidden" name="acao" value="gerar_mais">
             <button type="submit" class="primary">Gerar mais conteúdos</button>
         </form>

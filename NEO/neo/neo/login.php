@@ -7,19 +7,26 @@ if (logado()) {
 }
 $erro = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    validarCsrf();
     $email = trim($_POST['email'] ?? '');
     $senha = $_POST['senha'] ?? '';
-    if ($email === '' || $senha === '') {
+    if (loginTemporariamenteBloqueado('usuario')) {
+        $erro = 'Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.';
+    } elseif ($email === '' || $senha === '') {
         $erro = 'Preencha e-mail e senha.';
     } else {
         $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($user && password_verify($senha, $user['senha'])) {
-            $_SESSION['user_id'] = $user['id'];
+            renovarSessaoAutenticada();
+            limparFalhasLogin('usuario');
+            $_SESSION['user_id'] = (int)$user['id'];
+            $pdo->prepare("UPDATE users SET ultimo_login_em = NOW() WHERE id = ?")->execute([(int)$user['id']]);
             header('Location: index.php');
             exit;
         } else {
+            registrarFalhaLogin('usuario');
             $erro = 'E-mail ou senha inválidos.';
         }
     }
@@ -38,6 +45,7 @@ require __DIR__ . '/includes/head.php';
             <div class="error"><?= htmlspecialchars($erro) ?></div>
         <?php endif; ?>
         <form method="post">
+            <?= campoCsrf() ?>
             <div class="field">
                 <label>E-mail</label>
                 <input type="email" name="email" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required>

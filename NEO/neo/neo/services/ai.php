@@ -1,6 +1,8 @@
 
 <?php
 
+require_once __DIR__ . '/ai_quality.php';
+
 function groqApiKey(): string
 {
     $envKey = getenv('GROQ_API_KEY');
@@ -26,6 +28,18 @@ function groqApiKey(): string
     }
 
     throw new Exception('Chave da API da Groq nao configurada.');
+}
+
+function groqUrl(): string
+{
+    require __DIR__ . '/../config/groq.php';
+    return trim((string)($groqUrl ?? 'https://api.groq.com/openai/v1/chat/completions'));
+}
+
+function groqModel(): string
+{
+    require __DIR__ . '/../config/groq.php';
+    return trim((string)($groqModel ?? 'openai/gpt-oss-20b'));
 }
 
 function diretrizesIA(): string
@@ -87,9 +101,10 @@ function chamarGroq(array $messages, array $schema, string $schemaName): array
 
     foreach ($tentativas as $tentativa) {
         $dados = [
-            'model' => 'openai/gpt-oss-20b',
+            'model' => groqModel(),
             'messages' => $messages,
             'temperature' => $tentativa['temperature'],
+            'max_tokens' => 6000,
             'response_format' => $tentativa['format'] === 'json_schema'
                 ? [
                     'type' => 'json_schema',
@@ -113,7 +128,7 @@ function chamarGroq(array $messages, array $schema, string $schemaName): array
             throw new Exception('Nao foi possivel preparar a requisicao para a Groq.');
         }
 
-        $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
+        $ch = curl_init(groqUrl());
 
         if ($ch === false) {
             throw new Exception('Nao foi possivel iniciar a conexao com a Groq.');
@@ -312,13 +327,14 @@ function livroFallback(
 function questoesFallback(
     string $materia,
     string $titulo,
-    string $gostos = ''
+    string $gostos = '',
+    int $nivel = 1
 ): array {
     $contexto = trim($gostos) !== ''
         ? " considerando exemplos ligados a {$gostos}"
         : '';
 
-    return [
+    $questoes = [
         [
             'enunciado' => "Qual e a melhor primeira atitude ao estudar {$titulo} em {$materia}{$contexto}?",
             'opcao_a' => 'Memorizar frases soltas sem entender o contexto.',
@@ -360,6 +376,11 @@ function questoesFallback(
             'correta' => 'A'
         ]
     ];
+
+    return array_map(
+        static fn(array $questao): array => enriquecerQuestaoFallback($questao, $nivel),
+        $questoes
+    );
 }
 
 function gerarConteudos(
@@ -368,6 +389,8 @@ function gerarConteudos(
     array $titulosExistentes = [],
     int $proximoNivel = 1
 ): array {
+    $materia = limitarEntradaPromptIA($materia, 150);
+    $gostos = limitarEntradaPromptIA($gostos, 1000);
     $schema = [
         'type' => 'object',
         'properties' => [
@@ -460,7 +483,11 @@ function gerarConteudos(
         );
     }
 
-    return $resultado['conteudos'];
+    try {
+        return revisarConteudosIA($materia, $proximoNivel, $resultado['conteudos']);
+    } catch (Throwable $e) {
+        return conteudosFallback($materia, $proximoNivel, $titulosExistentes, $gostos);
+    }
 }
 
 function gerarQuestoes(
@@ -470,6 +497,10 @@ function gerarQuestoes(
     string $gostos = '',
     int $nivel = 1
 ): array {
+    $materia = limitarEntradaPromptIA($materia, 150);
+    $titulo = limitarEntradaPromptIA($titulo, 300);
+    $corpo = limitarEntradaPromptIA($corpo, 20000);
+    $gostos = limitarEntradaPromptIA($gostos, 1000);
     $schema = [
         'type' => 'object',
         'properties' => [
@@ -477,44 +508,7 @@ function gerarQuestoes(
                 'type' => 'array',
                 'minItems' => 5,
                 'maxItems' => 8,
-                'items' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'enunciado' => [
-                            'type' => 'string'
-                        ],
-                        'opcao_a' => [
-                            'type' => 'string'
-                        ],
-                        'opcao_b' => [
-                            'type' => 'string'
-                        ],
-                        'opcao_c' => [
-                            'type' => 'string'
-                        ],
-                        'opcao_d' => [
-                            'type' => 'string'
-                        ],
-                        'correta' => [
-                            'type' => 'string',
-                            'enum' => [
-                                'A',
-                                'B',
-                                'C',
-                                'D'
-                            ]
-                        ]
-                    ],
-                    'required' => [
-                        'enunciado',
-                        'opcao_a',
-                        'opcao_b',
-                        'opcao_c',
-                        'opcao_d',
-                        'correta'
-                    ],
-                    'additionalProperties' => false
-                ]
+                'items' => schemaQuestaoIA()
             ]
         ],
         'required' => [
@@ -544,7 +538,10 @@ function gerarQuestoes(
                         "{$preferencias}\n" .
                         "Nivel do estudante: {$nivel}\n" .
                         "Texto base:\n{$corpo}\n\n" .
-                        "Crie de 5 a 8 questoes sobre esse conteudo. Pelo menos metade das questoes deve usar situacoes, exemplos ou analogias ligadas aos gostos do estudante quando eles existirem. Quanto maior o nivel, mais interpretativas e exigentes devem ser as questoes. O objeto deve ter exatamente a chave questoes."
+                        "Crie de 5 a 8 questoes estritamente apoiadas no texto-base. Pelo menos metade deve usar situacoes ou analogias ligadas aos gostos quando isso for pedagogicamente útil. " .
+                        "Cada questão deve ter exatamente uma alternativa correta e quatro alternativas distintas e plausíveis. Informe dificuldade de 1 a 12. " .
+                        "Inclua explicacao_correta com o raciocínio passo a passo; feedback_a, feedback_b, feedback_c e feedback_d explicando especificamente por que cada escolha está correta ou incorreta; " .
+                        "e dica_1, dica_2 e dica_3 em progressão. As dicas orientam conceito, estratégia e aplicação, sem citar letra nem copiar a resposta correta. O objeto deve ter exatamente a chave questoes."
                 ]
             ],
             $schema,
@@ -554,7 +551,8 @@ function gerarQuestoes(
         return questoesFallback(
             $materia,
             $titulo,
-            $gostos
+            $gostos,
+            $nivel
         );
     }
 
@@ -565,11 +563,16 @@ function gerarQuestoes(
         return questoesFallback(
             $materia,
             $titulo,
-            $gostos
+            $gostos,
+            $nivel
         );
     }
 
-    return $resultado['questoes'];
+    try {
+        return revisarQuestoesIA($materia, $titulo, $corpo, $nivel, $resultado['questoes']);
+    } catch (Throwable $e) {
+        return questoesFallback($materia, $titulo, $gostos, $nivel);
+    }
 }
 
 function gerarFeedbackQuestoes(
@@ -579,6 +582,9 @@ function gerarFeedbackQuestoes(
     string $gostos = '',
     int $nivel = 1
 ): array {
+    $materia = limitarEntradaPromptIA($materia, 150);
+    $titulo = limitarEntradaPromptIA($titulo, 300);
+    $gostos = limitarEntradaPromptIA($gostos, 1000);
     if (empty($questoesRespondidas)) {
         return [];
     }
@@ -738,6 +744,9 @@ function gerarLivro(
     string $gostos = '',
     int $nivel = 1
 ): array {
+    $materia = limitarEntradaPromptIA($materia, 150);
+    $titulo = limitarEntradaPromptIA($titulo, 300);
+    $gostos = limitarEntradaPromptIA($gostos, 1000);
     $schema = [
         'type' => 'object',
         'properties' => [
@@ -797,7 +806,7 @@ function gerarLivro(
             );
         }
 
-        return $resultado;
+        return revisarLivroIA($materia, $nivel, $resultado);
     } catch (Exception $e) {
         return livroFallback(
             $materia,
@@ -807,8 +816,63 @@ function gerarLivro(
     }
 }
 
+function gerarDicaQuestao(
+    string $materia,
+    string $titulo,
+    array $questao,
+    int $nivelAjuda,
+    array $dicasAnteriores = [],
+    int $nivelAluno = 1
+): string {
+    $materia = limitarEntradaPromptIA($materia, 150);
+    $titulo = limitarEntradaPromptIA($titulo, 300);
+    $nivelAjuda = max(1, min(3, $nivelAjuda));
+    $preGerada = limitarPalavrasIA((string)($questao['dica_' . $nivelAjuda] ?? ''), 70);
+    if ($preGerada !== '' && validarDicaFacilitador($preGerada, $questao)) {
+        return $preGerada;
+    }
+
+    $schema = [
+        'type' => 'object',
+        'properties' => ['dica' => ['type' => 'string']],
+        'required' => ['dica'],
+        'additionalProperties' => false,
+    ];
+    $anteriores = $dicasAnteriores
+        ? implode("\n", array_map(static fn($dica) => '- ' . $dica, $dicasAnteriores))
+        : 'Nenhuma.';
+    $opcoes = [];
+    foreach (['A', 'B', 'C', 'D'] as $letra) {
+        $opcoes[] = $letra . ') ' . ($questao['opcao_' . strtolower($letra)] ?? '');
+    }
+
+    try {
+        $resultado = chamarGroq([
+            ['role' => 'system', 'content' => diretrizesIA() . "\n\nVocê é um facilitador socrático. Ajude o estudante a raciocinar sozinho. Nunca revele a letra, copie a alternativa correta ou diga diretamente a resposta. Retorne apenas JSON."],
+            ['role' => 'user', 'content' =>
+                "Matéria: {$materia}\nConteúdo: {$titulo}\nNível do aluno: {$nivelAluno}\nNível da ajuda: {$nivelAjuda}/3\n" .
+                "Enunciado: {$questao['enunciado']}\n" . implode("\n", $opcoes) . "\n" .
+                "Gabarito interno (não revele): {$questao['correta']}\nDicas anteriores:\n{$anteriores}\n\n" .
+                "No nível 1, aponte o conceito. No nível 2, mostre uma estratégia. No nível 3, indique a próxima operação mental sem concluir. Máximo de 70 palavras."
+            ],
+        ], $schema, 'facilitador_questao');
+        $dica = limitarPalavrasIA((string)($resultado['dica'] ?? ''), 70);
+        if (validarDicaFacilitador($dica, $questao)) {
+            return $dica;
+        }
+    } catch (Throwable $e) {
+        // O fallback abaixo mantém o fluxo disponível e não entrega o gabarito.
+    }
+
+    $fallbacks = [
+        1 => 'Identifique o conceito central cobrado no enunciado e recorde sua definição antes de comparar as alternativas.',
+        2 => 'Separe as condições do enunciado e elimine cada alternativa que contradiga pelo menos uma delas.',
+        3 => 'Compare as opções restantes com o exemplo mais próximo do material e verifique qual mantém todas as relações descritas.',
+    ];
+    return $fallbacks[$nivelAjuda];
+}
+
 function gerar(string $materia): array
 {
     return gerarConteudos($materia);
 }
-

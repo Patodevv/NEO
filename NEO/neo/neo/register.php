@@ -7,14 +7,19 @@ if (logado()) {
 }
 $erro = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    validarCsrf();
     $nome  = trim($_POST['nome'] ?? '');
-    $email = trim($_POST['email'] ?? '');
+    $email = mb_strtolower(trim($_POST['email'] ?? ''));
     $senha = $_POST['senha'] ?? '';
     $gostos = trim($_POST['gostos'] ?? '');
     if ($nome === '' || $email === '' || $senha === '') {
         $erro = 'Preencha todos os campos.';
-    } elseif (strlen($senha) < 4) {
-        $erro = 'A senha deve ter pelo menos 4 caracteres.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $erro = 'Informe um e-mail válido.';
+    } elseif (mb_strlen($nome) > 100 || mb_strlen($email) > 150 || mb_strlen($gostos) > 2000) {
+        $erro = 'Um dos campos ultrapassou o tamanho permitido.';
+    } elseif (strlen($senha) < 8) {
+        $erro = 'A senha deve ter pelo menos 8 caracteres.';
     } else {
         $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
         $stmt->execute([$email]);
@@ -22,11 +27,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $erro = 'Já existe uma conta com esse e-mail.';
         } else {
             $hash = password_hash($senha, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("INSERT INTO users (nome, email, senha, gostos) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$nome, $email, $hash, $gostos]);
-            $_SESSION['user_id'] = $pdo->lastInsertId();
-            header('Location: index.php');
-            exit;
+            try {
+                $stmt = $pdo->prepare("INSERT INTO users (nome, email, senha, gostos) VALUES (?, ?, ?, ?)");
+                $stmt->execute([$nome, $email, $hash, $gostos]);
+                renovarSessaoAutenticada();
+                $_SESSION['user_id'] = (int)$pdo->lastInsertId();
+                header('Location: index.php');
+                exit;
+            } catch (PDOException $e) {
+                if ($e->getCode() === '23000') {
+                    $erro = 'Já existe uma conta com esse e-mail.';
+                } else {
+                    throw $e;
+                }
+            }
         }
     }
 }
@@ -43,6 +57,7 @@ require __DIR__ . '/includes/head.php';
             <div class="error"><?= htmlspecialchars($erro) ?></div>
         <?php endif; ?>
         <form method="post">
+            <?= campoCsrf() ?>
             <div class="field">
                 <label>Nome</label>
                 <input type="text" name="nome" value="<?= htmlspecialchars($_POST['nome'] ?? '') ?>" required>

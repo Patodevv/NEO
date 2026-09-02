@@ -7,6 +7,13 @@ $totalQuestoes = $pdo->prepare("SELECT COUNT(*), COALESCE(SUM(acertos),0), COALE
 $totalQuestoes->execute([$usuario['id']]);
 [$qtdHistorico, $somaAcertos, $somaTotal] = $totalQuestoes->fetch(PDO::FETCH_NUM);
 $desempenho = $somaTotal > 0 ? round(($somaAcertos / $somaTotal) * 100) : 0;
+$semanaInicio = inicioSemanaNeo()->format('Y-m-d');
+$stmtOfensiva = $pdo->prepare("SELECT dias_ativos FROM ofensivas_semanais WHERE user_id = ? AND semana_inicio = ?");
+$stmtOfensiva->execute([$usuario['id'], $semanaInicio]);
+$diasOfensiva = (int)($stmtOfensiva->fetchColumn() ?: 0);
+$stmtSequencia = $pdo->prepare("SELECT semanas_atuais FROM progresso_ofensivas WHERE user_id = ?");
+$stmtSequencia->execute([$usuario['id']]);
+$sequenciaOfensiva = (int)($stmtSequencia->fetchColumn() ?: 0);
 $tituloPagina = 'Início';
 $paginaAtual  = 'inicio';
 $usaSidebar = true;
@@ -67,7 +74,7 @@ require __DIR__ . '/includes/head.php';
     </div>
     <div class="section-title">
         <span>Seu progresso</span>
-        <small>Geral</small>
+        <small>Geral • Ofensiva: <?= $diasOfensiva ?>/<?= NEO_DIAS_PARA_OFENSIVA_SEMANAL ?> dias • Sequência: <?= $sequenciaOfensiva ?> semana(s)</small>
     </div>
     <div class="progress-card">
         <div>

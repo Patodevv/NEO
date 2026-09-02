@@ -5,8 +5,9 @@ exigirLogin();
 $usuario = usuarioAtual($pdo);
 $salvo = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    validarCsrf();
     $cor = trim($_POST['cor'] ?? '#0878ff');
-    $gostos = trim($_POST['gostos'] ?? '');
+    $gostos = mb_substr(trim($_POST['gostos'] ?? ''), 0, 2000);
     if (preg_match('/^#[0-9a-fA-F]{6}$/', $cor)) {
         $stmt = $pdo->prepare("UPDATE users SET cor = ?, gostos = ? WHERE id = ?");
         $stmt->execute([$cor, $gostos, $usuario['id']]);
@@ -60,6 +61,7 @@ require __DIR__ . '/includes/head.php';
             </div>
 
             <form method="post" class="settings-form">
+                <?= campoCsrf() ?>
                 <textarea name="gostos" rows="4" placeholder="Ex: gosto de jogos, futebol, musica, explicacoes passo a passo."><?= htmlspecialchars($usuario['gostos'] ?? '') ?></textarea>
 
                 <div class="color-picker">

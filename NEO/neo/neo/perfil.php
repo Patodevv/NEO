@@ -1,17 +1,14 @@
 <?php
 require __DIR__ . '/config/db.php';
 require __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/services/store.php';
 exigirLogin();
 $usuario = usuarioAtual($pdo);
 $mensagem = '';
 $erro = '';
-$itensLoja = [
-    'anel_ouro' => ['nome' => 'Anel dourado', 'tipo' => 'Borda de foto', 'classe' => 'gold'],
-    'anel_neon' => ['nome' => 'Anel neon azul', 'tipo' => 'Borda de foto', 'classe' => 'neon'],
-    'anel_foco' => ['nome' => 'Anel foco total', 'tipo' => 'Borda de foto', 'classe' => 'focus'],
-];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'foto') {
+    validarCsrf();
     $arquivo = $_FILES['foto'] ?? null;
     if (!$arquivo || $arquivo['error'] !== UPLOAD_ERR_OK) {
         $erro = 'Escolha uma imagem para usar no perfil.';
@@ -34,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'foto') 
                 mkdir($pasta, 0775, true);
             }
 
-            $nomeArquivo = 'user_' . (int)$usuario['id'] . '_' . time() . '.' . $permitidos[$mime];
+            $nomeArquivo = 'user_' . (int)$usuario['id'] . '_' . bin2hex(random_bytes(12)) . '.' . $permitidos[$mime];
             $destino = $pasta . '/' . $nomeArquivo;
             if (move_uploaded_file($arquivo['tmp_name'], $destino)) {
                 $caminhoPublico = 'static/uploads/perfis/' . $nomeArquivo;
@@ -50,28 +47,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'foto') 
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'aplicar_item') {
-    $itemId = $_POST['item_id'] ?? '';
-    if (isset($itensLoja[$itemId])) {
-        $stmt = $pdo->prepare("SELECT id FROM compras_loja WHERE user_id = ? AND item_id = ?");
-        $stmt->execute([$usuario['id'], $itemId]);
-
-        if ($stmt->fetch()) {
-            $stmt = $pdo->prepare("UPDATE users SET decoracao_perfil = ? WHERE id = ?");
-            $stmt->execute([$itemId, $usuario['id']]);
-            $usuario = usuarioAtual($pdo);
-            $mensagem = 'Item aplicado ao perfil.';
-        } else {
-            $erro = 'Esse item ainda não está no seu inventário.';
-        }
+    validarCsrf();
+    try {
+        aplicarDecoracaoPerfil($pdo, (int)$usuario['id'], (int)($_POST['produto_id'] ?? 0));
+        $usuario = usuarioAtual($pdo);
+        $mensagem = 'Item aplicado ao perfil.';
+    } catch (DomainException $e) {
+        $erro = $e->getMessage();
     }
 }
 
-$stmt = $pdo->prepare("SELECT item_id FROM compras_loja WHERE user_id = ? ORDER BY criado_em DESC");
+$inventario = inventarioUsuario($pdo, (int)$usuario['id']);
+$stmt = $pdo->prepare("
+    SELECT m.nome, pm.nivel, pm.xp_total, pm.desempenho_recente
+    FROM progresso_materias pm JOIN materias m ON m.id = pm.materia_id
+    WHERE pm.user_id = ? ORDER BY m.nome
+");
 $stmt->execute([$usuario['id']]);
-$inventario = array_values(array_filter(
-    array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'item_id'),
-    fn($itemId) => isset($itensLoja[$itemId])
-));
+$progressosMaterias = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $xpAtual = (int)($usuario['xp'] ?? 0);
 $nivel = max(1, (int)($usuario['nivel'] ?? 1));
@@ -128,6 +121,7 @@ require __DIR__ . '/includes/head.php';
                 <?php endif; ?>
             </div>
             <form method="post" enctype="multipart/form-data" class="photo-form">
+                <?= campoCsrf() ?>
                 <input type="hidden" name="acao" value="foto">
                 <label for="foto">Trocar foto de perfil</label>
                 <input type="file" id="foto" name="foto" accept="image/png,image/jpeg,image/webp,image/gif" required>
@@ -159,19 +153,41 @@ require __DIR__ . '/includes/head.php';
             </div>
         <?php else: ?>
             <div class="inventory-grid">
-                <?php foreach ($inventario as $itemId): ?>
-                    <?php $item = $itensLoja[$itemId]; ?>
-                    <article class="inventory-item <?= htmlspecialchars($item['classe']) ?>">
-                        <div class="inventory-preview"></div>
-                        <span><?= htmlspecialchars($item['tipo']) ?></span>
+                <?php foreach ($inventario as $item): ?>
+                    <article class="inventory-item <?= htmlspecialchars($item['classe_visual'] ?? '') ?>">
+                        <div class="inventory-preview"><?php if (!empty($item['imagem'])): ?><img src="<?= htmlspecialchars($item['imagem']) ?>" alt=""><?php endif; ?></div>
+                        <span><?= htmlspecialchars($item['categoria']) ?></span>
                         <h2><?= htmlspecialchars($item['nome']) ?></h2>
-                        <form method="post">
-                            <input type="hidden" name="acao" value="aplicar_item">
-                            <input type="hidden" name="item_id" value="<?= htmlspecialchars($itemId) ?>">
-                            <button type="submit" class="<?= ($usuario['decoracao_perfil'] ?? '') === $itemId ? 'ghost' : 'primary' ?>">
-                                <?= ($usuario['decoracao_perfil'] ?? '') === $itemId ? 'Em uso' : 'Aplicar' ?>
-                            </button>
-                        </form>
+                        <?php if ($item['categoria'] === 'decoracao_perfil'): ?>
+                            <form method="post">
+                                <?= campoCsrf() ?>
+                                <input type="hidden" name="acao" value="aplicar_item">
+                                <input type="hidden" name="produto_id" value="<?= (int)$item['id'] ?>">
+                                <button type="submit" class="<?= ($usuario['decoracao_perfil'] ?? '') === $item['codigo'] ? 'ghost' : 'primary' ?>">
+                                    <?= ($usuario['decoracao_perfil'] ?? '') === $item['codigo'] ? 'Em uso' : 'Aplicar' ?>
+                                </button>
+                            </form>
+                        <?php endif; ?>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </section>
+
+    <section class="inventory-section">
+        <div class="section-title">
+            <span>Domínio por matéria</span>
+            <small>EXP e desempenho independentes por conteúdo</small>
+        </div>
+        <?php if (!$progressosMaterias): ?>
+            <div class="inventory-empty"><p>Responda atividades para iniciar sua progressão por matéria.</p></div>
+        <?php else: ?>
+            <div class="inventory-grid">
+                <?php foreach ($progressosMaterias as $progressoMateria): ?>
+                    <article class="inventory-item">
+                        <span><?= htmlspecialchars($progressoMateria['nome']) ?></span>
+                        <h2>Nível <?= (int)$progressoMateria['nivel'] ?></h2>
+                        <p><?= (int)$progressoMateria['xp_total'] ?> EXP • <?= number_format((float)$progressoMateria['desempenho_recente'], 0, ',', '.') ?>% recente</p>
                     </article>
                 <?php endforeach; ?>
             </div>
