@@ -1,46 +1,155 @@
+.subjects-folder {
+    position: relative;
+    width: 100%;
+    margin: 0;
+    padding: 50px 42px 42px;
+    border: 1px solid var(--panel-border);
+    border-radius: 22px;
+    background: var(--panel-bg);
+    box-shadow: var(--panel-shadow);
+    isolation: isolate;
+    contain: layout paint;
+}
+
+.subjects-folder::before {
+    display: none;
+}
+
 .subject-grid {
+    position: relative;
+    z-index: 1;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+    gap: 42px 34px;
 }
 
 .subject {
-    min-height: 112px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 22px;
-    background: var(--surface);
+    min-width: 0;
+    display: grid;
+    grid-template-rows: auto auto auto;
+    gap: 13px;
     color: var(--text);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 6px;
-    text-align: left;
+    text-align: center;
     text-decoration: none;
 }
 
-.subject:hover,
-.subject.selected {
-    border-color: var(--primary);
-    background: color-mix(in srgb, var(--primary) 15%, var(--surface));
+.subject-icon {
+    --icon-star-size: 38px;
+    position: relative;
+    width: min(100%, 154px);
+    aspect-ratio: 1;
+    justify-self: center;
+    display: grid;
+    place-items: center;
+    margin-top: 0;
+    border: 1.5px solid var(--neo-blue);
+    border-radius: 30px;
+    background: var(--btn-bg);
+    color: var(--btn-icon);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--neo-blue) 8%, transparent);
+    transition: color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease;
+    isolation: isolate;
+}
+
+.subject-icon::before {
+    display: none;
+}
+
+.subject-icon::after {
+    display: none;
+}
+
+.subject-icon > svg:not(.icon-hover-star) {
+    position: relative;
+    z-index: 1;
+    width: 58px;
+    height: 58px;
 }
 
 .subject b {
-    font-size: 16px;
+    min-height: 38px;
+    width: min(100%, 190px);
+    justify-self: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 14px;
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    background: var(--control-bg);
+    color: rgba(255, 255, 255, .92);
+    font-size: 15px;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background .16s ease, color .16s ease, transform .16s ease;
 }
 
-.subject span {
-    color: var(--muted);
+.subject small {
+    color: rgba(255, 255, 255, .56);
     font-size: 12px;
+    font-weight: 700;
 }
 
-@media (max-width: 900px) {
+.subject:hover .subject-icon {
+    color: var(--btn-icon-hover);
+    background: color-mix(in srgb, var(--neo-blue) 22%, transparent);
+    box-shadow: 0 0 0 4px var(--neo-blue-glow);
+    transform: translateY(-2px);
+}
+
+.subject:hover b {
+    background: rgba(24, 24, 24, .9);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+@media (max-width: 1100px) {
+    .subjects-folder {
+        padding: 46px 30px 36px;
+    }
+
     .subject-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(150px, 1fr));
     }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 760px) {
+    .subjects-folder {
+        padding: 38px 18px 30px;
+    }
+
+    .subjects-folder::before {
+        display: none;
+    }
+
+    .subject-grid {
+        grid-template-columns: repeat(2, minmax(130px, 1fr));
+        gap: 32px 18px;
+    }
+
+    .subject-icon {
+        --icon-star-size: 34px;
+        width: min(100%, 136px);
+        border-radius: 24px;
+    }
+
+    .subject-icon::before {
+        display: none;
+    }
+
+    .subject-icon::after {
+        display: none;
+    }
+
+    .subject-icon > svg:not(.icon-hover-star) {
+        width: 46px;
+        height: 46px;
+    }
+}
+
+@media (max-width: 460px) {
     .subject-grid {
         grid-template-columns: 1fr;
     }

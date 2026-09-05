@@ -1,17 +1,17 @@
 <?php
+
 require __DIR__ . '/config/db.php';
 require __DIR__ . '/includes/auth.php';
+require __DIR__ . '/includes/content_lock.php';
+require __DIR__ . '/includes/materia_icon.php';
 require __DIR__ . '/services/ai.php';
+
 exigirLogin();
 $usuario = usuarioAtual($pdo);
-$erroIA = '';
-$questoesAtualizadas = false;
 $conteudoId = (int)($_GET['conteudo_id'] ?? ($_POST['conteudo_id'] ?? 0));
-$acao = $_POST['acao'] ?? '';
 $stmt = $pdo->prepare("
     SELECT c.*, m.nome AS materia_nome
-    FROM conteudos c
-    JOIN materias m ON m.id = c.materia_id
+    FROM conteudos c JOIN materias m ON m.id = c.materia_id
     WHERE c.id = ? AND c.user_id = ?
 ");
 $stmt->execute([$conteudoId, $usuario['id']]);
@@ -20,187 +20,401 @@ if (!$conteudo) {
     header('Location: materias.php');
     exit;
 }
-function salvarQuestoesGeradas(PDO $pdo, int $userId, int $conteudoId, array $geradas): void
+
+$conteudo['dificuldade_adaptativa'] = dificuldadeAdaptativa($pdo, (int)$usuario['id'], (int)$conteudo['materia_id']);
+$erroIA = '';
+$erro = '';
+$questoesAtualizadas = false;
+$feedbacksIA = [];
+$resultado = null;
+
+function salvarQuestoesGeradas(PDO $pdo, int $userId, int $conteudoId, array $geradas, int $dificuldade): int
 {
-    $stmtInsert = $pdo->prepare("
+    $stmt = $pdo->prepare("
         INSERT INTO questoes
-        (user_id, conteudo_id, enunciado, opcao_a, opcao_b, opcao_c, opcao_d, correta)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            (user_id, conteudo_id, enunciado, opcao_a, opcao_b, opcao_c, opcao_d, correta,
+             ai_provider, ai_model, dificuldade, explicacao_correta, feedback_a, feedback_b, feedback_c, feedback_d, dica_1, dica_2, dica_3)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
-    foreach ($geradas as $questaoGerada) {
-        $correta = strtoupper(trim($questaoGerada['correta'] ?? ''));
-        if (!in_array($correta, ['A', 'B', 'C', 'D'], true)) {
+    $salvas = 0;
+
+    foreach ($geradas as $questao) {
+        $correta = strtoupper(trim((string)($questao['correta'] ?? '')));
+        $campos = ['enunciado', 'opcao_a', 'opcao_b', 'opcao_c', 'opcao_d'];
+        $valores = [];
+        foreach ($campos as $campo) {
+            $valores[$campo] = limparMarcacaoIA((string)($questao[$campo] ?? ''));
+        }
+        if (!in_array($correta, ['A', 'B', 'C', 'D'], true) || in_array('', $valores, true)) {
             continue;
         }
-        $enunciado = trim($questaoGerada['enunciado'] ?? '');
-        $opcaoA = trim($questaoGerada['opcao_a'] ?? '');
-        $opcaoB = trim($questaoGerada['opcao_b'] ?? '');
-        $opcaoC = trim($questaoGerada['opcao_c'] ?? '');
-        $opcaoD = trim($questaoGerada['opcao_d'] ?? '');
-        if ($enunciado === '' || $opcaoA === '' || $opcaoB === '' || $opcaoC === '' || $opcaoD === '') {
-            continue;
+
+        $stmt->execute([
+            $userId, $conteudoId, $valores['enunciado'], $valores['opcao_a'], $valores['opcao_b'],
+            $valores['opcao_c'], $valores['opcao_d'], $correta,
+            trim((string)($questao['_ai_provider'] ?? 'Local')),
+            trim((string)($questao['_ai_model'] ?? 'fallback')),
+            max(1, min(12, (int)($questao['dificuldade'] ?? $dificuldade))),
+            limitarPalavrasIA(limparMarcacaoIA((string)($questao['explicacao_correta'] ?? '')), 120) ?: null,
+            limitarPalavrasIA(limparMarcacaoIA((string)($questao['feedback_a'] ?? '')), 70) ?: null,
+            limitarPalavrasIA(limparMarcacaoIA((string)($questao['feedback_b'] ?? '')), 70) ?: null,
+            limitarPalavrasIA(limparMarcacaoIA((string)($questao['feedback_c'] ?? '')), 70) ?: null,
+            limitarPalavrasIA(limparMarcacaoIA((string)($questao['feedback_d'] ?? '')), 70) ?: null,
+            limitarPalavrasIA(limparMarcacaoIA((string)($questao['dica_1'] ?? '')), 70) ?: null,
+            limitarPalavrasIA(limparMarcacaoIA((string)($questao['dica_2'] ?? '')), 70) ?: null,
+            limitarPalavrasIA(limparMarcacaoIA((string)($questao['dica_3'] ?? '')), 70) ?: null,
+        ]);
+        $salvas++;
+    }
+
+    if ($salvas < 5) {
+        throw new RuntimeException('A validacao reteve questoes demais. Gere uma nova atividade.');
+    }
+    return $salvas;
+}
+
+function carregarQuestoes(PDO $pdo, int $conteudoId, int $userId): array
+{
+    $stmt = $pdo->prepare("SELECT * FROM questoes WHERE conteudo_id = ? AND user_id = ? ORDER BY id");
+    $stmt->execute([$conteudoId, $userId]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function gerarESalvarQuestoes(PDO $pdo, array $conteudo, array $usuario, int $nivel): void
+{
+    $geradas = gerarQuestoes(
+        $conteudo['materia_nome'], $conteudo['titulo'], limparMarcacaoIA((string)($conteudo['corpo'] ?? '')),
+        trim($usuario['gostos'] ?? ''), $nivel
+    );
+    if (!$geradas) {
+        throw new RuntimeException('A IA nao retornou questoes validas.');
+    }
+    registrarAuditoriaIA($pdo, (int)$usuario['id'], 'questoes', $conteudo['materia_nome'] . ':' . $conteudo['titulo'] . ':' . $nivel);
+
+    $pdo->beginTransaction();
+    try {
+        $pdo->prepare("DELETE FROM questoes WHERE conteudo_id = ? AND user_id = ?")
+            ->execute([(int)$conteudo['id'], (int)$usuario['id']]);
+        salvarQuestoesGeradas($pdo, (int)$usuario['id'], (int)$conteudo['id'], $geradas, $nivel);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
         }
-        $stmtInsert->execute([$userId, $conteudoId, $enunciado, $opcaoA, $opcaoB, $opcaoC, $opcaoD, $correta]);
+        throw $e;
     }
 }
+
+function feedbackPersistido(array $questao, string $resposta): string
+{
+    $resposta = strtolower($resposta);
+    $correta = strtolower((string)$questao['correta']);
+    $explicacao = trim((string)($questao['explicacao_correta'] ?? ''));
+    $feedback = trim((string)($questao['feedback_' . $resposta] ?? ''));
+    if ($resposta === $correta) {
+        return $explicacao ?: $feedback;
+    }
+    if ($feedback === '' || $explicacao === '') {
+        return '';
+    }
+    return $feedback . "\n\nRaciocínio correto: " . $explicacao;
+}
+
+$questoes = carregarQuestoes($pdo, $conteudoId, (int)$usuario['id']);
+$acao = (string)($_POST['acao'] ?? '');
+if (!empty($_POST['facilitador_questao_id'])) {
+    $acao = 'facilitador';
+}
+
+$nivelGeracaoQuestoes = max(1, min(12, (int)$conteudo['dificuldade_adaptativa']));
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    validarCsrf();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $acao === 'novas_questoes') {
     try {
-        $geradas = gerarQuestoes(
-            $conteudo['materia_nome'],
-            $conteudo['titulo'],
-            $conteudo['corpo'] ?? '',
-            trim($usuario['gostos'] ?? ''),
-            (int)($usuario['nivel'] ?? 1)
-        );
-        if (!$geradas) {
-            throw new Exception('A IA nao retornou questoes validas.');
-        }
-        $stmtDelete = $pdo->prepare("DELETE FROM questoes WHERE conteudo_id = ? AND user_id = ?");
-        $stmtDelete->execute([$conteudoId, $usuario['id']]);
-        salvarQuestoesGeradas($pdo, (int)$usuario['id'], $conteudoId, $geradas);
+        gerarESalvarQuestoes($pdo, $conteudo, $usuario, $nivelGeracaoQuestoes);
+        $questoes = carregarQuestoes($pdo, $conteudoId, (int)$usuario['id']);
         $questoesAtualizadas = true;
-    } catch (Exception $e) {
-        $erroIA = $e->getMessage();
+    } catch (Throwable $e) {
+        $erroIA = textoErroIa($e instanceof Exception ? $e : new Exception($e->getMessage()));
     }
 }
-$stmt = $pdo->prepare("SELECT * FROM questoes WHERE conteudo_id = ? AND user_id = ? ORDER BY id");
-$stmt->execute([$conteudoId, $usuario['id']]);
-$questoes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-if (!$questoes) {
-    try {
-        $geradas = gerarQuestoes(
-            $conteudo['materia_nome'],
-            $conteudo['titulo'],
-            $conteudo['corpo'] ?? '',
-            trim($usuario['gostos'] ?? ''),
-            (int)($usuario['nivel'] ?? 1)
-        );
 
-        salvarQuestoesGeradas($pdo, (int)$usuario['id'], $conteudoId, $geradas);
-
-        $stmt->execute([$conteudoId, $usuario['id']]);
-        $questoes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (Exception $e) {
-        $erroIA = $e->getMessage();
-    }
+$ajudasPorQuestao = [];
+$stmt = $pdo->prepare("
+    SELECT aq.* FROM ajudas_questoes aq
+    JOIN questoes q ON q.id = aq.questao_id
+    WHERE aq.user_id = ? AND q.conteudo_id = ? AND q.user_id = ?
+    ORDER BY aq.questao_id, aq.nivel
+");
+$stmt->execute([$usuario['id'], $conteudoId, $usuario['id']]);
+foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $ajuda) {
+    $ajudasPorQuestao[(int)$ajuda['questao_id']][] = $ajuda;
 }
-$resultado = null;
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $acao === 'responder' && $questoes) {
-    $acertos = 0;
-    foreach ($questoes as $q) {
-        $respostaUsuario = $_POST['resposta_' . $q['id']] ?? '';
-        if ($respostaUsuario === $q['correta']) {
-            $acertos++;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $acao === 'facilitador' && $questoes) {
+    $questaoId = (int)($_POST['facilitador_questao_id'] ?? 0);
+    $questao = null;
+    foreach ($questoes as $candidata) {
+        if ((int)$candidata['id'] === $questaoId) {
+            $questao = $candidata;
+            break;
         }
     }
-    $total = count($questoes);
-    $stmt = $pdo->prepare("INSERT INTO historico (user_id, conteudo_id, acertos, total) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$usuario['id'], $conteudoId, $acertos, $total]);
-    $recompensa = recompensarUsuario($pdo, (int)$usuario['id'], $acertos, $total);
-    $usuario = usuarioAtual($pdo);
-    $resultado = ['acertos' => $acertos, 'total' => $total, 'recompensa' => $recompensa];
+
+    try {
+        if (!$questao) {
+            throw new DomainException('Questao invalida para este conteúdo.');
+        }
+        $anteriores = $ajudasPorQuestao[$questaoId] ?? [];
+        $nivelAjuda = count($anteriores) + 1;
+        if ($nivelAjuda > 3) {
+            throw new DomainException('Todas as ajudas progressivas desta questão já foram utilizadas.');
+        }
+        $dica = gerarDicaQuestao(
+            $conteudo['materia_nome'], $conteudo['titulo'], $questao, $nivelAjuda,
+            array_column($anteriores, 'dica'), (int)$conteudo['dificuldade_adaptativa']
+        );
+        registrarAuditoriaIA($pdo, (int)$usuario['id'], 'facilitador', $questaoId . ':' . $nivelAjuda);
+        $ajuda = registrarAjudaQuestao($pdo, (int)$usuario['id'], $questaoId, $nivelAjuda, $dica);
+        $ajudasPorQuestao[$questaoId][] = $ajuda;
+        $usuario = usuarioAtual($pdo);
+    } catch (DomainException $e) {
+        $erro = $e->getMessage();
+    }
 }
-$tituloPagina = 'Questões';
-$paginaAtual  = 'materias';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $acao === 'responder' && $questoes) {
+    $respostas = [];
+    $pendentesIA = [];
+    try {
+        foreach ($questoes as $questao) {
+            $id = (int)$questao['id'];
+            $resposta = strtoupper(trim((string)($_POST['resposta_' . $id] ?? '')));
+            if (!in_array($resposta, ['A', 'B', 'C', 'D'], true)) {
+                throw new DomainException('Responda todas as questões antes de enviar.');
+            }
+            $respostas[$id] = $resposta;
+            $feedbacksIA[$id] = feedbackPersistido($questao, $resposta);
+            if ($feedbacksIA[$id] === '') {
+                $pendentesIA[] = [
+                    'questao_id' => $id, 'enunciado' => $questao['enunciado'],
+                    'opcao_a' => $questao['opcao_a'], 'opcao_b' => $questao['opcao_b'],
+                    'opcao_c' => $questao['opcao_c'], 'opcao_d' => $questao['opcao_d'],
+                    'resposta_usuario' => $resposta, 'resposta_correta' => $questao['correta'],
+                    'resultado' => $resposta === $questao['correta'] ? 'acerto' : 'erro',
+                ];
+            }
+        }
+
+        if ($pendentesIA) {
+            $gerados = gerarFeedbackQuestoes(
+                $conteudo['materia_nome'], $conteudo['titulo'], $pendentesIA,
+                trim($usuario['gostos'] ?? ''), (int)$conteudo['dificuldade_adaptativa']
+            );
+            foreach ($gerados as $id => $feedback) {
+                $feedbacksIA[(int)$id] = $feedback;
+            }
+        }
+
+        foreach ($questoes as $questao) {
+            $id = (int)$questao['id'];
+            if (empty($feedbacksIA[$id])) {
+                $correta = strtoupper((string)$questao['correta']);
+                $feedbacksIA[$id] = 'Compare a alternativa escolhida com o conceito central do enunciado. A opção correta é ' . $correta . ' porque corresponde ao que foi explicado no material.';
+            }
+        }
+
+        $resultado = registrarResultadoAtividade($pdo, (int)$usuario['id'], $conteudo, $questoes, $respostas, $feedbacksIA);
+        $usuario = usuarioAtual($pdo);
+    } catch (DomainException $e) {
+        $erro = $e->getMessage();
+    } catch (Throwable $e) {
+        error_log('[NEO][questoes] ' . $e->getMessage());
+        $erro = 'Não foi possível registrar a atividade agora. Nenhuma recompensa foi alterada.';
+    }
+}
+
+$totalQuestoes = count($questoes);
+$questoesGeradasTabs = $totalQuestoes > 0;
+$atividadeQuestoesConcluida = atividadeAtualConcluida($pdo, (int)$usuario['id'], $conteudoId, $questoes);
+$conteudoBloqueadoTabs = $questoesGeradasTabs && !$atividadeQuestoesConcluida;
+$tituloPagina = 'Matéria';
+$tituloTopbar = 'Matéria';
+$paginaAtual = 'materias';
 $usaSidebar = true;
 $cssPaginas = ['questoes'];
 require __DIR__ . '/includes/head.php';
 ?>
 <?php require __DIR__ . '/includes/sidebar.php'; ?>
 <main class="main">
-    <header class="topbar">
-        <div class="user-heading">
-            <span class="eyebrow">NEOMIND • <?= htmlspecialchars(strtoupper($conteudo['materia_nome'])) ?></span>
-            <strong><?= htmlspecialchars($usuario['nome']) ?></strong>
-            <span class="page-title">Questões</span>
-        </div>
-        <a href="perfil.php" class="profile">
-            <?php if (!empty($usuario['foto'])): ?>
-                <img src="<?= htmlspecialchars($usuario['foto']) ?>" alt="">
-            <?php else: ?>
-                <?= htmlspecialchars(strtoupper(substr($usuario['nome'], 0, 1))) ?>
-            <?php endif; ?>
-        </a>
-    </header>
-    <div class="back-row">
-        <a href="livro.php?conteudo_id=<?= (int)$conteudo['id'] ?>" class="back">← Voltar para conteúdo</a>
-    </div>
+    <?php require __DIR__ . '/includes/topbar.php'; ?>
+    <section class="lesson-page">
+        <section class="lesson-header">
+            <div class="lesson-title-panel neo-panel">
+                <h1><?= htmlspecialchars($conteudo['titulo']) ?></h1>
+            </div>
+            <a href="conteudos.php?materia_id=<?= (int)$conteudo['materia_id'] ?>" class="lesson-icon-btn" title="Voltar para conteúdos" aria-label="Voltar para conteúdos">
+                <?= estrelaHoverNeo() ?>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                    <path d="M15 18l-6-6 6-6"></path>
+                    <path d="M9 12h10"></path>
+                </svg>
+            </a>
+        </section>
+
+        <?php $contentTabActive = 'questoes'; require __DIR__ . '/includes/content_tabs.php'; ?>
+
+    <?php if ($erro): ?>
+        <div class="error"><?= htmlspecialchars($erro) ?></div>
+    <?php endif; ?>
+    <?php if ($erroIA): ?>
+        <div class="error">Não foi possível concluir a geração agora: <?= htmlspecialchars($erroIA) ?></div>
+    <?php endif; ?>
+
+        <form method="post" class="question-controls" data-ai-loading data-ai-message="Gerando novas questões">
+            <?= campoCsrf() ?>
+            <input type="hidden" name="conteudo_id" value="<?= (int)$conteudo['id'] ?>">
+            <input type="hidden" name="acao" value="novas_questoes">
+            <button type="submit" class="question-generate-card" title="Gerar novas questões" aria-label="Gerar novas questões">
+                <?= estrelaHoverNeo() ?>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                    <path d="M8 5h9a2 2 0 0 1 2 2v12H7a2 2 0 0 1-2-2V8"></path>
+                    <path d="M8 5V3"></path>
+                    <path d="M8 11h7"></path>
+                    <path d="M8 15h5"></path>
+                    <path d="M5 8l3-3 3 3"></path>
+                </svg>
+                <span>Gerar novas questões</span>
+            </button>
+            <div class="question-difficulty-card" aria-label="Dificuldade das questões">
+                <b>Nível <?= (int)$conteudo['dificuldade_adaptativa'] ?></b>
+            </div>
+        </form>
+
     <?php if (!$questoes): ?>
-        <div class="question-card">
-            <?php if ($erroIA): ?>
-                <div class="error">Nao foi possivel gerar as questoes agora: <?= htmlspecialchars($erroIA) ?></div>
-            <?php endif; ?>
-            <p class="empty">Ainda nao ha questoes disponiveis para este conteudo.</p>
-        </div>
+        <section class="question-empty neo-panel">
+            <b>Nenhuma questão disponível</b>
+            <p class="empty">A atividade ainda não pôde ser preparada para este conteúdo.</p>
+        </section>
     <?php else: ?>
-        <?php if ($questoesAtualizadas): ?>
-            <div class="msg-ok">
-                Novas questoes geradas. Responde isso ai.
-            </div>
-        <?php endif; ?>
         <?php if ($resultado): ?>
-            <div class="msg-ok">
-                ✓ Você acertou <?= $resultado['acertos'] ?> de <?= $resultado['total'] ?> questão(ões). Resultado salvo no histórico.
-                +<?= (int)$resultado['recompensa']['xp'] ?> XP e +<?= (int)$resultado['recompensa']['cossas'] ?> coças.
-                <?php if (!empty($resultado['recompensa']['subiu_nivel'])): ?>
-                    Level <?= (int)$resultado['recompensa']['nivel'] ?> desbloqueado.
-                <?php endif; ?>
-            </div>
+            <section class="result-panel neo-panel">
+                <div class="result-summary">
+                    <span>Resultado</span>
+                    <strong><?= (int)$resultado['acertos'] ?>/<?= (int)$resultado['total'] ?></strong>
+                </div>
+                <div class="result-actions">
+                    <a href="questoes.php?conteudo_id=<?= (int)$conteudo['id'] ?>" class="result-retry-btn">
+                        <?= estrelaHoverNeo() ?>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                            <path d="M3 12a9 9 0 0 1 15.3-6.4"></path>
+                            <path d="M18 3v5h-5"></path>
+                            <path d="M21 12a9 9 0 0 1-15.3 6.4"></path>
+                            <path d="M6 21v-5h5"></path>
+                        </svg>
+                        <span>Tentar novamente</span>
+                    </a>
+                </div>
+            </section>
         <?php endif; ?>
-        <form method="post">
+
+        <form method="post" class="question-form" data-ai-loading data-ai-message="Analisando suas respostas">
+            <?= campoCsrf() ?>
             <input type="hidden" name="conteudo_id" value="<?= (int)$conteudo['id'] ?>">
             <input type="hidden" name="acao" value="responder">
-            <?php foreach ($questoes as $i => $q): ?>
-                <div class="question-card" style="margin-bottom: 18px;">
-                    <span class="tag">QUESTÃO <?= str_pad($i + 1, 2, '0', STR_PAD_LEFT) ?> • <?= htmlspecialchars(strtoupper($conteudo['materia_nome'])) ?></span>
 
-                    <h2><?= htmlspecialchars($q['enunciado']) ?></h2>
+            <?php foreach ($questoes as $i => $q): ?>
+                <?php
+                    $respostaUsuario = strtoupper(trim((string)($_POST['resposta_' . $q['id']] ?? '')));
+                    $acertou = $resultado && $respostaUsuario === strtoupper((string)$q['correta']);
+                    $ajudas = $ajudasPorQuestao[(int)$q['id']] ?? [];
+                    $proximoNivel = count($ajudas) + 1;
+                    $rotuloProvedorQuestao = siglaProvedorIA((string)($q['ai_provider'] ?? ''));
+                    $nomeProvedorQuestao = nomeProvedorIA((string)($q['ai_provider'] ?? ''));
+                ?>
+                <article class="question-card">
+                    <?php if ($rotuloProvedorQuestao !== ''): ?>
+                        <span class="ai-provider-badge" title="Questão gerada por <?= htmlspecialchars($nomeProvedorQuestao) ?>" aria-label="Questão gerada por <?= htmlspecialchars($nomeProvedorQuestao) ?>">
+                            <?= $rotuloProvedorQuestao ?>
+                        </span>
+                    <?php endif; ?>
+                    <div class="question-meta">
+                        <span class="tag">QUESTÃO <?= str_pad($i + 1, 2, '0', STR_PAD_LEFT) ?></span>
+                    </div>
+
+                    <h2><?= nl2br(htmlspecialchars(limparMarcacaoIA((string)$q['enunciado']))) ?></h2>
                     <div class="options">
                         <?php foreach (['A', 'B', 'C', 'D'] as $letra): ?>
                             <?php
                                 $campo = 'opcao_' . strtolower($letra);
-                                $marcada = ($resultado && ($_POST['resposta_' . $q['id']] ?? '') === $letra);
-                                $classe = '';
-                                if ($resultado) {
-                                    if ($letra === $q['correta']) {
-                                        $classe = 'certa';
-                                    } elseif ($marcada) {
-                                        $classe = 'errada';
-                                    }
-                                }
+                                $estaMarcada = $resultado && $respostaUsuario === $letra;
+                                $classe = $resultado ? ($letra === strtoupper((string)$q['correta']) ? 'certa' : ($estaMarcada ? 'errada' : '')) : '';
                             ?>
                             <label class="opcao-label <?= $classe ?>">
                                 <input
                                     type="radio"
                                     name="resposta_<?= (int)$q['id'] ?>"
                                     value="<?= $letra ?>"
-                                    <?= $marcada ? 'checked' : '' ?>
+                                    <?= $estaMarcada ? 'checked' : '' ?>
                                     <?= $resultado ? 'disabled' : 'required' ?>
                                 >
-                                <?= $letra ?>) <?= htmlspecialchars($q[$campo]) ?>
+                                <span class="option-letter"><?= $letra ?></span>
+                                <span><?= nl2br(htmlspecialchars(limparMarcacaoIA((string)$q[$campo]))) ?></span>
                             </label>
                         <?php endforeach; ?>
                     </div>
-                    <?php if (!$resultado): ?>
-                        <div class="feedback">Escolha uma alternativa.</div>
+
+                    <?php if ($ajudas): ?>
+                        <div class="facilitator-list">
+                            <?php foreach ($ajudas as $ajuda): ?>
+                                <div class="facilitator-hint">
+                                    <span>Ajuda <?= (int)$ajuda['nivel'] ?></span>
+                                    <p><?= nl2br(htmlspecialchars(limparMarcacaoIA((string)$ajuda['dica']))) ?></p>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
                     <?php endif; ?>
-                </div>
+
+                    <?php if (!$resultado): ?>
+                        <div class="question-support">
+                            <?php if ($proximoNivel <= 3): ?>
+                                <button type="submit" name="facilitador_questao_id" value="<?= (int)$q['id'] ?>" class="facilitator-btn" formnovalidate data-ai-message="Preparando uma ajuda para você">
+                                    <?= estrelaHoverNeo() ?>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                                        <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3Z"></path>
+                                        <path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14Z"></path>
+                                    </svg>
+                                    <span>Facilitador · <?= $proximoNivel === 1 ? 'grátis' : ($proximoNivel === 2 ? '25 coças' : '40 coças') ?></span>
+                                </button>
+                            <?php else: ?>
+                                <span class="facilitator-complete">Todas as ajudas liberadas</span>
+                            <?php endif; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="feedback feedback-ia <?= $acertou ? 'feedback-correct' : 'feedback-wrong' ?>">
+                            <strong><?= $acertou ? 'Você acertou' : 'Revise esta resposta' ?></strong>
+                            <p><?= nl2br(htmlspecialchars(limparMarcacaoIA((string)($feedbacksIA[$q['id']] ?? 'Revise o conceito apresentado no material.')))) ?></p>
+                        </div>
+                    <?php endif; ?>
+                </article>
             <?php endforeach; ?>
+
             <?php if (!$resultado): ?>
-                <button type="submit" class="primary">Enviar respostas →</button>
+                <button type="submit" class="question-submit">
+                    <?= estrelaHoverNeo() ?>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                        <path d="M5 12h13"></path>
+                        <path d="M13 6l6 6-6 6"></path>
+                    </svg>
+                    <span>Enviar respostas</span>
+                </button>
             <?php endif; ?>
         </form>
-        <?php if ($resultado): ?>
-            <div class="action-row">
-                <a href="questoes.php?conteudo_id=<?= (int)$conteudo['id'] ?>" class="primary">Tentar novamente →</a>
-                <form method="post">
-                    <input type="hidden" name="conteudo_id" value="<?= (int)$conteudo['id'] ?>">
-                    <input type="hidden" name="acao" value="novas_questoes">
-                    <button type="submit" class="ghost">Gerar novas questões</button>
-                </form>
-            </div>
-        <?php endif; ?>
     <?php endif; ?>
+    </section>
 </main>
 </body>
 </html>

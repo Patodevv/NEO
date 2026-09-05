@@ -1,3 +1,7 @@
 <?php
-$groqApiKey = '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';
-$groqUrl = 'https://api.groq.com/openai/v1/chat/completions';
+
+require_once __DIR__ . '/env.php';
+
+$groqApiKey = (string)ambienteNeo('GROQ_API_KEY', '');
+$groqUrl = (string)ambienteNeo('GROQ_API_URL', 'https://api.groq.com/openai/v1/chat/completions');
+$groqModel = (string)ambienteNeo('GROQ_MODEL', 'openai/gpt-oss-20b');

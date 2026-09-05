@@ -1,66 +1,215 @@
-.settings-card {
-    width: min(100%, 620px);
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.setting {
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 18px 22px;
-    background: var(--surface);
-    display: flex;
+.settings-account,
+.settings-account-action {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
-    gap: 20px;
+    gap: 16px;
+    padding: 20px 24px;
+    overflow: visible;
 }
 
-.setting small {
-    display: block;
-    margin-top: 4px;
+.settings-icon {
+    width: 52px;
+    height: 52px;
+    display: grid;
+    place-items: center;
+    border: 1.5px solid var(--neo-blue);
+    border-radius: 18px;
+    background: var(--btn-bg);
+    color: var(--btn-icon);
+}
+
+.settings-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.settings-account-copy {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.settings-account-copy b {
+    overflow: hidden;
+    color: #fff;
+    font-size: 16px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.settings-account-copy small {
+    overflow: hidden;
     color: var(--muted);
-}
-
-.setting-stack {
-    align-items: stretch;
-    flex-direction: column;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .settings-form {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+    display: grid;
+    gap: 18px;
 }
 
-.color-picker {
+.settings-panel {
+    display: grid;
+    gap: 20px;
+    padding: 26px 30px;
+    overflow: visible;
+}
+
+.settings-panel-head {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+}
+
+.settings-panel-head > div {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+}
+
+.settings-panel h2,
+.settings-account-action h2 {
+    color: #fff;
+    font-size: 19px;
+    line-height: 1.15;
+}
+
+.settings-form > .settings-panel > label:not(.color-control) {
+    margin-bottom: -12px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.settings-form textarea {
+    min-height: 124px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.color-control {
+    min-height: 62px;
     display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 12px 10px 16px;
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    background: var(--control-bg);
+    color: rgba(255, 255, 255, .88);
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.color-control-value {
+    display: inline-flex;
     align-items: center;
     gap: 12px;
 }
 
-.color-picker label {
+.color-control output {
     color: var(--muted);
     font-size: 12px;
+    font-variant-numeric: tabular-nums;
 }
 
-input[type="color"] {
-    width: 50px;
-    height: 38px;
-    border: 0;
-    border-radius: 8px;
-    background: transparent;
+.color-control input[type="color"] {
+    width: 46px;
+    height: 40px;
+    padding: 4px;
+    border: 1px solid var(--neo-blue);
+    border-radius: 13px;
+    background: #121212;
     cursor: pointer;
 }
 
-.save-btn {
-    align-self: flex-start;
+.color-control input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
 }
 
-@media (max-width: 560px) {
-    .setting {
+.color-control input[type="color"]::-webkit-color-swatch {
+    border: 0;
+    border-radius: 8px;
+}
+
+.color-control input[type="color"]::-moz-color-swatch {
+    border: 0;
+    border-radius: 8px;
+}
+
+.color-control input[type="color"]:focus-visible {
+    box-shadow: 0 0 0 4px var(--neo-blue-glow);
+    outline: none;
+}
+
+.settings-save-row {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.settings-save-row .save-btn {
+    min-width: 190px;
+    gap: 9px;
+}
+
+.settings-save-row svg {
+    width: 18px;
+    height: 18px;
+}
+
+.settings-account-action {
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.settings-account-action > div {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+}
+
+@media (max-width: 620px) {
+    .settings-account {
+        grid-template-columns: 34px minmax(0, 1fr);
+        padding: 18px;
+    }
+
+    .settings-account > .ghost {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .settings-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+    }
+
+    .settings-panel {
+        padding: 22px 18px;
+    }
+
+    .settings-panel-head {
+        grid-template-columns: 34px minmax(0, 1fr);
+        gap: 13px;
+    }
+
+    .settings-account-action {
+        grid-template-columns: 1fr;
         align-items: stretch;
-        flex-direction: column;
+        padding: 20px 18px;
+    }
+
+    .settings-account-action .neo-danger-button,
+    .settings-save-row .save-btn {
+        width: 100%;
     }
 }

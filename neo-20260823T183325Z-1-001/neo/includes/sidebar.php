@@ -10,9 +10,9 @@ $paginaAtual = $paginaAtual ?? '';
     </svg>
 </button>
 
-<aside class="sidebar" id="sidebar">
+<aside class="sidebar" id="sidebar" data-state-key="<?= htmlspecialchars($sidebarStorageKey ?? ('neo_sidebar_open_user_' . (int)($usuario['id'] ?? 0))) ?>" data-force-closed="<?= !empty($mostrarRostoNeo) ? '1' : '0' ?>">
     <a href="index.php" class="logo" aria-label="NEO">
-        <img src="assets/logo.png" alt="NEO">
+        <img src="assets/logo.png" alt="NEO" decoding="async">
     </a>
 
     <a href="index.php" class="nav-btn <?= $paginaAtual === 'inicio' ? 'active' : '' ?>" title="Inicio" aria-label="Inicio">
@@ -70,4 +70,4 @@ $paginaAtual = $paginaAtual ?? '';
     </div>
 </aside>
 
-<script src="static/sidebar.js"></script>
+<script src="static/sidebar.js?v=<?= filemtime(__DIR__ . '/../static/sidebar.js') ?>"></script>

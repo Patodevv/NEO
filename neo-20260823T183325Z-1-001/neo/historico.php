@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/config/db.php';
 require __DIR__ . '/includes/auth.php';
+require __DIR__ . '/includes/materia_icon.php';
 exigirLogin();
 $usuario = usuarioAtual($pdo);
 $stmt = $pdo->prepare("
@@ -13,6 +14,11 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([$usuario['id'], $usuario['id']]);
 $historico = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$totalTentativas = count($historico);
+$totalAcertos = array_sum(array_map(fn($h) => (int)$h['acertos'], $historico));
+$totalQuestoes = array_sum(array_map(fn($h) => (int)$h['total'], $historico));
+$mediaGeral = $totalQuestoes > 0 ? round(($totalAcertos / $totalQuestoes) * 100) : 0;
+$materiasEstudadas = count(array_unique(array_map(fn($h) => $h['materia_nome'], $historico)));
 $tituloPagina = 'Histórico';
 $paginaAtual  = 'historico';
 $usaSidebar = true;
@@ -21,39 +27,73 @@ require __DIR__ . '/includes/head.php';
 ?>
 <?php require __DIR__ . '/includes/sidebar.php'; ?>
 <main class="main">
-    <header class="topbar">
-        <div class="user-heading">
-            <span class="eyebrow">NEOMIND • PLATAFORMA DE ESTUDOS</span>
-            <strong><?= htmlspecialchars($usuario['nome']) ?></strong>
-            <span class="page-title">Histórico</span>
-        </div>
-        <a href="perfil.php" class="profile">
-            <?php if (!empty($usuario['foto'])): ?>
-                <img src="<?= htmlspecialchars($usuario['foto']) ?>" alt="">
-            <?php else: ?>
-                <?= htmlspecialchars(strtoupper(substr($usuario['nome'], 0, 1))) ?>
-            <?php endif; ?>
-        </a>
-    </header>
-    <div class="section-title">
-        <span>Histórico</span>
-        <small>Seu desempenho recente</small>
-    </div>
-    <div class="history-card">
-        <?php if (!$historico): ?>
-            <p class="empty">Você ainda não respondeu nenhuma questão.</p>
-        <?php endif; ?>
-        <?php foreach ($historico as $h): ?>
-            <?php $pct = $h['total'] > 0 ? round(($h['acertos'] / $h['total']) * 100) : 0; ?>
-            <div class="history-item">
-                <span class="date"><?= date('d/m', strtotime($h['data'])) ?></span>
-                <div>
-                    <b><?= htmlspecialchars($h['conteudo_titulo']) ?></b>
-                    <small><?= htmlspecialchars($h['materia_nome']) ?> • <?= (int)$h['acertos'] ?>/<?= (int)$h['total'] ?> questões</small>
-                </div>
-                <strong><?= $pct ?>%</strong>
+    <?php require __DIR__ . '/includes/topbar.php'; ?>
+
+    <div class="neo-page-shell history-page">
+        <section class="neo-page-heading neo-panel">
+            <div class="neo-page-heading-copy">
+                <span class="neo-page-kicker">Atividades</span>
+                <h1>Histórico de estudos</h1>
             </div>
-        <?php endforeach; ?>
+            <div class="neo-summary-group" aria-label="Resumo do histórico">
+                <span class="neo-summary-pill"><b><?= $totalTentativas ?></b> tentativas</span>
+                <span class="neo-summary-pill"><b><?= $mediaGeral ?>%</b> média</span>
+                <span class="neo-summary-pill"><b><?= $materiasEstudadas ?></b> matérias</span>
+            </div>
+        </section>
+
+        <section class="history-list" aria-label="Atividades recentes">
+            <?php if (!$historico): ?>
+                <div class="neo-empty-state neo-panel">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5V12l3.2 2"></path>
+                    </svg>
+                    <b>Nenhuma atividade registrada</b>
+                    <a href="materias.php" class="primary">Começar a estudar</a>
+                </div>
+            <?php endif; ?>
+
+            <?php foreach ($historico as $h): ?>
+                <?php
+                $pct = $h['total'] > 0 ? round(($h['acertos'] / $h['total']) * 100) : 0;
+                $dataHistorico = strtotime($h['data']);
+                ?>
+                <article class="history-row neo-star-hover">
+                    <span class="history-activity-icon" aria-hidden="true">
+                        <?= estrelaHoverNeo() ?>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M7 4h10a2 2 0 0 1 2 2v14H5V6a2 2 0 0 1 2-2Z"></path>
+                            <path d="m8 10 2 2 5-5"></path><path d="M8 16h8"></path>
+                        </svg>
+                    </span>
+
+                    <div class="history-row-copy">
+                        <b><?= htmlspecialchars($h['conteudo_titulo']) ?></b>
+                        <div class="history-row-meta">
+                            <span>Questões</span>
+                            <span><?= htmlspecialchars($h['materia_nome']) ?></span>
+                            <time datetime="<?= htmlspecialchars(date('c', $dataHistorico)) ?>"><?= date('d/m/Y \à\s H:i', $dataHistorico) ?></time>
+                        </div>
+                        <?php if (!empty($h['recompensado'])): ?>
+                            <small class="history-reward">+<?= (int)$h['exp_ganho'] ?> EXP · +<?= (int)$h['cossas_ganhas'] ?> coças</small>
+                        <?php elseif (!empty($h['conjunto_hash'])): ?>
+                            <small class="history-reward is-muted">Tentativa registrada sem nova recompensa</small>
+                        <?php endif; ?>
+                    </div>
+
+                    <span class="history-score">
+                        <b><?= $pct ?>%</b>
+                        <small><?= (int)$h['acertos'] ?> de <?= (int)$h['total'] ?></small>
+                    </span>
+
+                    <a href="livro.php?conteudo_id=<?= (int)$h['conteudo_id'] ?>" class="neo-icon-button" aria-label="Rever <?= htmlspecialchars($h['conteudo_titulo']) ?>" title="Rever conteúdo">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M5 12h14"></path><path d="m14 7 5 5-5 5"></path>
+                        </svg>
+                    </a>
+                </article>
+            <?php endforeach; ?>
+        </section>
     </div>
 </main>
 </body>

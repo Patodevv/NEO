@@ -2,82 +2,127 @@
 require __DIR__ . '/config/db.php';
 require __DIR__ . '/includes/auth.php';
 exigirLogin();
+
 $usuario = usuarioAtual($pdo);
-$salvo = false;
+$erro = '';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    validarCsrf();
     $cor = trim($_POST['cor'] ?? '#0878ff');
-    $gostos = trim($_POST['gostos'] ?? '');
+    $gostos = mb_substr(trim($_POST['gostos'] ?? ''), 0, 2000);
+
     if (preg_match('/^#[0-9a-fA-F]{6}$/', $cor)) {
-        $stmt = $pdo->prepare("UPDATE users SET cor = ?, gostos = ? WHERE id = ?");
-        $stmt->execute([$cor, $gostos, $usuario['id']]);
+        $preferenciasJson = json_encode(['texto' => $gostos], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $stmt = $pdo->prepare("UPDATE users SET cor = ?, gostos = ?, preferencias_json = ? WHERE id = ?");
+        $stmt->execute([$cor, $gostos, $preferenciasJson, $usuario['id']]);
         $usuario['cor'] = $cor;
         $usuario['gostos'] = $gostos;
-        $salvo = true;
+        $usuario['preferencias_json'] = $preferenciasJson;
+    } else {
+        $erro = 'Escolha uma cor válida para a interface.';
     }
 }
+
 $tituloPagina = 'Configurações';
-$paginaAtual  = 'config';
+$paginaAtual = 'config';
 $usaSidebar = true;
 $cssPaginas = ['config'];
+$nomeCompleto = trim((string)$usuario['nome'] . ' ' . (string)($usuario['sobrenome'] ?? ''));
 require __DIR__ . '/includes/head.php';
 ?>
 <?php require __DIR__ . '/includes/sidebar.php'; ?>
 <main class="main">
-    <header class="topbar">
-        <div class="user-heading">
-            <span class="eyebrow">NEOMIND • PLATAFORMA DE ESTUDOS</span>
-            <strong><?= htmlspecialchars($usuario['nome']) ?></strong>
-            <span class="page-title">Configurações</span>
-        </div>
-        <a href="perfil.php" class="profile">
-            <?php if (!empty($usuario['foto'])): ?>
-                <img src="<?= htmlspecialchars($usuario['foto']) ?>" alt="">
-            <?php else: ?>
-                <?= htmlspecialchars(strtoupper(substr($usuario['nome'], 0, 1))) ?>
-            <?php endif; ?>
-        </a>
-    </header>
-    <div class="section-title">
-        <span>Configurações</span>
-        <small>Personalize sua experiência</small>
-    </div>
-    <?php if ($salvo): ?>
-        <div class="msg-ok">✓ Perfil salvo com sucesso.</div>
-    <?php endif; ?>
-    <div class="settings-card">
-        <div class="setting">
-            <div>
-                <b>Conta</b>
-                <small><?= htmlspecialchars($usuario['nome']) ?> • <?= htmlspecialchars($usuario['email']) ?></small>
+    <?php require __DIR__ . '/includes/topbar.php'; ?>
+
+    <div class="neo-page-shell settings-page">
+        <?php if ($erro): ?>
+            <div class="error"><?= htmlspecialchars($erro) ?></div>
+        <?php endif; ?>
+
+        <section class="neo-page-heading neo-panel">
+            <div class="neo-page-heading-copy">
+                <span class="neo-page-kicker">Configurações</span>
+                <h1>Sua experiência no NEO</h1>
             </div>
-            <a href="logout.php" class="ghost">Sair</a>
-        </div>
+            <span class="neo-summary-pill"><b><?= htmlspecialchars($usuario['nome']) ?></b></span>
+        </section>
 
-        <div class="setting setting-stack">
-            <div>
-                <b>Preferencias de estudo</b>
-                <small>Essas informacoes ajudam a IA a criar exemplos e questoes mais proximos de voce</small>
+        <section class="settings-account neo-panel">
+            <span class="settings-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"></circle><path d="M5.5 20a6.5 6.5 0 0 1 13 0"></path></svg>
+            </span>
+            <div class="settings-account-copy">
+                <span class="neo-page-kicker">Conta</span>
+                <b><?= htmlspecialchars($nomeCompleto) ?></b>
+                <small><?= htmlspecialchars($usuario['email']) ?></small>
             </div>
+            <a href="perfil.php" class="ghost">Abrir perfil</a>
+        </section>
 
-            <form method="post" class="settings-form">
-                <textarea name="gostos" rows="4" placeholder="Ex: gosto de jogos, futebol, musica, explicacoes passo a passo."><?= htmlspecialchars($usuario['gostos'] ?? '') ?></textarea>
-
-                <div class="color-picker">
-                    <label>Cor do site</label>
-                    <input type="color" name="cor" value="<?= htmlspecialchars($usuario['cor']) ?>">
+        <form method="post" class="settings-form">
+            <?= campoCsrf() ?>
+            <section class="settings-panel neo-panel">
+                <div class="settings-panel-head">
+                    <span class="settings-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h7a4 4 0 0 1 4 4v10H9a4 4 0 0 0-4-4V5Z"></path><path d="M16 9a4 4 0 0 1 4-4v10a4 4 0 0 0-4 4"></path></svg>
+                    </span>
+                    <div>
+                        <span class="neo-page-kicker">Preferências</span>
+                        <h2>Seu jeito de aprender</h2>
+                    </div>
                 </div>
+                <label for="gostos">Interesses e estilo de explicação</label>
+                <textarea id="gostos" name="gostos" rows="5" maxlength="2000" placeholder="Ex: gosto de jogos, futebol, música e explicações passo a passo."><?= htmlspecialchars($usuario['gostos'] ?? '') ?></textarea>
+            </section>
 
-                <button type="submit" class="save-btn">Salvar</button>
-            </form>
-        </div>
-        <div class="setting">
-            <div>
-                <b>IA conectada</b>
-                <small>Conteudos e questoes sao gerados automaticamente quando ainda nao existem.</small>
+            <section class="settings-panel neo-panel">
+                <div class="settings-panel-head">
+                    <span class="settings-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"></circle><path d="M12 4v16M4 12h16"></path></svg>
+                    </span>
+                    <div>
+                        <span class="neo-page-kicker">Interface</span>
+                        <h2>Cor do site</h2>
+                    </div>
+                </div>
+                <label class="color-control" for="cor">
+                    <span>Cor principal</span>
+                    <span class="color-control-value">
+                        <output for="cor" data-color-value><?= htmlspecialchars(strtoupper($usuario['cor'])) ?></output>
+                        <input type="color" id="cor" name="cor" value="<?= htmlspecialchars($usuario['cor']) ?>">
+                    </span>
+                </label>
+            </section>
+
+            <div class="settings-save-row">
+                <button type="submit" class="save-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h12l2 2v14H5V4Z"></path><path d="M8 4v6h8V4"></path><path d="M8 20v-6h8v6"></path></svg>
+                    Salvar alterações
+                </button>
             </div>
-            <a href="materias.php" class="ghost">Estudar</a>
-        </div>
+        </form>
+
+        <section class="settings-account-action neo-panel">
+            <div>
+                <span class="neo-page-kicker">Sessão</span>
+                <h2>Sair da conta</h2>
+            </div>
+            <a href="logout.php" class="neo-danger-button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 5H5v14h5"></path><path d="M14 8l4 4-4 4"></path><path d="M8 12h10"></path></svg>
+                Sair
+            </a>
+        </section>
     </div>
 </main>
+<script>
+(function () {
+    var color = document.getElementById('cor');
+    var output = document.querySelector('[data-color-value]');
+    if (!color || !output) return;
+    color.addEventListener('input', function () {
+        output.textContent = color.value.toUpperCase();
+    });
+})();
+</script>
 </body>
 </html>
