@@ -39,7 +39,13 @@
     document.addEventListener('submit', function (event) {
         var form = event.target.closest && event.target.closest('form[data-ai-loading]');
         if (!form || event.defaultPrevented) return;
+        if (form.dataset.aiSubmitting === '1') {
+            event.preventDefault();
+            return;
+        }
+        form.dataset.aiSubmitting = '1';
         var submitter = event.submitter;
+        if (submitter) submitter.setAttribute('aria-disabled', 'true');
         var message = submitter && submitter.dataset.aiMessage
             ? submitter.dataset.aiMessage
             : form.dataset.aiMessage;
@@ -62,6 +68,11 @@
     });
     window.addEventListener('pageshow', function () {
         hideLoader(true);
+        document.querySelectorAll('form[data-ai-submitting="1"]').forEach(function (form) {
+            delete form.dataset.aiSubmitting;
+            form.querySelectorAll('[aria-disabled="true"]').forEach(function (button) {
+                button.removeAttribute('aria-disabled');
+            });
+        });
     });
 })();
-

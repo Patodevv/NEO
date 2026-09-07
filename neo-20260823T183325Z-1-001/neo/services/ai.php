@@ -1,7 +1,7 @@
-
 <?php
 
 require_once __DIR__ . '/ai_quality.php';
+require_once __DIR__ . '/ai_usage.php';
 
 function openaiApiKey(): string
 {
@@ -123,18 +123,18 @@ function origemAtualIA(): array
     ];
 }
 
-function anexarOrigemIA(array $conteudo): array
+function anexarOrigemIA(array $conteudo, ?array $origem = null): array
 {
-    $origem = origemAtualIA();
+    $origem = $origem ?? origemAtualIA();
     $conteudo['_ai_provider'] = $origem['provider'];
     $conteudo['_ai_model'] = $origem['model'];
     return $conteudo;
 }
 
-function anexarOrigemListaIA(array $itens): array
+function anexarOrigemListaIA(array $itens, ?array $origem = null): array
 {
     return array_map(
-        static fn(array $item): array => anexarOrigemIA($item),
+        static fn(array $item): array => anexarOrigemIA($item, $origem),
         $itens
     );
 }
@@ -600,6 +600,7 @@ function gerarConteudos(
             $schema,
             'geracao_conteudos'
         );
+        $origemGeracao = origemAtualIA();
     } catch (Exception $e) {
         usarFallbackLocalIA();
         return anexarOrigemListaIA(conteudosFallback(
@@ -624,7 +625,10 @@ function gerarConteudos(
     }
 
     try {
-        return anexarOrigemListaIA(revisarConteudosIA($materia, $proximoNivel, $resultado['conteudos']));
+        return anexarOrigemListaIA(
+            revisarConteudosIA($materia, $proximoNivel, $resultado['conteudos']),
+            $origemGeracao
+        );
     } catch (Throwable $e) {
         usarFallbackLocalIA();
         return anexarOrigemListaIA(conteudosFallback($materia, $proximoNivel, $titulosExistentes, $gostos));
@@ -689,6 +693,7 @@ function gerarQuestoes(
             $schema,
             'geracao_questoes'
         );
+        $origemGeracao = origemAtualIA();
     } catch (Exception $e) {
         usarFallbackLocalIA();
         return anexarOrigemListaIA(questoesFallback(
@@ -713,7 +718,10 @@ function gerarQuestoes(
     }
 
     try {
-        return anexarOrigemListaIA(revisarQuestoesIA($materia, $titulo, $corpo, $nivel, $resultado['questoes']));
+        return anexarOrigemListaIA(
+            revisarQuestoesIA($materia, $titulo, $corpo, $nivel, $resultado['questoes']),
+            $origemGeracao
+        );
     } catch (Throwable $e) {
         usarFallbackLocalIA();
         return anexarOrigemListaIA(questoesFallback($materia, $titulo, $gostos, $nivel));
@@ -940,6 +948,7 @@ function gerarLivro(
             $schema,
             'geracao_livro'
         );
+        $origemGeracao = origemAtualIA();
 
         if (
             empty($resultado['corpo']) ||
@@ -953,7 +962,7 @@ function gerarLivro(
             ));
         }
 
-        return anexarOrigemIA(revisarLivroIA($materia, $nivel, $resultado));
+        return anexarOrigemIA(revisarLivroIA($materia, $nivel, $resultado), $origemGeracao);
     } catch (Exception $e) {
         usarFallbackLocalIA();
         return anexarOrigemIA(livroFallback(

@@ -12,7 +12,7 @@ $conteudoId = (int)($_GET['conteudo_id'] ?? ($_POST['conteudo_id'] ?? 0));
 $stmt = $pdo->prepare("
     SELECT c.*, m.nome AS materia_nome
     FROM conteudos c JOIN materias m ON m.id = c.materia_id
-    WHERE c.id = ? AND c.user_id = ?
+    WHERE c.id = ? AND c.user_id = ? AND c.removido_em IS NULL
 ");
 $stmt->execute([$conteudoId, $usuario['id']]);
 $conteudo = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -82,27 +82,36 @@ function carregarQuestoes(PDO $pdo, int $conteudoId, int $userId): array
 
 function gerarESalvarQuestoes(PDO $pdo, array $conteudo, array $usuario, int $nivel): void
 {
-    $geradas = gerarQuestoes(
-        $conteudo['materia_nome'], $conteudo['titulo'], limparMarcacaoIA((string)($conteudo['corpo'] ?? '')),
-        trim($usuario['gostos'] ?? ''), $nivel
-    );
-    if (!$geradas) {
-        throw new RuntimeException('A IA nao retornou questoes validas.');
-    }
-    registrarAuditoriaIA($pdo, (int)$usuario['id'], 'questoes', $conteudo['materia_nome'] . ':' . $conteudo['titulo'] . ':' . $nivel);
+    executarOperacaoControladaIA(
+        $pdo,
+        (int)$usuario['id'],
+        'questoes',
+        $conteudo['materia_nome'] . ':' . $conteudo['titulo'] . ':' . $nivel,
+        static function () use ($pdo, $conteudo, $usuario, $nivel): void {
+            $geradas = gerarQuestoes(
+                $conteudo['materia_nome'], $conteudo['titulo'], limparMarcacaoIA((string)($conteudo['corpo'] ?? '')),
+                trim($usuario['gostos'] ?? ''), $nivel
+            );
+            if (!$geradas) {
+                throw new RuntimeException('A IA nao retornou questoes validas.');
+            }
+            registrarAuditoriaIA($pdo, (int)$usuario['id'], 'questoes', $conteudo['materia_nome'] . ':' . $conteudo['titulo'] . ':' . $nivel);
 
-    $pdo->beginTransaction();
-    try {
-        $pdo->prepare("DELETE FROM questoes WHERE conteudo_id = ? AND user_id = ?")
-            ->execute([(int)$conteudo['id'], (int)$usuario['id']]);
-        salvarQuestoesGeradas($pdo, (int)$usuario['id'], (int)$conteudo['id'], $geradas, $nivel);
-        $pdo->commit();
-    } catch (Throwable $e) {
-        if ($pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
-        throw $e;
-    }
+            $pdo->beginTransaction();
+            try {
+                $pdo->prepare("DELETE FROM questoes WHERE conteudo_id = ? AND user_id = ?")
+                    ->execute([(int)$conteudo['id'], (int)$usuario['id']]);
+                salvarQuestoesGeradas($pdo, (int)$usuario['id'], (int)$conteudo['id'], $geradas, $nivel);
+                $pdo->commit();
+            } catch (Throwable $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                throw $e;
+            }
+        },
+        'conteudo:' . (int)$conteudo['id']
+    );
 }
 
 function feedbackPersistido(array $questao, string $resposta): string
@@ -130,6 +139,15 @@ $nivelGeracaoQuestoes = max(1, min(12, (int)$conteudo['dificuldade_adaptativa'])
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validarCsrf();
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($acao, ['facilitador', 'responder'], true)) {
+    $hashPostado = (string)($_POST['question_set_hash'] ?? '');
+    $hashAtual = hashQuestoesAtuais($questoes) ?? '';
+    if ($hashPostado === '' || $hashAtual === '' || !hash_equals($hashAtual, $hashPostado)) {
+        $erro = 'Esta atividade foi atualizada em outra aba. Revise as novas questões antes de responder.';
+        $acao = '';
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $acao === 'novas_questoes') {
@@ -173,61 +191,97 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $acao === 'facilitador' && $questoe
         if ($nivelAjuda > 3) {
             throw new DomainException('Todas as ajudas progressivas desta questão já foram utilizadas.');
         }
-        $dica = gerarDicaQuestao(
-            $conteudo['materia_nome'], $conteudo['titulo'], $questao, $nivelAjuda,
-            array_column($anteriores, 'dica'), (int)$conteudo['dificuldade_adaptativa']
+        $ajuda = executarOperacaoControladaIA(
+            $pdo,
+            (int)$usuario['id'],
+            'facilitador',
+            $questaoId . ':' . $nivelAjuda,
+            static function () use ($pdo, $conteudo, $usuario, $questao, $questaoId, $nivelAjuda, $anteriores): array {
+                $dica = gerarDicaQuestao(
+                    $conteudo['materia_nome'], $conteudo['titulo'], $questao, $nivelAjuda,
+                    array_column($anteriores, 'dica'), (int)$conteudo['dificuldade_adaptativa']
+                );
+                registrarAuditoriaIA($pdo, (int)$usuario['id'], 'facilitador', $questaoId . ':' . $nivelAjuda);
+                return registrarAjudaQuestao($pdo, (int)$usuario['id'], $questaoId, $nivelAjuda, $dica);
+            },
+            'conteudo:' . $conteudoId
         );
-        registrarAuditoriaIA($pdo, (int)$usuario['id'], 'facilitador', $questaoId . ':' . $nivelAjuda);
-        $ajuda = registrarAjudaQuestao($pdo, (int)$usuario['id'], $questaoId, $nivelAjuda, $dica);
         $ajudasPorQuestao[$questaoId][] = $ajuda;
         $usuario = usuarioAtual($pdo);
     } catch (DomainException $e) {
         $erro = $e->getMessage();
+    } catch (Throwable $e) {
+        error_log('[NEO][facilitador] ' . $e->getMessage());
+        $erro = 'Não foi possível preparar a ajuda agora.';
     }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $acao === 'responder' && $questoes) {
-    $respostas = [];
-    $pendentesIA = [];
     try {
-        foreach ($questoes as $questao) {
-            $id = (int)$questao['id'];
-            $resposta = strtoupper(trim((string)($_POST['resposta_' . $id] ?? '')));
-            if (!in_array($resposta, ['A', 'B', 'C', 'D'], true)) {
-                throw new DomainException('Responda todas as questões antes de enviar.');
-            }
-            $respostas[$id] = $resposta;
-            $feedbacksIA[$id] = feedbackPersistido($questao, $resposta);
-            if ($feedbacksIA[$id] === '') {
-                $pendentesIA[] = [
-                    'questao_id' => $id, 'enunciado' => $questao['enunciado'],
-                    'opcao_a' => $questao['opcao_a'], 'opcao_b' => $questao['opcao_b'],
-                    'opcao_c' => $questao['opcao_c'], 'opcao_d' => $questao['opcao_d'],
-                    'resposta_usuario' => $resposta, 'resposta_correta' => $questao['correta'],
-                    'resultado' => $resposta === $questao['correta'] ? 'acerto' : 'erro',
-                ];
-            }
-        }
+        [$resultado, $feedbacksIA] = executarComBloqueioRecurso(
+            $pdo,
+            (int)$usuario['id'],
+            'conteudo:' . $conteudoId,
+            static function () use ($pdo, $usuario, $conteudo, $questoes, $conteudoId): array {
+                $respostas = [];
+                $pendentesIA = [];
+                $feedbacks = [];
 
-        if ($pendentesIA) {
-            $gerados = gerarFeedbackQuestoes(
-                $conteudo['materia_nome'], $conteudo['titulo'], $pendentesIA,
-                trim($usuario['gostos'] ?? ''), (int)$conteudo['dificuldade_adaptativa']
-            );
-            foreach ($gerados as $id => $feedback) {
-                $feedbacksIA[(int)$id] = $feedback;
-            }
-        }
+                foreach ($questoes as $questao) {
+                    $id = (int)$questao['id'];
+                    $resposta = strtoupper(trim((string)($_POST['resposta_' . $id] ?? '')));
+                    if (!in_array($resposta, ['A', 'B', 'C', 'D'], true)) {
+                        throw new DomainException('Responda todas as questões antes de enviar.');
+                    }
+                    $respostas[$id] = $resposta;
+                    $feedbacks[$id] = feedbackPersistido($questao, $resposta);
+                    if ($feedbacks[$id] === '') {
+                        $pendentesIA[] = [
+                            'questao_id' => $id, 'enunciado' => $questao['enunciado'],
+                            'opcao_a' => $questao['opcao_a'], 'opcao_b' => $questao['opcao_b'],
+                            'opcao_c' => $questao['opcao_c'], 'opcao_d' => $questao['opcao_d'],
+                            'resposta_usuario' => $resposta, 'resposta_correta' => $questao['correta'],
+                            'resultado' => $resposta === $questao['correta'] ? 'acerto' : 'erro',
+                        ];
+                    }
+                }
 
-        foreach ($questoes as $questao) {
-            $id = (int)$questao['id'];
-            if (empty($feedbacksIA[$id])) {
-                $correta = strtoupper((string)$questao['correta']);
-                $feedbacksIA[$id] = 'Compare a alternativa escolhida com o conceito central do enunciado. A opção correta é ' . $correta . ' porque corresponde ao que foi explicado no material.';
-            }
-        }
+                if ($pendentesIA) {
+                    $gerados = executarOperacaoControladaIA(
+                        $pdo,
+                        (int)$usuario['id'],
+                        'feedback',
+                        $conteudo['materia_nome'] . ':' . $conteudo['titulo'],
+                        static fn(): array => gerarFeedbackQuestoes(
+                            $conteudo['materia_nome'], $conteudo['titulo'], $pendentesIA,
+                            trim($usuario['gostos'] ?? ''), (int)$conteudo['dificuldade_adaptativa']
+                        ),
+                        'feedback-conteudo:' . $conteudoId
+                    );
+                    foreach ($gerados as $id => $feedback) {
+                        $feedbacks[(int)$id] = $feedback;
+                    }
+                }
 
-        $resultado = registrarResultadoAtividade($pdo, (int)$usuario['id'], $conteudo, $questoes, $respostas, $feedbacksIA);
+                foreach ($questoes as $questao) {
+                    $id = (int)$questao['id'];
+                    if (empty($feedbacks[$id])) {
+                        $correta = strtoupper((string)$questao['correta']);
+                        $feedbacks[$id] = 'Compare a alternativa escolhida com o conceito central do enunciado. A opção correta é ' . $correta . ' porque corresponde ao que foi explicado no material.';
+                    }
+                }
+
+                $resultadoAtividade = registrarResultadoAtividade(
+                    $pdo,
+                    (int)$usuario['id'],
+                    $conteudo,
+                    $questoes,
+                    $respostas,
+                    $feedbacks
+                );
+                return [$resultadoAtividade, $feedbacks];
+            }
+        );
         $usuario = usuarioAtual($pdo);
     } catch (DomainException $e) {
         $erro = $e->getMessage();
@@ -325,6 +379,7 @@ require __DIR__ . '/includes/head.php';
             <?= campoCsrf() ?>
             <input type="hidden" name="conteudo_id" value="<?= (int)$conteudo['id'] ?>">
             <input type="hidden" name="acao" value="responder">
+            <input type="hidden" name="question_set_hash" value="<?= htmlspecialchars(hashQuestoesAtuais($questoes) ?? '') ?>">
 
             <?php foreach ($questoes as $i => $q): ?>
                 <?php
@@ -350,7 +405,7 @@ require __DIR__ . '/includes/head.php';
                         <?php foreach (['A', 'B', 'C', 'D'] as $letra): ?>
                             <?php
                                 $campo = 'opcao_' . strtolower($letra);
-                                $estaMarcada = $resultado && $respostaUsuario === $letra;
+                                $estaMarcada = $respostaUsuario === $letra;
                                 $classe = $resultado ? ($letra === strtoupper((string)$q['correta']) ? 'certa' : ($estaMarcada ? 'errada' : '')) : '';
                             ?>
                             <label class="opcao-label <?= $classe ?>">

@@ -13,19 +13,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $senha = $_POST['senha'] ?? '';
     $hashAdmin = trim((string)ambienteNeo('NEO_ADMIN_PASSWORD_HASH', ''));
 
-    if (loginTemporariamenteBloqueado('admin')) {
+    if (loginTemporariamenteBloqueado($pdo, 'admin', 'painel-administrativo')) {
         $erro = 'Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.';
     } elseif ($hashAdmin === '') {
         $erro = 'A senha administrativa ainda não foi configurada no ambiente.';
     } elseif (password_verify($senha, $hashAdmin)) {
         renovarSessaoAutenticada();
-        limparFalhasLogin('admin');
+        limparFalhasLogin($pdo, 'admin', 'painel-administrativo');
         $_SESSION['admin_logado'] = true;
         $_SESSION['admin_autenticado_em'] = time();
         header('Location: adm.php');
         exit;
     } else {
-        registrarFalhaLogin('admin');
+        registrarFalhaLogin($pdo, 'admin', 'painel-administrativo');
         $erro = 'Senha administrativa incorreta.';
     }
 }

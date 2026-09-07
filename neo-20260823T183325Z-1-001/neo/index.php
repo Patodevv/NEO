@@ -18,7 +18,7 @@ $sequenciaOfensiva = (int)($stmtSequencia->fetchColumn() ?: 0);
 $stmtAcessos = $pdo->prepare("
     SELECT ua.acessado_em, c.id AS conteudo_id, c.titulo, m.nome AS materia_nome
     FROM ultimos_acessos ua
-    JOIN conteudos c ON c.id = ua.conteudo_id AND c.user_id = ua.user_id
+    JOIN conteudos c ON c.id = ua.conteudo_id AND c.user_id = ua.user_id AND c.removido_em IS NULL
     JOIN materias m ON m.id = ua.materia_id
     WHERE ua.user_id = ?
     ORDER BY ua.acessado_em DESC

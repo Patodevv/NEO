@@ -15,7 +15,7 @@ if (!preg_match('/^[a-zA-Z0-9_]+$/', $dbname)) {
 }
 
 try {
-    if (ambienteBooleanoNeo('DB_AUTO_CREATE', true)) {
+    if (ambienteBooleanoNeo('DB_AUTO_CREATE', false)) {
         $pdoServidor = new PDO(
             "mysql:host={$host};port={$porta};charset=utf8mb4",
             $user,
@@ -37,7 +37,9 @@ try {
     );
 
     require_once dirname(__DIR__) . '/database/migrator.php';
-    executarMigracoes($pdo);
+    if (ambienteBooleanoNeo('DB_AUTO_MIGRATE', false)) {
+        executarMigracoes($pdo);
+    }
 } catch (Throwable $e) {
     error_log('[NEO][database] ' . $e->getMessage());
 

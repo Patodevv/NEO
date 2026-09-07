@@ -1,31 +1,39 @@
 # NeoMind
 
-Sistema simples em PHP puro (sem frameworks) com banco SQLite embutido (não precisa instalar MySQL).
+Aplicação educacional em PHP 8 com MySQL, geração de conteúdo por OpenAI e fallback para Groq.
 
-## Como rodar
+## Configuração
 
-1. Tenha o PHP instalado (8.x) com a extensão `pdo_sqlite` (vem habilitada por padrão na maioria das instalações).
-2. Dentro da pasta do projeto, rode:
+1. Copie `.env.example` para `.env` e configure o banco e as chaves das APIs.
+2. Crie o banco vazio ou ative `DB_AUTO_CREATE=true` apenas durante a instalação local.
+3. Execute as migrações:
 
+```powershell
+C:\xampp\php\php.exe scripts\migrate.php
 ```
-php -S localhost:8000
+
+4. Mantenha `DB_AUTO_CREATE=false` e `DB_AUTO_MIGRATE=false` durante o uso normal.
+5. Sirva a pasta `neo` pelo Apache do XAMPP.
+
+As credenciais de IA ficam somente no `.env`:
+
+```dotenv
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-5-mini
+GROQ_API_KEY=
+GROQ_MODEL=openai/gpt-oss-20b
 ```
 
-3. Acesse http://localhost:8000 no navegador.
+## Manutenção
 
-O banco (`storage/database.sqlite`) é criado automaticamente na primeira execução, já com algumas matérias, conteúdos e uma questão de exemplo.
+Para remover imagens antigas que não são mais utilizadas:
 
-## Estrutura
+```powershell
+C:\xampp\php\php.exe scripts\cleanup_uploads.php
+```
 
-- `config/db.php` — conexão e criação automática do banco (SQLite)
-- `includes/auth.php` — sessão e proteção de páginas (exigirLogin)
-- `includes/sidebar.php` — menu lateral, incluído em todas as páginas internas
-- `includes/head.php` — `<head>` + cor do site (aplicada via CSS var --primary)
-- `login.php` / `register.php` / `logout.php` — autenticação
-- `index.php` — Dashboard
-- `materias.php` — Página 1: lista de matérias
-- `conteudos.php` — Página 2: lista de conteúdos de uma matéria
-- `livro.php` — Página 3: leitura do conteúdo
-- `questoes.php` — Página 4: questões do conteúdo (corrige e salva no histórico)
-- `historico.php` — histórico de tentativas do usuário
-- `config.php` — configurações (trocar a cor geral do site)
+Para executar a suíte de integração:
+
+```powershell
+C:\xampp\php\php.exe tests\integration.php
+```

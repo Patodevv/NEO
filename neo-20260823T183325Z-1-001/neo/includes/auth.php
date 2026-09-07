@@ -27,7 +27,9 @@ function usuarioAtual(PDO $pdo): ?array
 
     if (!$usuario) {
         unset($_SESSION['user_id']);
-        return null;
+        renovarSessaoAutenticada();
+        header('Location: login.php');
+        exit;
     }
 
     if (!empty($usuario['decoracao_perfil']) && tabelaExiste($pdo, 'produtos')) {

@@ -144,7 +144,7 @@
 
 .onboarding-viewport {
     position: relative;
-    min-height: 550px;
+    min-height: 660px;
     overflow: hidden;
 }
 
@@ -438,9 +438,22 @@
     margin: 0;
 }
 
+.study-days-field {
+    width: min(100%, 360px);
+    margin-top: 18px;
+}
+
+.study-days-field > label {
+    display: block;
+    margin-bottom: 9px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+}
+
 .onboarding-panel .preferences-text-field textarea {
     width: 100%;
-    min-height: 230px;
+    min-height: 154px;
     padding: 18px 20px;
     border: 1px solid var(--border-soft);
     border-radius: 16px;
@@ -589,7 +602,7 @@
     }
 
     .onboarding-viewport {
-        min-height: 680px;
+        min-height: 760px;
     }
 
     .onboarding-panel {
@@ -614,7 +627,7 @@
 
 @media (max-width: 440px) {
     .onboarding-viewport {
-        min-height: 735px;
+        min-height: 820px;
     }
 
     .onboarding-panel {

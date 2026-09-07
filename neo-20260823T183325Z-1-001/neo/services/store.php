@@ -146,30 +146,66 @@ function aplicarDecoracaoPerfil(PDO $pdo, int $userId, int $produtoId): void
     $pdo->prepare("UPDATE users SET decoracao_perfil = ? WHERE id = ?")->execute([$codigo, $userId]);
 }
 
+function salvarImagemUploadSeguro(array $arquivo, string $subpasta, string $prefixo = ''): string
+{
+    if (($arquivo['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+        throw new DomainException('Nao foi possivel receber a imagem.');
+    }
+
+    $permitidos = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/gif' => 'gif'];
+    $mime = mime_content_type($arquivo['tmp_name']);
+    $dimensoes = @getimagesize($arquivo['tmp_name']);
+    $largura = is_array($dimensoes) ? (int)($dimensoes[0] ?? 0) : 0;
+    $altura = is_array($dimensoes) ? (int)($dimensoes[1] ?? 0) : 0;
+
+    if (!isset($permitidos[$mime]) || (int)$arquivo['size'] <= 0 || (int)$arquivo['size'] > 2 * 1024 * 1024) {
+        throw new DomainException('Use uma imagem JPG, PNG, WEBP ou GIF de ate 2 MB.');
+    }
+    if ($largura <= 0 || $altura <= 0 || $largura > 4096 || $altura > 4096 || $largura * $altura > 16000000) {
+        throw new DomainException('A imagem possui dimensoes invalidas ou muito grandes.');
+    }
+
+    if (!preg_match('/^[a-z0-9_-]+$/', $subpasta)) {
+        throw new InvalidArgumentException('Pasta de upload invalida.');
+    }
+
+    $pasta = dirname(__DIR__) . '/static/uploads/' . $subpasta;
+    if (!is_dir($pasta) && !mkdir($pasta, 0775, true) && !is_dir($pasta)) {
+        throw new RuntimeException('Nao foi possivel criar a pasta de imagens.');
+    }
+    $prefixo = preg_replace('/[^a-zA-Z0-9_-]/', '', $prefixo) ?? '';
+    $nome = $prefixo . bin2hex(random_bytes(16)) . '.' . $permitidos[$mime];
+    if (!move_uploaded_file($arquivo['tmp_name'], $pasta . '/' . $nome)) {
+        throw new RuntimeException('Nao foi possivel salvar a imagem.');
+    }
+    return 'static/uploads/' . $subpasta . '/' . $nome;
+}
+
+function removerImagemUpload(?string $caminhoPublico, string $subpasta): void
+{
+    $caminhoPublico = trim((string)$caminhoPublico);
+    $prefixo = 'static/uploads/' . $subpasta . '/';
+    if ($caminhoPublico === '' || !str_starts_with($caminhoPublico, $prefixo)) {
+        return;
+    }
+
+    $nome = basename($caminhoPublico);
+    if ($caminhoPublico !== $prefixo . $nome) {
+        return;
+    }
+
+    $arquivo = dirname(__DIR__) . '/' . $prefixo . $nome;
+    if (is_file($arquivo)) {
+        @unlink($arquivo);
+    }
+}
+
 function salvarImagemProduto(array $arquivo): ?string
 {
     if (($arquivo['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
         return null;
     }
-    if (($arquivo['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
-        throw new DomainException('Nao foi possivel receber a imagem do produto.');
-    }
-
-    $permitidos = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/gif' => 'gif'];
-    $mime = mime_content_type($arquivo['tmp_name']);
-    if (!isset($permitidos[$mime]) || (int)$arquivo['size'] > 2 * 1024 * 1024) {
-        throw new DomainException('Use uma imagem JPG, PNG, WEBP ou GIF de ate 2 MB.');
-    }
-
-    $pasta = dirname(__DIR__) . '/static/uploads/produtos';
-    if (!is_dir($pasta) && !mkdir($pasta, 0775, true) && !is_dir($pasta)) {
-        throw new RuntimeException('Nao foi possivel criar a pasta de produtos.');
-    }
-    $nome = bin2hex(random_bytes(16)) . '.' . $permitidos[$mime];
-    if (!move_uploaded_file($arquivo['tmp_name'], $pasta . '/' . $nome)) {
-        throw new RuntimeException('Nao foi possivel salvar a imagem do produto.');
-    }
-    return 'static/uploads/produtos/' . $nome;
+    return salvarImagemUploadSeguro($arquivo, 'produtos');
 }
 
 function normalizarCodigoProduto(string $codigo): string

@@ -4,23 +4,15 @@ require __DIR__ . '/includes/auth.php';
 exigirLogin();
 
 $usuario = usuarioAtual($pdo);
-$erro = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validarCsrf();
-    $cor = trim($_POST['cor'] ?? '#0878ff');
     $gostos = mb_substr(trim($_POST['gostos'] ?? ''), 0, 2000);
-
-    if (preg_match('/^#[0-9a-fA-F]{6}$/', $cor)) {
-        $preferenciasJson = json_encode(['texto' => $gostos], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        $stmt = $pdo->prepare("UPDATE users SET cor = ?, gostos = ?, preferencias_json = ? WHERE id = ?");
-        $stmt->execute([$cor, $gostos, $preferenciasJson, $usuario['id']]);
-        $usuario['cor'] = $cor;
-        $usuario['gostos'] = $gostos;
-        $usuario['preferencias_json'] = $preferenciasJson;
-    } else {
-        $erro = 'Escolha uma cor válida para a interface.';
-    }
+    $preferenciasJson = json_encode(['texto' => $gostos], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $stmt = $pdo->prepare("UPDATE users SET gostos = ?, preferencias_json = ? WHERE id = ?");
+    $stmt->execute([$gostos, $preferenciasJson, $usuario['id']]);
+    $usuario['gostos'] = $gostos;
+    $usuario['preferencias_json'] = $preferenciasJson;
 }
 
 $tituloPagina = 'Configurações';
@@ -35,10 +27,6 @@ require __DIR__ . '/includes/head.php';
     <?php require __DIR__ . '/includes/topbar.php'; ?>
 
     <div class="neo-page-shell settings-page">
-        <?php if ($erro): ?>
-            <div class="error"><?= htmlspecialchars($erro) ?></div>
-        <?php endif; ?>
-
         <section class="neo-page-heading neo-panel">
             <div class="neo-page-heading-copy">
                 <span class="neo-page-kicker">Configurações</span>
@@ -75,25 +63,6 @@ require __DIR__ . '/includes/head.php';
                 <textarea id="gostos" name="gostos" rows="5" maxlength="2000" placeholder="Ex: gosto de jogos, futebol, música e explicações passo a passo."><?= htmlspecialchars($usuario['gostos'] ?? '') ?></textarea>
             </section>
 
-            <section class="settings-panel neo-panel">
-                <div class="settings-panel-head">
-                    <span class="settings-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"></circle><path d="M12 4v16M4 12h16"></path></svg>
-                    </span>
-                    <div>
-                        <span class="neo-page-kicker">Interface</span>
-                        <h2>Cor do site</h2>
-                    </div>
-                </div>
-                <label class="color-control" for="cor">
-                    <span>Cor principal</span>
-                    <span class="color-control-value">
-                        <output for="cor" data-color-value><?= htmlspecialchars(strtoupper($usuario['cor'])) ?></output>
-                        <input type="color" id="cor" name="cor" value="<?= htmlspecialchars($usuario['cor']) ?>">
-                    </span>
-                </label>
-            </section>
-
             <div class="settings-save-row">
                 <button type="submit" class="save-btn">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h12l2 2v14H5V4Z"></path><path d="M8 4v6h8V4"></path><path d="M8 20v-6h8v6"></path></svg>
@@ -114,15 +83,5 @@ require __DIR__ . '/includes/head.php';
         </section>
     </div>
 </main>
-<script>
-(function () {
-    var color = document.getElementById('cor');
-    var output = document.querySelector('[data-color-value]');
-    if (!color || !output) return;
-    color.addEventListener('input', function () {
-        output.textContent = color.value.toUpperCase();
-    });
-})();
-</script>
 </body>
 </html>

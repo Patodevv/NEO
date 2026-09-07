@@ -8,6 +8,8 @@ if (PHP_SAPI !== 'cli') {
 }
 
 require dirname(__DIR__) . '/config/db.php';
+require_once dirname(__DIR__) . '/database/migrator.php';
+executarMigracoes($pdo);
 
 $versoes = $pdo->query('SELECT versao, aplicado_em FROM schema_migrations ORDER BY versao')
     ->fetchAll(PDO::FETCH_ASSOC);

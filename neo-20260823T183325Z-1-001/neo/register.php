@@ -24,6 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $senha = (string)($_POST['senha'] ?? '');
     $confirmarSenha = (string)($_POST['confirmar_senha'] ?? '');
     $gostos = trim((string)($_POST['gostos'] ?? ''));
+    $diasEstudoSemana = filter_var($_POST['dias_estudo_semana'] ?? null, FILTER_VALIDATE_INT, [
+        'options' => ['min_range' => 1, 'max_range' => 7],
+    ]);
 
     if ($nome === '' || $sobrenome === '' || $idade === false) {
         $erro = 'Preencha nome, sobrenome e uma idade válida.';
@@ -49,6 +52,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (mb_strlen($gostos) > 2000) {
         $erro = 'O texto de preferências ultrapassou o tamanho permitido.';
         $etapaInicial = 3;
+    } elseif ($diasEstudoSemana === false) {
+        $erro = 'Escolha entre 1 e 7 dias de estudo por semana.';
+        $etapaInicial = 3;
     } else {
         $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ?');
         $stmt->execute([$email]);
@@ -63,10 +69,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $stmt = $pdo->prepare("
                     INSERT INTO users
-                        (nome, sobrenome, idade, genero, email, senha, gostos, preferencias_json, onboarding_concluido_em)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                        (nome, sobrenome, idade, genero, email, senha, gostos, preferencias_json, dias_estudo_semana, onboarding_concluido_em)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
                 ");
-                $stmt->execute([$nome, $sobrenome, $idade, $genero, $email, $hash, $gostos, $preferenciasJson]);
+                $stmt->execute([$nome, $sobrenome, $idade, $genero, $email, $hash, $gostos, $preferenciasJson, $diasEstudoSemana]);
 
                 renovarSessaoAutenticada();
                 $_SESSION['user_id'] = (int)$pdo->lastInsertId();
@@ -128,11 +134,11 @@ require __DIR__ . '/includes/head.php';
                         <div class="field field-age">
                             <label for="idade">Idade</label>
                             <div class="number-control">
-                                <button type="button" class="number-step" data-number-step="-1" aria-label="Diminuir idade" title="Diminuir idade">
+                                <button type="button" class="number-step" data-number-step="-1" data-number-target="idade" aria-label="Diminuir idade" title="Diminuir idade">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"></path></svg>
                                 </button>
                                 <input id="idade" type="number" name="idade" value="<?= htmlspecialchars($_POST['idade'] ?? '') ?>" min="6" max="120" inputmode="numeric" required>
-                                <button type="button" class="number-step" data-number-step="1" aria-label="Aumentar idade" title="Aumentar idade">
+                                <button type="button" class="number-step" data-number-step="1" data-number-target="idade" aria-label="Aumentar idade" title="Aumentar idade">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M12 6v12"></path><path d="M6 12h12"></path></svg>
                                 </button>
                             </div>
@@ -218,11 +224,25 @@ require __DIR__ . '/includes/head.php';
 
                     <div class="field preferences-text-field">
                         <label for="gostos">Gostos e estilo de estudo</label>
-                        <textarea id="gostos" name="gostos" rows="8" maxlength="2000" required placeholder="Ex: gosto de tecnologia, futebol e música. Aprendo melhor com exemplos simples, comparações e explicações passo a passo."><?= htmlspecialchars($_POST['gostos'] ?? '') ?></textarea>
+                        <textarea id="gostos" name="gostos" rows="6" maxlength="2000" required placeholder="Ex: gosto de tecnologia, futebol e música. Aprendo melhor com exemplos simples, comparações e explicações passo a passo."><?= htmlspecialchars($_POST['gostos'] ?? '') ?></textarea>
                         <div class="preferences-meta">
                             <small class="field-message">Escreva pelo menos uma preferência.</small>
                             <span><b data-preference-count>0</b>/2000</span>
                         </div>
+                    </div>
+
+                    <div class="field study-days-field">
+                        <label for="dias_estudo_semana">Quantos dias você quer estudar por semana?</label>
+                        <div class="number-control">
+                            <button type="button" class="number-step" data-number-step="-1" data-number-target="dias_estudo_semana" aria-label="Diminuir dias de estudo" title="Diminuir dias de estudo">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"></path></svg>
+                            </button>
+                            <input id="dias_estudo_semana" type="number" name="dias_estudo_semana" value="<?= htmlspecialchars($_POST['dias_estudo_semana'] ?? '3') ?>" min="1" max="7" inputmode="numeric" required>
+                            <button type="button" class="number-step" data-number-step="1" data-number-target="dias_estudo_semana" aria-label="Aumentar dias de estudo" title="Aumentar dias de estudo">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M12 6v12"></path><path d="M6 12h12"></path></svg>
+                            </button>
+                        </div>
+                        <small class="field-message">Escolha entre 1 e 7 dias.</small>
                     </div>
 
                     <div class="onboarding-actions">
@@ -346,7 +366,8 @@ require __DIR__ . '/includes/head.php';
 
     root.querySelectorAll('[data-number-step]').forEach(function (button) {
         button.addEventListener('click', function () {
-            var input = document.getElementById('idade');
+            var input = document.getElementById(button.dataset.numberTarget || 'idade');
+            if (!input) return;
             var direction = Number(button.dataset.numberStep) || 0;
             var minimum = Number(input.min) || 0;
             var maximum = Number(input.max) || 120;

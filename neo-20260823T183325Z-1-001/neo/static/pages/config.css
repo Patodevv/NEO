@@ -79,7 +79,7 @@
     line-height: 1.15;
 }
 
-.settings-form > .settings-panel > label:not(.color-control) {
+.settings-form > .settings-panel > label {
     margin-bottom: -12px;
     color: var(--muted);
     font-size: 10px;
@@ -92,63 +92,6 @@
     min-height: 124px;
     resize: vertical;
     line-height: 1.5;
-}
-
-.color-control {
-    min-height: 62px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 10px 12px 10px 16px;
-    border: 1px solid var(--panel-border);
-    border-radius: 16px;
-    background: var(--control-bg);
-    color: rgba(255, 255, 255, .88);
-    font-size: 13px;
-    font-weight: 800;
-    cursor: pointer;
-}
-
-.color-control-value {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.color-control output {
-    color: var(--muted);
-    font-size: 12px;
-    font-variant-numeric: tabular-nums;
-}
-
-.color-control input[type="color"] {
-    width: 46px;
-    height: 40px;
-    padding: 4px;
-    border: 1px solid var(--neo-blue);
-    border-radius: 13px;
-    background: #121212;
-    cursor: pointer;
-}
-
-.color-control input[type="color"]::-webkit-color-swatch-wrapper {
-    padding: 0;
-}
-
-.color-control input[type="color"]::-webkit-color-swatch {
-    border: 0;
-    border-radius: 8px;
-}
-
-.color-control input[type="color"]::-moz-color-swatch {
-    border: 0;
-    border-radius: 8px;
-}
-
-.color-control input[type="color"]:focus-visible {
-    box-shadow: 0 0 0 4px var(--neo-blue-glow);
-    outline: none;
 }
 
 .settings-save-row {

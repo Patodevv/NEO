@@ -7,6 +7,8 @@ if (!preg_match('/^neo_v2_test_\d+$/', $bancoTeste)) {
 
 putenv('DB_NAME=' . $bancoTeste);
 putenv('DB_AUTO_CREATE=true');
+putenv('DB_AUTO_MIGRATE=true');
+session_save_path(sys_get_temp_dir());
 
 $pdo = null;
 $falhas = [];
@@ -21,9 +23,11 @@ $ok = static function (bool $condicao, string $mensagem) use (&$falhas): void {
 
 try {
     require dirname(__DIR__) . '/config/db.php';
+    require_once dirname(__DIR__) . '/includes/security.php';
     require_once dirname(__DIR__) . '/services/gamification.php';
     require_once dirname(__DIR__) . '/services/store.php';
-    require_once dirname(__DIR__) . '/services/ai_quality.php';
+    require_once dirname(__DIR__) . '/services/ai.php';
+    require_once dirname(__DIR__) . '/services/content.php';
 
     $materiaId = (int)$pdo->query("SELECT id FROM materias WHERE nome = 'Matemática'")->fetchColumn();
     $hash = password_hash('senha-segura', PASSWORD_DEFAULT);
@@ -38,21 +42,23 @@ try {
     $preferenciasTeste = ['Tecnologia', 'Ciência'];
     $pdo->prepare("
         UPDATE users
-        SET sobrenome = ?, idade = ?, genero = ?, gostos = ?, preferencias_json = ?, onboarding_concluido_em = NOW()
+        SET sobrenome = ?, idade = ?, genero = ?, gostos = ?, preferencias_json = ?, dias_estudo_semana = ?, onboarding_concluido_em = NOW()
         WHERE id = ?
     ")->execute([
         'Onboarding', 16, 'nao_binario', implode(', ', $preferenciasTeste),
-        json_encode($preferenciasTeste, JSON_UNESCAPED_UNICODE), $userId,
+        json_encode($preferenciasTeste, JSON_UNESCAPED_UNICODE), 3, $userId,
     ]);
-    $perfilOnboarding = $pdo->query("SELECT sobrenome, idade, genero, gostos, preferencias_json, onboarding_concluido_em FROM users WHERE id = {$userId}")->fetch(PDO::FETCH_ASSOC);
+    $perfilOnboarding = $pdo->query("SELECT sobrenome, idade, genero, gostos, preferencias_json, dias_estudo_semana, onboarding_concluido_em FROM users WHERE id = {$userId}")->fetch(PDO::FETCH_ASSOC);
     $ok(
         $perfilOnboarding['sobrenome'] === 'Onboarding'
         && (int)$perfilOnboarding['idade'] === 16
         && $perfilOnboarding['genero'] === 'nao_binario'
         && json_decode((string)$perfilOnboarding['preferencias_json'], true) === $preferenciasTeste
         && str_contains((string)$perfilOnboarding['gostos'], 'Tecnologia')
+        && (int)$perfilOnboarding['dias_estudo_semana'] === 3
+        && metaOfensivaSemanalUsuario($pdo, $userId) === 3
         && !empty($perfilOnboarding['onboarding_concluido_em']),
-        'onboarding persiste perfil e preferências usadas pela IA'
+        'onboarding persiste perfil, preferências e meta semanal'
     );
 
     $pdo->prepare("INSERT INTO conteudos (user_id,materia_id,titulo,corpo,dificuldade) VALUES (?,?,?,?,?)")
@@ -112,6 +118,23 @@ try {
     $saldoAposSegunda = (int)$pdo->query("SELECT cossas FROM users WHERE id = {$userId}")->fetchColumn();
     $ok($resultado1['recompensado'] && !$resultado2['recompensado'] && $saldoAposPrimeira === $saldoAposSegunda, 'a mesma lista de questões recompensa apenas uma vez');
     $ok((int)$resultado1['ofensiva']['recompensa'] === 50 && (int)$resultado2['ofensiva']['recompensa'] === 0, 'ofensiva semanal exige três dias e recompensa uma única vez');
+
+    $pdo->prepare('UPDATE users SET dias_estudo_semana = 4 WHERE id = ?')->execute([$userEstoqueId]);
+    foreach ($datasApoio as $data) {
+        $pdo->prepare("INSERT IGNORE INTO atividades_estudo_diarias (user_id,data_atividade,materia_id,atividade_tipo) VALUES (?,?,?,'teste_meta')")
+            ->execute([$userEstoqueId, $data, $materiaId]);
+    }
+    $pdo->beginTransaction();
+    $ofensivaPersonalizada = registrarAtividadeSemanal($pdo, $userEstoqueId, $materiaId, 'meta-personalizada');
+    $pdo->commit();
+    $ok(
+        (int)$ofensivaPersonalizada['meta'] === 4
+        && (int)$ofensivaPersonalizada['dias_ativos'] === 3
+        && empty($ofensivaPersonalizada['concluida'])
+        && (int)$ofensivaPersonalizada['recompensa'] === 0,
+        'ofensiva respeita a meta semanal escolhida pelo usuário'
+    );
+
     $ok((int)$pdo->query("SELECT COUNT(*) FROM respostas_historico")->fetchColumn() === 10, 'respostas detalhadas são preservadas em todas as tentativas');
     $ok((int)$pdo->query("SELECT xp_total FROM progresso_materias WHERE user_id={$userId} AND materia_id={$materiaId}")->fetchColumn() > 0, 'EXP é registrado por matéria');
     $ok($pdo->query("SELECT status FROM conteudos WHERE id={$conteudoId}")->fetchColumn() === 'Concluído', 'desempenho suficiente conclui o conteúdo');
@@ -171,6 +194,41 @@ try {
     $listaDuplicada = array_fill(0, 5, $duplicada);
     $ok((bool)problemasQuestoesLocal($listaDuplicada), 'validador rejeita alternativas e enunciados duplicados');
     $ok(dicaRevelaResposta('A alternativa correta é A.', 'A', 'Somar o mesmo valor nos dois lados.'), 'validador impede dica que revela o gabarito');
+
+    $resultadoControlado = executarOperacaoControladaIA(
+        $pdo,
+        $userId,
+        'teste',
+        'integracao',
+        static fn(): int => 42,
+        'teste-integracao'
+    );
+    $statusOperacao = $pdo->query("SELECT status FROM requisicoes_ia WHERE user_id={$userId} ORDER BY id DESC LIMIT 1")->fetchColumn();
+    $ok($resultadoControlado === 42 && $statusOperacao === 'concluida', 'operações de IA são registradas e finalizadas pelo controle de uso');
+
+    $_SERVER['REMOTE_ADDR'] = '127.0.0.77';
+    limparFalhasLogin($pdo, 'usuario', 'bloqueio@example.test');
+    for ($i = 0; $i < 5; $i++) {
+        registrarFalhaLogin($pdo, 'usuario', 'bloqueio@example.test');
+    }
+    $_SESSION = [];
+    $bloqueadoSemSessao = loginTemporariamenteBloqueado($pdo, 'usuario', 'bloqueio@example.test');
+    limparFalhasLogin($pdo, 'usuario', 'bloqueio@example.test');
+    $ok($bloqueadoSemSessao, 'limite de login persiste mesmo quando a sessão é apagada');
+
+    $historicosAntesArquivo = (int)$pdo->query("SELECT COUNT(*) FROM historico WHERE conteudo_id={$conteudoId}")->fetchColumn();
+    $questoesTotaisAntesArquivo = (int)$pdo->query("SELECT questoes_total FROM progresso_materias WHERE user_id={$userId} AND materia_id={$materiaId}")->fetchColumn();
+    $arquivado = arquivarConteudo($pdo, $userId, $materiaId, $conteudoId);
+    $historicosDepoisArquivo = (int)$pdo->query("SELECT COUNT(*) FROM historico WHERE conteudo_id={$conteudoId}")->fetchColumn();
+    $questoesTotaisDepoisArquivo = (int)$pdo->query("SELECT questoes_total FROM progresso_materias WHERE user_id={$userId} AND materia_id={$materiaId}")->fetchColumn();
+    $removidoEm = $pdo->query("SELECT removido_em FROM conteudos WHERE id={$conteudoId}")->fetchColumn();
+    $questoesRestantes = (int)$pdo->query("SELECT COUNT(*) FROM questoes WHERE conteudo_id={$conteudoId}")->fetchColumn();
+    $ok(
+        $arquivado && !empty($removidoEm) && $questoesRestantes === 0
+        && $historicosAntesArquivo === $historicosDepoisArquivo
+        && $questoesTotaisAntesArquivo === $questoesTotaisDepoisArquivo,
+        'arquivar livro preserva histórico, recompensas e progresso acumulado'
+    );
 
     $ok(!$falhas, 'todos os cenários de integração passaram');
 } finally {

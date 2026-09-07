@@ -51,7 +51,9 @@ foreach ($chavesTitulo as $chaveTitulo) {
 }
 
 $diasOfensivaTopbar = 0;
-$metaOfensivaTopbar = defined('NEO_DIAS_PARA_OFENSIVA_SEMANAL') ? NEO_DIAS_PARA_OFENSIVA_SEMANAL : 3;
+$metaOfensivaTopbar = isset($pdo, $usuario['id']) && function_exists('metaOfensivaSemanalUsuario')
+    ? metaOfensivaSemanalUsuario($pdo, (int)$usuario['id'])
+    : 3;
 if (isset($pdo, $usuario['id']) && function_exists('inicioSemanaNeo') && function_exists('tabelaExiste') && tabelaExiste($pdo, 'ofensivas_semanais')) {
     $stmtOfensivaTopbar = $pdo->prepare("SELECT dias_ativos FROM ofensivas_semanais WHERE user_id = ? AND semana_inicio = ?");
     $stmtOfensivaTopbar->execute([(int)$usuario['id'], inicioSemanaNeo()->format('Y-m-d')]);

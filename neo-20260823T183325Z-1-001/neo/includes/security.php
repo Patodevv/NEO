@@ -56,27 +56,47 @@ function exigirPostSeguro(): void
     validarCsrf();
 }
 
-function loginTemporariamenteBloqueado(string $escopo): bool
+function hashIdentificadorLogin(string $valor): string
 {
-    $dados = $_SESSION['limites_login'][$escopo] ?? null;
-    return is_array($dados)
-        && (int)($dados['tentativas'] ?? 0) >= 5
-        && (int)($dados['bloqueado_ate'] ?? 0) > time();
+    return hash('sha256', mb_strtolower(trim($valor)));
 }
 
-function registrarFalhaLogin(string $escopo): void
+function hashIpLogin(): string
 {
-    $dados = $_SESSION['limites_login'][$escopo] ?? ['tentativas' => 0, 'bloqueado_ate' => 0];
-    $dados['tentativas'] = (int)$dados['tentativas'] + 1;
-    if ($dados['tentativas'] >= 5) {
-        $dados['bloqueado_ate'] = time() + 300;
-    }
-    $_SESSION['limites_login'][$escopo] = $dados;
+    return hash('sha256', (string)($_SERVER['REMOTE_ADDR'] ?? 'desconhecido'));
 }
 
-function limparFalhasLogin(string $escopo): void
+function loginTemporariamenteBloqueado(PDO $pdo, string $escopo, string $identificador): bool
 {
-    unset($_SESSION['limites_login'][$escopo]);
+    $stmt = $pdo->prepare("
+        SELECT
+            SUM(identificador_hash = ?) AS tentativas_identificador,
+            SUM(ip_hash = ?) AS tentativas_ip
+        FROM tentativas_login
+        WHERE escopo = ? AND criado_em >= NOW() - INTERVAL 15 MINUTE
+    ");
+    $stmt->execute([hashIdentificadorLogin($identificador), hashIpLogin(), $escopo]);
+    $tentativas = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+    return (int)($tentativas['tentativas_identificador'] ?? 0) >= 5
+        || (int)($tentativas['tentativas_ip'] ?? 0) >= 20;
+}
+
+function registrarFalhaLogin(PDO $pdo, string $escopo, string $identificador): void
+{
+    $pdo->prepare("
+        INSERT INTO tentativas_login (escopo, identificador_hash, ip_hash)
+        VALUES (?, ?, ?)
+    ")->execute([$escopo, hashIdentificadorLogin($identificador), hashIpLogin()]);
+    $pdo->prepare('DELETE FROM tentativas_login WHERE criado_em < NOW() - INTERVAL 1 DAY')->execute();
+}
+
+function limparFalhasLogin(PDO $pdo, string $escopo, string $identificador): void
+{
+    $pdo->prepare("
+        DELETE FROM tentativas_login
+        WHERE escopo = ? AND identificador_hash = ?
+    ")->execute([$escopo, hashIdentificadorLogin($identificador)]);
 }
 
 function renovarSessaoAutenticada(): void
@@ -84,4 +104,3 @@ function renovarSessaoAutenticada(): void
     session_regenerate_id(true);
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
-

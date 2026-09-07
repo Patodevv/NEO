@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validarCsrf();
     $email = trim($_POST['email'] ?? '');
     $senha = $_POST['senha'] ?? '';
-    if (loginTemporariamenteBloqueado('usuario')) {
+    if (loginTemporariamenteBloqueado($pdo, 'usuario', $email)) {
         $erro = 'Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.';
     } elseif ($email === '' || $senha === '') {
         $erro = 'Preencha e-mail e senha.';
@@ -20,14 +20,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($user && password_verify($senha, $user['senha'])) {
             renovarSessaoAutenticada();
-            limparFalhasLogin('usuario');
+            limparFalhasLogin($pdo, 'usuario', $email);
             $_SESSION['user_id'] = (int)$user['id'];
             $_SESSION['neo_intro_login'] = true;
             $pdo->prepare("UPDATE users SET ultimo_login_em = NOW() WHERE id = ?")->execute([(int)$user['id']]);
             header('Location: index.php');
             exit;
         } else {
-            registrarFalhaLogin('usuario');
+            registrarFalhaLogin($pdo, 'usuario', $email);
             $erro = 'E-mail ou senha inválidos.';
         }
     }

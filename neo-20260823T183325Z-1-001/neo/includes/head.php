@@ -1,5 +1,4 @@
 <?php
-$corSite = (!empty($usuario['cor'])) ? $usuario['cor'] : '#0878ff';
 $assetVersion = function (string $arquivo): string {
     $caminho = __DIR__ . '/../' . $arquivo;
     return is_file($caminho) ? (string)filemtime($caminho) : (string)time();
@@ -33,11 +32,6 @@ if ($mostrarRostoNeo) {
         <link rel="stylesheet" href="static/pages/<?= htmlspecialchars($cssPagina) ?>.css?v=<?= $assetVersion('static/pages/' . $cssPagina . '.css') ?>">
     <?php endforeach; ?>
 
-    <style>
-        :root {
-            --primary: <?= htmlspecialchars($corSite) ?>;
-        }
-    </style>
     <?php if (!empty($usaSidebar)): ?>
     <script>
         (function () {

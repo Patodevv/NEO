@@ -12,34 +12,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'foto') 
     if (!$arquivo || $arquivo['error'] !== UPLOAD_ERR_OK) {
         $erro = 'Escolha uma imagem para usar no perfil.';
     } else {
-        $permitidos = [
-            'image/jpeg' => 'jpg',
-            'image/png' => 'png',
-            'image/webp' => 'webp',
-            'image/gif' => 'gif',
-        ];
-        $mime = mime_content_type($arquivo['tmp_name']);
-
-        if (!isset($permitidos[$mime])) {
-            $erro = 'Use uma imagem JPG, PNG, WEBP ou GIF.';
-        } elseif ($arquivo['size'] > 2 * 1024 * 1024) {
-            $erro = 'A imagem precisa ter no máximo 2 MB.';
-        } else {
-            $pasta = __DIR__ . '/static/uploads/perfis';
-            if (!is_dir($pasta)) {
-                mkdir($pasta, 0775, true);
-            }
-
-            $nomeArquivo = 'user_' . (int)$usuario['id'] . '_' . bin2hex(random_bytes(12)) . '.' . $permitidos[$mime];
-            $destino = $pasta . '/' . $nomeArquivo;
-            if (move_uploaded_file($arquivo['tmp_name'], $destino)) {
-                $caminhoPublico = 'static/uploads/perfis/' . $nomeArquivo;
+        $fotoAnterior = (string)($usuario['foto'] ?? '');
+        $caminhoPublico = null;
+        try {
+            $caminhoPublico = salvarImagemUploadSeguro($arquivo, 'perfis', 'user_' . (int)$usuario['id'] . '_');
+            try {
                 $stmt = $pdo->prepare("UPDATE users SET foto = ? WHERE id = ?");
                 $stmt->execute([$caminhoPublico, $usuario['id']]);
-                $usuario = usuarioAtual($pdo);
-            } else {
-                $erro = 'Não foi possível salvar a foto agora.';
+            } catch (Throwable $e) {
+                removerImagemUpload($caminhoPublico, 'perfis');
+                throw $e;
             }
+            removerImagemUpload($fotoAnterior, 'perfis');
+            $usuario = usuarioAtual($pdo);
+        } catch (DomainException $e) {
+            $erro = $e->getMessage();
+        } catch (Throwable $e) {
+            error_log('[NEO][perfil-foto] ' . $e->getMessage());
+            $erro = 'Não foi possível salvar a foto agora.';
         }
     }
 }

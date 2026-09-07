@@ -23,6 +23,19 @@
     gap: 42px 34px;
 }
 
+.subject-form {
+    display: contents;
+}
+
+button.subject {
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+}
+
 .subject {
     min-width: 0;
     display: grid;

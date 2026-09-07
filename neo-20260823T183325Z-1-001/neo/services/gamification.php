@@ -5,6 +5,19 @@ require_once __DIR__ . '/economy.php';
 const NEO_DIAS_PARA_OFENSIVA_SEMANAL = 3;
 const NEO_LIMITE_RECOMPENSAS_CONTEUDO_DIA = 3;
 
+function metaOfensivaSemanalUsuario(PDO $pdo, int $userId): int
+{
+    if ($userId <= 0 || (function_exists('colunaExiste') && !colunaExiste($pdo, 'users', 'dias_estudo_semana'))) {
+        return NEO_DIAS_PARA_OFENSIVA_SEMANAL;
+    }
+
+    $stmt = $pdo->prepare('SELECT dias_estudo_semana FROM users WHERE id = ?');
+    $stmt->execute([$userId]);
+    $meta = (int)($stmt->fetchColumn() ?: NEO_DIAS_PARA_OFENSIVA_SEMANAL);
+
+    return max(1, min(7, $meta));
+}
+
 function xpParaProximoNivel(int $nivel): int
 {
     return max(100, $nivel * 100);
@@ -147,6 +160,7 @@ function registrarAtividadeSemanal(PDO $pdo, int $userId, int $materiaId, string
     $hoje = new DateTimeImmutable('today');
     $semana = inicioSemanaNeo($hoje);
     $semanaTexto = $semana->format('Y-m-d');
+    $metaSemanal = metaOfensivaSemanalUsuario($pdo, $userId);
 
     $stmt = $pdo->prepare("
         INSERT IGNORE INTO atividades_estudo_diarias
@@ -171,8 +185,8 @@ function registrarAtividadeSemanal(PDO $pdo, int $userId, int $materiaId, string
     $stmt->execute([$userId, $semanaTexto]);
     $registro = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    $resultado = ['dias_ativos' => $diasAtivos, 'concluida' => !empty($registro['concluida_em']), 'recompensa' => 0, 'sequencia' => (int)($registro['numero_sequencia'] ?? 0)];
-    if ($diasAtivos < NEO_DIAS_PARA_OFENSIVA_SEMANAL || !empty($registro['concluida_em'])) {
+    $resultado = ['dias_ativos' => $diasAtivos, 'meta' => $metaSemanal, 'concluida' => !empty($registro['concluida_em']), 'recompensa' => 0, 'sequencia' => (int)($registro['numero_sequencia'] ?? 0)];
+    if ($diasAtivos < $metaSemanal || !empty($registro['concluida_em'])) {
         return $resultado;
     }
 
@@ -189,7 +203,7 @@ function registrarAtividadeSemanal(PDO $pdo, int $userId, int $materiaId, string
 
     $transacao = alterarSaldoCossas(
         $pdo, $userId, $recompensa, 'ofensiva_semanal', 'semana', $semanaTexto,
-        "ofensiva:{$semanaTexto}", ['sequencia' => $sequencia, 'dias_ativos' => $diasAtivos]
+        "ofensiva:{$semanaTexto}", ['sequencia' => $sequencia, 'dias_ativos' => $diasAtivos, 'meta' => $metaSemanal]
     );
 
     $pdo->prepare("
@@ -203,7 +217,7 @@ function registrarAtividadeSemanal(PDO $pdo, int $userId, int $materiaId, string
         WHERE user_id = ? AND semana_inicio = ?
     ")->execute([$sequencia, $recompensa, $transacao['id'], $userId, $semanaTexto]);
 
-    return ['dias_ativos' => $diasAtivos, 'concluida' => true, 'recompensa' => $recompensa, 'sequencia' => $sequencia];
+    return ['dias_ativos' => $diasAtivos, 'meta' => $metaSemanal, 'concluida' => true, 'recompensa' => $recompensa, 'sequencia' => $sequencia];
 }
 
 function registrarResultadoAtividade(
@@ -372,4 +386,3 @@ function registrarAjudaQuestao(PDO $pdo, int $userId, int $questaoId, int $nivel
         throw $e;
     }
 }
-

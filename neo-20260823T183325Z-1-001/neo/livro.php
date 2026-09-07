@@ -12,7 +12,7 @@ $stmt = $pdo->prepare("
     SELECT c.*, m.nome AS materia_nome, m.id AS materia_id
     FROM conteudos c
     JOIN materias m ON m.id = c.materia_id
-    WHERE c.id = ? AND c.user_id = ?
+    WHERE c.id = ? AND c.user_id = ? AND c.removido_em IS NULL
 ");
 $stmt->execute([$conteudoId, $usuario['id']]);
 $conteudo = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -20,7 +20,7 @@ if (!$conteudo) {
     header('Location: materias.php');
     exit;
 }
-$pdo->prepare("UPDATE conteudos SET status = 'Em andamento' WHERE id = ? AND user_id = ? AND status <> 'Concluído'")
+$pdo->prepare("UPDATE conteudos SET status = 'Em andamento' WHERE id = ? AND user_id = ? AND removido_em IS NULL AND status <> 'Concluído'")
     ->execute([$conteudoId, $usuario['id']]);
 $conteudo['status'] = $conteudo['status'] === 'Concluído' ? 'Concluído' : 'Em andamento';
 $stmtAcesso = $pdo->prepare("
@@ -47,32 +47,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'gerar_l
     validarCsrf();
     try {
         $nivelAdaptativo = dificuldadeAdaptativa($pdo, (int)$usuario['id'], (int)$conteudo['materia_id']);
-        $novoLivro = gerarLivro(
-            $conteudo['materia_nome'],
-            $conteudo['titulo'],
-            trim($usuario['gostos'] ?? ''),
-            $nivelAdaptativo
+        executarOperacaoControladaIA(
+            $pdo,
+            (int)$usuario['id'],
+            'livro',
+            $conteudo['materia_nome'] . ':' . $conteudo['titulo'],
+            static function () use ($pdo, $usuario, $conteudo, $conteudoId, $nivelAdaptativo): void {
+                $novoLivro = gerarLivro(
+                    $conteudo['materia_nome'],
+                    $conteudo['titulo'],
+                    trim($usuario['gostos'] ?? ''),
+                    $nivelAdaptativo
+                );
+                $novoTitulo = limparMarcacaoIA((string)($novoLivro['titulo'] ?? ''));
+                $novoCorpo = limparMarcacaoIA((string)($novoLivro['corpo'] ?? ''));
+                if ($novoCorpo === '') {
+                    throw new Exception('A IA nao retornou um livro valido.');
+                }
+                registrarAuditoriaIA($pdo, (int)$usuario['id'], 'livro', $conteudo['materia_nome'] . ':' . $conteudo['titulo']);
+
+                $pdo->beginTransaction();
+                try {
+                    $stmtUpdate = $pdo->prepare("UPDATE conteudos SET titulo = ?, corpo = ?, ai_provider = ?, ai_model = ?, status = ? WHERE id = ? AND user_id = ? AND removido_em IS NULL");
+                    $stmtUpdate->execute([
+                        $novoTitulo !== '' ? $novoTitulo : $conteudo['titulo'],
+                        $novoCorpo,
+                        trim((string)($novoLivro['_ai_provider'] ?? 'Local')),
+                        trim((string)($novoLivro['_ai_model'] ?? 'fallback')),
+                        'Livro gerado pela IA',
+                        $conteudoId,
+                        $usuario['id']
+                    ]);
+                    if ($stmtUpdate->rowCount() !== 1) {
+                        throw new DomainException('Este livro não está mais disponível.');
+                    }
+                    $pdo->prepare("DELETE FROM questoes WHERE conteudo_id = ? AND user_id = ?")
+                        ->execute([$conteudoId, $usuario['id']]);
+                    $pdo->commit();
+                } catch (Throwable $e) {
+                    if ($pdo->inTransaction()) {
+                        $pdo->rollBack();
+                    }
+                    throw $e;
+                }
+            },
+            'conteudo:' . $conteudoId
         );
-        $novoTitulo = limparMarcacaoIA((string)($novoLivro['titulo'] ?? ''));
-        $novoCorpo = limparMarcacaoIA((string)($novoLivro['corpo'] ?? ''));
-        if ($novoCorpo === '') {
-            throw new Exception('A IA nao retornou um livro valido.');
-        }
-        registrarAuditoriaIA($pdo, (int)$usuario['id'], 'livro', $conteudo['materia_nome'] . ':' . $conteudo['titulo']);
-        $pdo->beginTransaction();
-        $stmtUpdate = $pdo->prepare("UPDATE conteudos SET titulo = ?, corpo = ?, ai_provider = ?, ai_model = ?, status = ? WHERE id = ? AND user_id = ?");
-        $stmtUpdate->execute([
-            $novoTitulo !== '' ? $novoTitulo : $conteudo['titulo'],
-            $novoCorpo,
-            trim((string)($novoLivro['_ai_provider'] ?? 'Local')),
-            trim((string)($novoLivro['_ai_model'] ?? 'fallback')),
-            'Livro gerado pela IA',
-            $conteudoId,
-            $usuario['id']
-        ]);
-        $stmtDelete = $pdo->prepare("DELETE FROM questoes WHERE conteudo_id = ? AND user_id = ?");
-        $stmtDelete->execute([$conteudoId, $usuario['id']]);
-        $pdo->commit();
         $stmt->execute([$conteudoId, $usuario['id']]);
         $conteudo = $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (Exception $e) {

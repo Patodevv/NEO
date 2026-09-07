@@ -5,7 +5,7 @@ require __DIR__ . '/includes/materia_icon.php';
 exigirLogin();
 $usuario = usuarioAtual($pdo);
 $stmt = $pdo->prepare("
-    SELECT h.*, c.titulo AS conteudo_titulo, m.nome AS materia_nome
+    SELECT h.*, c.titulo AS conteudo_titulo, c.removido_em AS conteudo_removido_em, m.nome AS materia_nome
     FROM historico h
     JOIN conteudos c ON c.id = h.conteudo_id
     JOIN materias m ON m.id = c.materia_id
@@ -86,11 +86,13 @@ require __DIR__ . '/includes/head.php';
                         <small><?= (int)$h['acertos'] ?> de <?= (int)$h['total'] ?></small>
                     </span>
 
-                    <a href="livro.php?conteudo_id=<?= (int)$h['conteudo_id'] ?>" class="neo-icon-button" aria-label="Rever <?= htmlspecialchars($h['conteudo_titulo']) ?>" title="Rever conteúdo">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M5 12h14"></path><path d="m14 7 5 5-5 5"></path>
-                        </svg>
-                    </a>
+                    <?php if (empty($h['conteudo_removido_em'])): ?>
+                        <a href="livro.php?conteudo_id=<?= (int)$h['conteudo_id'] ?>" class="neo-icon-button" aria-label="Rever <?= htmlspecialchars($h['conteudo_titulo']) ?>" title="Rever conteúdo">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M5 12h14"></path><path d="m14 7 5 5-5 5"></path>
+                            </svg>
+                        </a>
+                    <?php endif; ?>
                 </article>
             <?php endforeach; ?>
         </section>

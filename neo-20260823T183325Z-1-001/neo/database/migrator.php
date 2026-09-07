@@ -44,6 +44,21 @@ function executarMigracoes(PDO $pdo): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
 
+    $arquivos = glob(__DIR__ . '/migrations/*.php') ?: [];
+    sort($arquivos, SORT_STRING);
+    $aplicadas = array_fill_keys($pdo->query("SELECT versao FROM schema_migrations")->fetchAll(PDO::FETCH_COLUMN), true);
+    $temPendente = false;
+    foreach ($arquivos as $arquivo) {
+        if (!isset($aplicadas[basename($arquivo, '.php')])) {
+            $temPendente = true;
+            break;
+        }
+    }
+
+    if (!$temPendente) {
+        return;
+    }
+
     $lock = (int)$pdo->query("SELECT GET_LOCK('neo_schema_migrations', 15)")->fetchColumn();
 
     if ($lock !== 1) {
@@ -52,8 +67,6 @@ function executarMigracoes(PDO $pdo): void
 
     try {
         $aplicadas = array_fill_keys($pdo->query("SELECT versao FROM schema_migrations")->fetchAll(PDO::FETCH_COLUMN), true);
-        $arquivos = glob(__DIR__ . '/migrations/*.php') ?: [];
-        sort($arquivos, SORT_STRING);
         $registrar = $pdo->prepare("INSERT INTO schema_migrations (versao) VALUES (?)");
 
         foreach ($arquivos as $arquivo) {
@@ -76,4 +89,3 @@ function executarMigracoes(PDO $pdo): void
         $pdo->query("SELECT RELEASE_LOCK('neo_schema_migrations')");
     }
 }
-

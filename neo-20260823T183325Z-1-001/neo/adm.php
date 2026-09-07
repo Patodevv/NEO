@@ -11,6 +11,7 @@ $produtoEditar = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validarCsrf();
     $acao = $_POST['acao'] ?? '';
+    $imagemNova = null;
 
     try {
         if ($acao === 'salvar_usuario') {
@@ -68,31 +69,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new DomainException('Produtos não permanentes precisam de uma data final para expiração do item.');
             }
 
-            $imagem = salvarImagemProduto($_FILES['imagem'] ?? []);
+            $imagemNova = salvarImagemProduto($_FILES['imagem'] ?? []);
             if ($id > 0) {
                 $pdo->beginTransaction();
-                $stmt = $pdo->prepare("SELECT codigo FROM produtos WHERE id = ? FOR UPDATE");
+                $stmt = $pdo->prepare("SELECT codigo, imagem FROM produtos WHERE id = ? FOR UPDATE");
                 $stmt->execute([$id]);
-                $codigoAnterior = $stmt->fetchColumn();
-                if ($codigoAnterior === false) {
+                $produtoAnterior = $stmt->fetch(PDO::FETCH_ASSOC);
+                if (!$produtoAnterior) {
                     throw new DomainException('Produto não encontrado.');
                 }
+                $codigoAnterior = (string)$produtoAnterior['codigo'];
                 $stmt = $pdo->prepare("
                     UPDATE produtos SET codigo=?, nome=?, descricao=?, preco_cossas=?, categoria=?, classe_visual=?, estoque=?, ativo=?, temporario=?, permanente=?, disponivel_de=?, disponivel_ate=?, limite_por_usuario=?, imagem=COALESCE(?, imagem), removido_em=NULL
                     WHERE id=?
                 ");
-                $stmt->execute([$codigo, $nome, $descricao ?: null, $preco, $categoria, $classe, $estoque, $ativo, $temporario, $permanente, $de, $ate, $limite, $imagem, $id]);
+                $stmt->execute([$codigo, $nome, $descricao ?: null, $preco, $categoria, $classe, $estoque, $ativo, $temporario, $permanente, $de, $ate, $limite, $imagemNova, $id]);
                 if ($codigoAnterior !== $codigo) {
                     $pdo->prepare("UPDATE compras_loja SET item_id = ? WHERE produto_id = ?")->execute([$codigo, $id]);
                     $pdo->prepare("UPDATE users SET decoracao_perfil = ? WHERE decoracao_perfil = ?")->execute([$codigo, $codigoAnterior]);
                 }
                 $pdo->commit();
+                if ($imagemNova !== null) {
+                    removerImagemUpload((string)($produtoAnterior['imagem'] ?? ''), 'produtos');
+                }
             } else {
                 $stmt = $pdo->prepare("
                     INSERT INTO produtos (codigo,nome,descricao,preco_cossas,categoria,classe_visual,estoque,ativo,temporario,permanente,disponivel_de,disponivel_ate,limite_por_usuario,imagem)
                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 ");
-                $stmt->execute([$codigo, $nome, $descricao ?: null, $preco, $categoria, $classe, $estoque, $ativo, $temporario, $permanente, $de, $ate, $limite, $imagem]);
+                $stmt->execute([$codigo, $nome, $descricao ?: null, $preco, $categoria, $classe, $estoque, $ativo, $temporario, $permanente, $de, $ate, $limite, $imagemNova]);
             }
         } elseif ($acao === 'remover_produto') {
             $id = (int)($_POST['produto_id'] ?? 0);
@@ -101,6 +106,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
+        }
+        if ($imagemNova !== null) {
+            removerImagemUpload($imagemNova, 'produtos');
         }
         if ($e instanceof PDOException && $e->getCode() === '23000') {
             $erro = 'Já existe um registro com esse e-mail ou código.';
@@ -128,7 +136,7 @@ $produtos = $pdo->query("SELECT * FROM produtos ORDER BY removido_em IS NOT NULL
 
 $usuarios = $pdo->query("
     SELECT u.*,
-        (SELECT COUNT(*) FROM conteudos c WHERE c.user_id = u.id) AS total_conteudos,
+        (SELECT COUNT(*) FROM conteudos c WHERE c.user_id = u.id AND c.removido_em IS NULL) AS total_conteudos,
         (SELECT COUNT(*) FROM historico h WHERE h.user_id = u.id) AS total_tentativas
     FROM users u
     ORDER BY u.criado_em DESC
