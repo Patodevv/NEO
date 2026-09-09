@@ -3,12 +3,12 @@
     top: 0;
     left: 0;
     right: 0;
-    min-height: 54px;
+    min-height: clamp(46px, 5vw, 54px);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    padding: 0 22px 0 74px;
+    gap: clamp(6px, 1.2vw, 16px);
+    padding: 0 clamp(8px, 2vw, 22px) 0 clamp(56px, 6.8vw, 74px);
     border-bottom: 1px solid rgba(120, 145, 255, 0.16);
     background: rgba(18, 18, 18, 0.94);
     box-shadow: 0 4px 10px rgba(0, 0, 0, .1);
@@ -259,26 +259,26 @@
     z-index: 2;
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-left: 26px;
+    gap: clamp(4px, 1vw, 8px);
+    margin-left: clamp(10px, 2vw, 26px);
     margin-right: auto;
 }
 
 .side-stat {
-    min-width: 58px;
-    height: 34px;
-    min-height: 34px;
+    min-width: clamp(35px, 8vw, 58px);
+    height: clamp(28px, 4.2vw, 34px);
+    min-height: clamp(28px, 4.2vw, 34px);
     box-sizing: border-box;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 7px;
-    padding: 4px 12px;
+    gap: clamp(4px, 1.2vw, 7px);
+    padding: 4px clamp(7px, 1.6vw, 12px);
     border: 1px solid rgba(255, 255, 255, .08);
     border-radius: 999px;
     background: rgba(18, 18, 18, .82);
     color: #fff;
-    font-size: 14px;
+    font-size: clamp(11px, 2.8vw, 14px);
     font-weight: 900;
     line-height: 1;
     white-space: nowrap;
@@ -287,9 +287,9 @@
 
 .blue-flame {
     position: relative;
-    width: 25px;
-    height: 28px;
-    flex: 0 0 25px;
+    width: clamp(19px, 4.4vw, 25px);
+    height: clamp(22px, 4.8vw, 28px);
+    flex: 0 0 clamp(19px, 4.4vw, 25px);
     display: block;
     overflow: visible;
     filter: drop-shadow(0 0 8px rgba(50, 157, 255, .48));
@@ -485,11 +485,11 @@
 .user-heading {
     position: absolute;
     left: 50%;
-    top: 31px;
+    top: clamp(23px, 3.1vw, 31px);
     display: flex;
     align-items: center;
     justify-content: center;
-    max-width: min(52vw, 620px);
+    max-width: min(46vw, 620px);
     text-align: center;
     transform: translate(-50%, -50%);
     pointer-events: none;
@@ -502,7 +502,7 @@
 
 .page-title {
     color: var(--btn-icon);
-    font-size: 25px;
+    font-size: clamp(16px, 2.4vw, 25px);
     font-weight: 700;
     letter-spacing: .3px;
     line-height: 1;
@@ -514,20 +514,20 @@
 
 .page-title-image {
     display: block;
-    height: 24px;
+    height: clamp(16px, 2.4vw, 24px);
     width: auto;
-    max-width: none;
+    max-width: 100%;
     object-fit: contain;
     object-position: center;
 }
 
 .page-title-loja,
 .page-title-perfil {
-    height: 18px;
+    height: clamp(13px, 1.9vw, 18px);
 }
 
 .page-title-configuracoes {
-    height: 26px;
+    height: clamp(18px, 2.5vw, 26px);
 }
 
 .topbar-actions {
@@ -536,23 +536,55 @@
     margin-left: auto;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: clamp(5px, 1vw, 10px);
+}
+
+.topbar-mobile-test {
+    --icon-star-size: clamp(21px, 5.8vw, 26px);
+    position: relative;
+    width: clamp(28px, 7.6vw, 34px);
+    height: clamp(28px, 7.6vw, 34px);
+    flex: 0 0 clamp(28px, 7.6vw, 34px);
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--neo-blue);
+    border-radius: clamp(11px, 3vw, 14px);
+    background: var(--btn-bg);
+    color: var(--btn-icon);
+    isolation: isolate;
+    transition: color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+.topbar-mobile-test:hover,
+.topbar-mobile-test:focus-visible,
+.topbar-mobile-test.is-active {
+    color: var(--btn-icon-hover);
+    background: color-mix(in srgb, var(--neo-blue) 22%, transparent);
+    box-shadow: 0 0 0 4px var(--neo-blue-glow);
+    outline: none;
+    transform: translateY(-1px) scale(1.03);
+}
+
+.topbar-mobile-test > svg:not(.icon-hover-star) {
+    width: clamp(15px, 4.4vw, 18px);
+    height: clamp(15px, 4.4vw, 18px);
 }
 
 .cossas-pill {
-    height: 34px;
-    min-height: 34px;
+    height: clamp(28px, 7.6vw, 34px);
+    min-height: clamp(28px, 7.6vw, 34px);
     box-sizing: border-box;
     border-radius: 999px;
-    padding: 6px 14px;
+    padding: 6px clamp(9px, 1.8vw, 14px);
     background: rgba(18, 18, 18, .82);
     border: 1px solid rgba(255, 255, 255, .08);
     color: #fff;
     display: inline-flex;
     align-items: center;
-    gap: 7px;
+    gap: clamp(4px, 1.2vw, 7px);
     text-decoration: none;
-    font-size: 14px;
+    font-size: clamp(12px, 2.5vw, 14px);
     font-weight: 800;
     transition: color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s ease;
 }
@@ -569,14 +601,22 @@
     height: 14px;
 }
 
+.cossas-pill-value {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
 .topbar .profile {
-    width: 34px;
-    height: 34px;
-    flex: 0 0 34px;
-    font-size: 14px;
-    border-radius: 14px;
+    width: clamp(28px, 7.6vw, 34px);
+    height: clamp(28px, 7.6vw, 34px);
+    flex: 0 0 clamp(28px, 7.6vw, 34px);
+    font-size: clamp(12px, 2.5vw, 14px);
+    border-radius: clamp(11px, 3vw, 14px);
     background: var(--btn-bg);
-    border: 1.5px solid var(--neo-blue);
+    border: 1px solid var(--neo-blue);
     color: var(--btn-icon);
     transition: color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s ease;
 }
@@ -594,75 +634,130 @@
 
 @media (max-width: 560px) {
     .topbar {
-        min-height: 50px;
+        min-height: clamp(44px, 12vw, 50px);
         left: 0;
-        padding: 0 10px 0 62px;
+        padding: 0 clamp(7px, 2.5vw, 10px) 0 clamp(52px, 15vw, 62px);
     }
 
     .user-heading {
-        top: 25px;
-        max-width: 30vw;
+        top: clamp(22px, 6vw, 25px);
+        max-width: 28vw;
     }
 
     .topbar-side-stats {
-        gap: 5px;
-        margin-left: 16px;
+        gap: 4px;
+        margin-left: clamp(8px, 3vw, 16px);
     }
 
     .side-stat {
-        min-width: 35px;
-        height: 32px;
-        min-height: 32px;
-        padding: 4px 9px;
-        gap: 5px;
-        font-size: 12px;
+        min-width: clamp(31px, 9vw, 35px);
+        height: clamp(28px, 8vw, 32px);
+        min-height: clamp(28px, 8vw, 32px);
+        padding: 4px clamp(7px, 2vw, 9px);
+        gap: 4px;
+        font-size: clamp(10px, 3vw, 12px);
     }
 
     .blue-flame {
-        width: 22px;
-        height: 25px;
-        flex-basis: 22px;
+        width: clamp(18px, 5vw, 22px);
+        height: clamp(21px, 5.8vw, 25px);
+        flex-basis: clamp(18px, 5vw, 22px);
     }
 
     .topbar h1 {
-        font-size: 20px;
+        font-size: clamp(15px, 5.2vw, 20px);
     }
 
     .page-title {
-        font-size: 20px;
+        font-size: clamp(15px, 5.2vw, 20px);
     }
 
     .page-title-image {
-        height: 20px;
+        height: clamp(15px, 5vw, 20px);
         width: auto;
-        max-width: none;
+        max-width: 100%;
     }
 
     .page-title-loja,
     .page-title-perfil {
-        height: 15px;
+        height: clamp(12px, 4vw, 15px);
     }
 
     .page-title-configuracoes {
-        height: 22px;
+        height: clamp(17px, 5.4vw, 22px);
     }
 
     .cossas-pill {
-        min-width: 38px;
-        height: 32px;
-        min-height: 32px;
-        padding: 6px 10px;
-        font-size: 0;
+        min-width: clamp(32px, 9.4vw, 38px);
+        max-width: clamp(58px, 19vw, 92px);
+        height: clamp(28px, 8vw, 32px);
+        min-height: clamp(28px, 8vw, 32px);
+        padding: 5px clamp(8px, 2.6vw, 10px);
+        font-size: clamp(11px, 3.1vw, 12px);
     }
 
     .cossas-pill .coin {
-        width: 16px;
-        height: 16px;
+        width: clamp(13px, 4vw, 16px);
+        height: clamp(13px, 4vw, 16px);
     }
 
     .topbar .profile {
-        width: 32px;
-        height: 32px;
-        flex-basis: 32px;
+        width: clamp(28px, 8vw, 32px);
+        height: clamp(28px, 8vw, 32px);
+        flex-basis: clamp(28px, 8vw, 32px);
+    }
+}
+
+@media (max-width: 430px) {
+    .user-heading {
+        max-width: 22vw;
+    }
+
+    .page-title,
+    .topbar h1 {
+        font-size: clamp(14px, 4.3vw, 17px);
+    }
+
+    .page-title-image {
+        height: clamp(14px, 4.3vw, 17px);
+    }
+
+    .topbar-actions {
+        gap: 6px;
+    }
+}
+
+@media (max-width: 360px) {
+    .topbar {
+        padding-right: 8px;
+        padding-left: 52px;
+    }
+
+    .topbar-side-stats {
+        margin-left: 7px;
+    }
+
+    .side-stat {
+        padding: 4px 7px;
+    }
+
+    .user-heading {
+        max-width: 18vw;
+    }
+
+    .topbar-mobile-test,
+    .topbar .profile {
+        width: 30px;
+        height: 30px;
+        flex-basis: 30px;
+        border-radius: 12px;
+    }
+
+    .cossas-pill {
+        min-width: 48px;
+        max-width: 68px;
+        height: 30px;
+        min-height: 30px;
+        padding: 5px 8px;
     }
 }

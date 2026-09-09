@@ -71,7 +71,7 @@ html.sidebar-preopen .sidebar-toggle {
   height: 34px;
   border-radius: 12px;
   background: var(--btn-bg);
-  border: 1.5px solid var(--neo-blue);
+  border: 1px solid var(--neo-blue);
   color: var(--btn-icon);
   display: flex;
   align-items: center;
@@ -145,7 +145,7 @@ html.sidebar-preopen .sidebar-toggle {
   margin: 8px 0;
   border-radius: 18px;
   background: var(--btn-bg);
-  border: 1.5px solid var(--neo-blue);
+  border: 1px solid var(--neo-blue);
   color: var(--btn-icon);
   text-decoration: none;
   cursor: pointer;
@@ -204,7 +204,7 @@ html.sidebar-preopen .sidebar-toggle {
 
 @media (max-width: 560px) {
   :root {
-    --sidebar-width: 70px;
+    --sidebar-width: 62px;
   }
 
   .sidebar-toggle,
@@ -217,5 +217,18 @@ html.sidebar-preopen .sidebar-toggle {
   .sidebar-toggle {
     top: 8px;
     left: 12px;
+  }
+
+  .sidebar {
+    padding-top: 10px;
+  }
+
+  .logo {
+    height: 28px;
+    margin-bottom: 20px;
+  }
+
+  .logo img {
+    max-width: 50px;
   }
 }

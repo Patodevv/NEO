@@ -19,7 +19,7 @@ if (!$materia) {
     header('Location: materias.php');
     exit;
 }
-$stmt = $pdo->prepare("SELECT * FROM conteudos WHERE materia_id = ? AND user_id = ? AND removido_em IS NULL ORDER BY dificuldade, ordem, id");
+$stmt = $pdo->prepare("SELECT * FROM conteudos WHERE materia_id = ? AND user_id = ? AND removido_em IS NULL ORDER BY ordem, id");
 $stmt->execute([$materiaId, $usuario['id']]);
 $conteudos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 function salvarConteudosGerados(PDO $pdo, int $userId, int $materiaId, array $gerados, int $dificuldade, int $ordemInicial, array $titulosExistentes): int

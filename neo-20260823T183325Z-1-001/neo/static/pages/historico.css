@@ -36,7 +36,7 @@
     height: 52px;
     display: grid;
     place-items: center;
-    border: 1.5px solid var(--neo-blue);
+    border: 1px solid var(--neo-blue);
     border-radius: 18px;
     background: var(--btn-bg);
     color: var(--btn-icon);

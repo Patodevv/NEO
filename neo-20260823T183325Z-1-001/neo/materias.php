@@ -52,6 +52,11 @@ require __DIR__ . '/includes/head.php';
             <?php endforeach; ?>
         </div>
     </section>
+    <a class="neo-icon-button neo-star-hover external-studies-link" href="estudos.php">
+        <?= estrelaHoverNeo() ?>
+        <?= iconeMateriaDashboard('portugues') ?>
+        <span>Estudos externos</span>
+    </a>
 </main>
 </body>
 </html>

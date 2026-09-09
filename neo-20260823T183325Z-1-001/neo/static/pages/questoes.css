@@ -1,7 +1,7 @@
 .question-controls {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px;
+    gap: clamp(12px, 2.4vw, 24px);
     align-items: stretch;
     margin: 0;
 }
@@ -9,7 +9,7 @@
 .question-generate-card,
 .question-difficulty-card {
     min-width: 0;
-    min-height: 66px;
+    min-height: clamp(52px, 6vw, 66px);
     border: 1px solid var(--panel-border);
     border-radius: 999px;
     background: var(--panel-bg);
@@ -22,8 +22,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    padding: 0 24px;
+    gap: clamp(8px, 1.6vw, 12px);
+    padding: 0 clamp(14px, 2.2vw, 24px);
     color: var(--btn-icon);
     font-weight: 900;
     overflow: visible;
@@ -34,8 +34,8 @@
 .question-generate-card svg:not(.icon-hover-star) {
     position: relative;
     z-index: 1;
-    width: 24px;
-    height: 24px;
+    width: clamp(19px, 2.5vw, 24px);
+    height: clamp(19px, 2.5vw, 24px);
     transition: transform .18s ease;
 }
 
@@ -69,13 +69,13 @@
 .question-difficulty-card {
     display: grid;
     place-items: center;
-    padding: 0 28px;
+    padding: 0 clamp(16px, 2.8vw, 28px);
     color: var(--btn-icon);
 }
 
 .question-difficulty-card b {
     color: var(--btn-icon);
-    font-size: 18px;
+    font-size: clamp(14px, 2vw, 18px);
     font-weight: 900;
     line-height: 1;
 }
@@ -83,19 +83,19 @@
 .question-empty {
     display: grid;
     gap: 8px;
-    padding: 28px;
+    padding: clamp(20px, 3vw, 28px);
 }
 
 .question-empty b {
     color: #fff;
-    font-size: 20px;
+    font-size: clamp(17px, 2.3vw, 20px);
 }
 
 .question-form {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
+    gap: clamp(14px, 2.2vw, 20px);
 }
 
 .question-card {
@@ -103,17 +103,18 @@
     width: 100%;
     margin: 0;
     border: 1px solid var(--panel-border);
-    border-radius: 24px;
-    padding: 28px 32px 30px;
+    border-radius: clamp(18px, 2.8vw, 24px);
+    padding: clamp(20px, 2.6vw, 28px) clamp(14px, 2.8vw, 32px) clamp(22px, 2.8vw, 30px);
     background: var(--panel-bg);
     box-shadow: var(--panel-shadow);
 }
 
 .question-card h2 {
-    margin: 18px 0 24px;
+    margin: clamp(14px, 2vw, 18px) 0 clamp(18px, 2.5vw, 24px);
     color: rgba(255, 255, 255, .94);
-    font-size: 28px;
+    font-size: clamp(19px, 3vw, 28px);
     line-height: 1.28;
+    overflow-wrap: anywhere;
 }
 
 .question-meta {
@@ -129,16 +130,16 @@
 
 .opcao-label {
     border: 1px solid var(--border-soft);
-    border-radius: 18px;
-    padding: 16px 18px;
+    border-radius: clamp(14px, 2vw, 18px);
+    padding: clamp(13px, 1.8vw, 16px) clamp(12px, 2vw, 18px);
     background: rgba(20, 20, 20, .5);
     color: var(--text);
     display: grid;
     grid-template-columns: auto auto minmax(0, 1fr);
     align-items: flex-start;
-    gap: 12px;
+    gap: clamp(8px, 1.5vw, 12px);
     cursor: pointer;
-    font-size: 14px;
+    font-size: clamp(13px, 1.6vw, 14px);
     line-height: 1.4;
     transition: border-color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease;
 }
@@ -149,9 +150,9 @@
 }
 
 .option-letter {
-    width: 26px;
-    height: 26px;
-    border: 1.5px solid var(--neo-blue);
+    width: clamp(23px, 3vw, 26px);
+    height: clamp(23px, 3vw, 26px);
+    border: 1px solid var(--neo-blue);
     border-radius: 10px;
     color: var(--neo-blue);
     display: inline-flex;
@@ -225,23 +226,23 @@
 }
 
 .question-support {
-    min-height: 44px;
-    margin-top: 20px;
+    min-height: clamp(38px, 5vw, 44px);
+    margin-top: clamp(14px, 2.2vw, 20px);
     display: flex;
     align-items: center;
     justify-content: flex-end;
 }
 
 .facilitator-btn {
-    --icon-star-size: 28px;
+    --icon-star-size: clamp(23px, 4vw, 28px);
     position: relative;
-    min-height: 48px;
+    min-height: clamp(42px, 5.5vw, 48px);
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    border: 1.5px solid var(--neo-blue);
+    gap: clamp(7px, 1.4vw, 10px);
+    border: 1px solid var(--neo-blue);
     border-radius: 16px;
-    padding: 0 16px;
+    padding: 0 clamp(12px, 1.8vw, 16px);
     background: var(--btn-bg);
     color: var(--btn-icon);
     font: inherit;
@@ -256,8 +257,8 @@
 .facilitator-btn svg:not(.icon-hover-star) {
     position: relative;
     z-index: 1;
-    width: 20px;
-    height: 20px;
+    width: clamp(17px, 2.2vw, 20px);
+    height: clamp(17px, 2.2vw, 20px);
     transition: transform .18s ease;
 }
 
@@ -307,18 +308,18 @@
 }
 
 .question-submit {
-    --icon-star-size: 30px;
+    --icon-star-size: clamp(24px, 4vw, 30px);
     position: relative;
     min-width: min(100%, 280px);
-    min-height: 52px;
+    min-height: clamp(44px, 5.8vw, 52px);
     margin-top: 4px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    border: 1.5px solid var(--neo-blue);
+    gap: clamp(7px, 1.4vw, 10px);
+    border: 1px solid var(--neo-blue);
     border-radius: 17px;
-    padding: 0 20px;
+    padding: 0 clamp(14px, 2vw, 20px);
     background: var(--btn-bg);
     color: var(--btn-icon);
     font: inherit;
@@ -331,8 +332,8 @@
 .question-submit svg:not(.icon-hover-star) {
     position: relative;
     z-index: 1;
-    width: 22px;
-    height: 22px;
+    width: clamp(18px, 2.5vw, 22px);
+    height: clamp(18px, 2.5vw, 22px);
     transition: transform .18s ease;
 }
 
@@ -363,13 +364,13 @@
 
 .result-panel {
     width: 100%;
-    min-height: 72px;
+    min-height: clamp(58px, 7vw, 72px);
     margin: 0 0 18px;
-    padding: 14px 18px 14px 24px;
+    padding: clamp(12px, 1.6vw, 14px) clamp(14px, 2vw, 18px) clamp(12px, 1.6vw, 14px) clamp(16px, 2.4vw, 24px);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 20px;
+    gap: clamp(12px, 2vw, 20px);
     border-radius: 22px;
 }
 
@@ -386,7 +387,7 @@
     align-items: center;
     margin: 0;
     color: var(--btn-icon);
-    font-size: 24px;
+    font-size: clamp(19px, 3vw, 24px);
     font-weight: 900;
     line-height: 1;
     white-space: nowrap;
@@ -410,16 +411,16 @@
 }
 
 .result-retry-btn {
-    --icon-star-size: 30px;
+    --icon-star-size: clamp(24px, 4vw, 30px);
     position: relative;
-    min-height: 52px;
+    min-height: clamp(44px, 5.8vw, 52px);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    border: 1.5px solid var(--neo-blue);
+    gap: clamp(7px, 1.4vw, 10px);
+    border: 1px solid var(--neo-blue);
     border-radius: 17px;
-    padding: 0 20px;
+    padding: 0 clamp(14px, 2vw, 20px);
     background: var(--btn-bg);
     color: var(--btn-icon);
     font-weight: 900;
@@ -432,8 +433,8 @@
 .result-retry-btn svg:not(.icon-hover-star) {
     position: relative;
     z-index: 1;
-    width: 22px;
-    height: 22px;
+    width: clamp(18px, 2.5vw, 22px);
+    height: clamp(18px, 2.5vw, 22px);
     transition: transform .18s ease;
 }
 
@@ -495,16 +496,16 @@
 
     .question-generate-card,
     .question-difficulty-card {
-        min-height: 58px;
+        min-height: clamp(48px, 13vw, 58px);
     }
 
     .question-card {
-        padding: 24px 18px;
-        border-radius: 20px;
+        padding: clamp(18px, 5vw, 24px) clamp(12px, 4vw, 18px);
+        border-radius: clamp(16px, 5vw, 20px);
     }
 
     .question-card h2 {
-        font-size: 21px;
+        font-size: clamp(18px, 5.2vw, 21px);
     }
 
     .opcao-label {
@@ -535,5 +536,34 @@
     .result-actions a,
     .result-actions button {
         width: 100%;
+    }
+}
+
+@media (max-width: 430px) {
+    .question-generate-card,
+    .question-difficulty-card {
+        min-height: clamp(46px, 12vw, 54px);
+        padding: 0 clamp(10px, 3.6vw, 14px);
+    }
+
+    .question-generate-card span,
+    .facilitator-btn span,
+    .question-submit span,
+    .result-retry-btn span {
+        white-space: normal;
+        text-align: center;
+    }
+
+    .question-card {
+        padding: clamp(16px, 4.5vw, 20px) clamp(10px, 3.4vw, 14px);
+    }
+
+    .question-card h2 {
+        margin-top: 14px;
+        font-size: clamp(17px, 5vw, 19px);
+    }
+
+    .opcao-label {
+        padding: clamp(12px, 3.8vw, 14px);
     }
 }

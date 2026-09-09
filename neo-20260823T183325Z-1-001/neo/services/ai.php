@@ -347,6 +347,142 @@ function chamarIA(array $messages, array $schema, string $schemaName): array
     throw new Exception('Nenhum provedor de IA respondeu: ' . implode(' | ', $erros));
 }
 
+function chamarTextoProvedorIA(
+    string $provedor,
+    string $apiKey,
+    string $url,
+    string $modelo,
+    array $messages,
+    int $maxTokens = 1800
+): string
+{
+    $dados = [
+        'model' => $modelo,
+        'messages' => $messages,
+    ];
+
+    if ($provedor === 'OpenAI') {
+        $dados['max_completion_tokens'] = $maxTokens;
+    } else {
+        $dados['temperature'] = 0.35;
+        $dados['max_tokens'] = $maxTokens;
+    }
+
+    $payload = json_encode($dados, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+    if ($payload === false) {
+        throw new Exception("Nao foi possivel preparar a conversa com {$provedor}.");
+    }
+
+    $ch = curl_init($url);
+
+    if ($ch === false) {
+        throw new Exception("Nao foi possivel iniciar a conexao com {$provedor}.");
+    }
+
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $apiKey,
+        ],
+        CURLOPT_POSTFIELDS => $payload,
+        CURLOPT_CONNECTTIMEOUT => 15,
+        CURLOPT_TIMEOUT => 120,
+    ]);
+
+    $resposta = curl_exec($ch);
+
+    if ($resposta === false) {
+        $erro = curl_error($ch);
+        curl_close($ch);
+        throw new Exception("Erro ao conectar com {$provedor}: {$erro}");
+    }
+
+    $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    $dadosResposta = json_decode($resposta, true);
+
+    if (!is_array($dadosResposta)) {
+        throw new Exception("{$provedor} retornou uma resposta invalida.");
+    }
+
+    if ($httpCode < 200 || $httpCode >= 300) {
+        $mensagem = $dadosResposta['error']['message'] ?? "Erro desconhecido na API da {$provedor}.";
+        throw new Exception("Erro da {$provedor} ({$httpCode}): {$mensagem}");
+    }
+
+    $conteudo = $dadosResposta['choices'][0]['message']['content'] ?? '';
+
+    if (is_array($conteudo)) {
+        $partes = [];
+        foreach ($conteudo as $item) {
+            if (isset($item['text']) && is_string($item['text'])) {
+                $partes[] = $item['text'];
+            }
+        }
+        $conteudo = implode("\n", $partes);
+    }
+
+    if (!is_string($conteudo) || trim($conteudo) === '') {
+        throw new Exception("{$provedor} retornou uma resposta vazia.");
+    }
+
+    definirOrigemIA($provedor, $modelo);
+    return trim($conteudo);
+}
+
+function conversarTextoIA(array $messages, int $maxTokens = 1800): array
+{
+    usarFallbackLocalIA();
+    $provedores = [
+        [
+            'nome' => 'OpenAI',
+            'chave' => openaiApiKey(),
+            'url' => openaiUrl(),
+            'modelo' => openaiModel(),
+        ],
+        [
+            'nome' => 'Groq',
+            'chave' => groqApiKey(),
+            'url' => groqUrl(),
+            'modelo' => groqModel(),
+        ],
+    ];
+    $erros = [];
+
+    foreach ($provedores as $provedor) {
+        if ($provedor['chave'] === '') {
+            $erros[] = "{$provedor['nome']}: chave nao configurada";
+            continue;
+        }
+
+        try {
+            $texto = chamarTextoProvedorIA(
+                $provedor['nome'],
+                $provedor['chave'],
+                $provedor['url'],
+                $provedor['modelo'],
+                $messages,
+                $maxTokens
+            );
+            $origem = origemAtualIA();
+            return [
+                'texto' => $texto,
+                'provider' => $origem['provider'],
+                'model' => $origem['model'],
+            ];
+        } catch (Throwable $e) {
+            $erros[] = $e->getMessage();
+            error_log('[NEO][MANEL][' . $provedor['nome'] . '] ' . $e->getMessage());
+        }
+    }
+
+    throw new Exception('Nenhum provedor de IA respondeu: ' . implode(' | ', $erros));
+}
+
 function decodificarJsonIa(string $conteudo): ?array
 {
     $conteudo = trim($conteudo);

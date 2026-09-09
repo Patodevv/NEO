@@ -105,7 +105,14 @@ if (isset($pdo, $usuario['id']) && function_exists('inicioSemanaNeo') && functio
         <?php endif; ?>
     </div>
     <div class="topbar-actions">
-        <a href="loja.php" class="cossas-pill"><span class="coin"></span><?= saldoCossasVisual($usuario) ?></a>
+        <button type="button" class="topbar-mobile-test neo-star-hover" data-mobile-preview-toggle aria-pressed="false" title="Simular mobile" aria-label="Simular mobile">
+            <?= estrelaHoverNeo() ?>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <rect x="7" y="3" width="10" height="18" rx="2.2"></rect>
+                <path d="M10.5 18h3"></path>
+            </svg>
+        </button>
+        <a href="loja.php" class="cossas-pill"><span class="coin"></span><span class="cossas-pill-value"><?= saldoCossasVisual($usuario) ?></span></a>
         <a href="perfil.php" class="profile">
         <?php if (!empty($usuario['foto'])): ?>
             <img src="<?= htmlspecialchars($usuario['foto']) ?>" alt="" decoding="async">

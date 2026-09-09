@@ -1,27 +1,27 @@
 .settings-account,
 .settings-account-action {
     display: grid;
-    grid-template-columns: 52px minmax(0, 1fr) auto;
+    grid-template-columns: clamp(38px, 5vw, 52px) minmax(0, 1fr) auto;
     align-items: center;
-    gap: 16px;
-    padding: 20px 24px;
+    gap: clamp(12px, 2vw, 16px);
+    padding: clamp(16px, 2vw, 20px) clamp(16px, 2.4vw, 24px);
     overflow: visible;
 }
 
 .settings-icon {
-    width: 52px;
-    height: 52px;
+    width: clamp(38px, 5vw, 52px);
+    height: clamp(38px, 5vw, 52px);
     display: grid;
     place-items: center;
-    border: 1.5px solid var(--neo-blue);
-    border-radius: 18px;
+    border: 1px solid var(--neo-blue);
+    border-radius: clamp(13px, 2vw, 18px);
     background: var(--btn-bg);
     color: var(--btn-icon);
 }
 
 .settings-icon svg {
-    width: 22px;
-    height: 22px;
+    width: clamp(18px, 2.4vw, 22px);
+    height: clamp(18px, 2.4vw, 22px);
 }
 
 .settings-account-copy {
@@ -53,17 +53,17 @@
 
 .settings-panel {
     display: grid;
-    gap: 20px;
-    padding: 26px 30px;
+    gap: clamp(15px, 2vw, 20px);
+    padding: clamp(20px, 2.5vw, 26px) clamp(16px, 2.6vw, 30px);
     overflow: visible;
 }
 
 .settings-panel-head {
     min-width: 0;
     display: grid;
-    grid-template-columns: 52px minmax(0, 1fr);
+    grid-template-columns: clamp(38px, 5vw, 52px) minmax(0, 1fr);
     align-items: center;
-    gap: 16px;
+    gap: clamp(12px, 2vw, 16px);
 }
 
 .settings-panel-head > div {
@@ -75,7 +75,7 @@
 .settings-panel h2,
 .settings-account-action h2 {
     color: #fff;
-    font-size: 19px;
+    font-size: clamp(16px, 2.2vw, 19px);
     line-height: 1.15;
 }
 
@@ -89,7 +89,7 @@
 }
 
 .settings-form textarea {
-    min-height: 124px;
+    min-height: clamp(96px, 14vw, 124px);
     resize: vertical;
     line-height: 1.5;
 }
@@ -154,5 +154,12 @@
     .settings-account-action .neo-danger-button,
     .settings-save-row .save-btn {
         width: 100%;
+    }
+
+    .settings-account-copy b,
+    .settings-account-copy small,
+    .settings-account-action h2 {
+        white-space: normal;
+        overflow-wrap: anywhere;
     }
 }

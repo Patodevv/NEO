@@ -2,14 +2,25 @@
     position: relative;
     width: 100%;
     margin: 0;
-    padding: 50px 42px 42px;
+    padding: clamp(28px, 4.2vw, 50px) clamp(14px, 3.5vw, 42px) clamp(24px, 3.6vw, 42px);
     border: 1px solid var(--panel-border);
-    border-radius: 22px;
+    border-radius: clamp(16px, 3vw, 22px);
     background: var(--panel-bg);
     box-shadow: var(--panel-shadow);
     isolation: isolate;
     contain: layout paint;
 }
+
+.external-studies-link {
+    width: 100%;
+    height: 64px;
+    margin-top: 24px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    font-weight: 800;
+}
+.external-studies-link:hover { transform: translateY(-2px); }
 
 .subjects-folder::before {
     display: none;
@@ -19,8 +30,8 @@
     position: relative;
     z-index: 1;
     display: grid;
-    grid-template-columns: repeat(4, minmax(150px, 1fr));
-    gap: 42px 34px;
+    grid-template-columns: repeat(auto-fit, minmax(clamp(118px, 18vw, 150px), 1fr));
+    gap: clamp(24px, 4vw, 42px) clamp(12px, 3vw, 34px);
 }
 
 .subject-form {
@@ -40,23 +51,23 @@ button.subject {
     min-width: 0;
     display: grid;
     grid-template-rows: auto auto auto;
-    gap: 13px;
+    gap: clamp(9px, 2vw, 13px);
     color: var(--text);
     text-align: center;
     text-decoration: none;
 }
 
 .subject-icon {
-    --icon-star-size: 38px;
+    --icon-star-size: clamp(28px, 7vw, 38px);
     position: relative;
-    width: min(100%, 154px);
+    width: min(100%, clamp(86px, 18vw, 154px));
     aspect-ratio: 1;
     justify-self: center;
     display: grid;
     place-items: center;
     margin-top: 0;
-    border: 1.5px solid var(--neo-blue);
-    border-radius: 30px;
+    border: 1px solid var(--neo-blue);
+    border-radius: clamp(20px, 4vw, 30px);
     background: var(--btn-bg);
     color: var(--btn-icon);
     box-shadow: 0 0 0 4px color-mix(in srgb, var(--neo-blue) 8%, transparent);
@@ -75,23 +86,23 @@ button.subject {
 .subject-icon > svg:not(.icon-hover-star) {
     position: relative;
     z-index: 1;
-    width: 58px;
-    height: 58px;
+    width: clamp(34px, 7vw, 58px);
+    height: clamp(34px, 7vw, 58px);
 }
 
 .subject b {
-    min-height: 38px;
+    min-height: clamp(32px, 4vw, 38px);
     width: min(100%, 190px);
     justify-self: center;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 8px 14px;
+    padding: 7px clamp(10px, 1.6vw, 14px);
     border: 1px solid var(--panel-border);
     border-radius: 999px;
     background: var(--control-bg);
     color: rgba(255, 255, 255, .92);
-    font-size: 15px;
+    font-size: clamp(12px, 1.7vw, 15px);
     font-weight: 800;
     white-space: nowrap;
     overflow: hidden;
@@ -101,7 +112,7 @@ button.subject {
 
 .subject small {
     color: rgba(255, 255, 255, .56);
-    font-size: 12px;
+    font-size: clamp(11px, 1.5vw, 12px);
     font-weight: 700;
 }
 
@@ -120,7 +131,7 @@ button.subject {
 
 @media (max-width: 1100px) {
     .subjects-folder {
-        padding: 46px 30px 36px;
+        padding: clamp(28px, 4vw, 46px) clamp(14px, 3vw, 30px) clamp(24px, 3vw, 36px);
     }
 
     .subject-grid {
@@ -130,7 +141,7 @@ button.subject {
 
 @media (max-width: 760px) {
     .subjects-folder {
-        padding: 38px 18px 30px;
+        padding: clamp(24px, 6vw, 38px) clamp(12px, 4vw, 18px) clamp(22px, 5vw, 30px);
     }
 
     .subjects-folder::before {
@@ -139,13 +150,13 @@ button.subject {
 
     .subject-grid {
         grid-template-columns: repeat(2, minmax(130px, 1fr));
-        gap: 32px 18px;
+        gap: clamp(22px, 6vw, 32px) clamp(10px, 4vw, 18px);
     }
 
     .subject-icon {
-        --icon-star-size: 34px;
-        width: min(100%, 136px);
-        border-radius: 24px;
+        --icon-star-size: clamp(26px, 8vw, 34px);
+        width: min(100%, clamp(82px, 30vw, 136px));
+        border-radius: clamp(18px, 6vw, 24px);
     }
 
     .subject-icon::before {
@@ -157,13 +168,13 @@ button.subject {
     }
 
     .subject-icon > svg:not(.icon-hover-star) {
-        width: 46px;
-        height: 46px;
+        width: clamp(32px, 10vw, 46px);
+        height: clamp(32px, 10vw, 46px);
     }
 }
 
 @media (max-width: 460px) {
     .subject-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }

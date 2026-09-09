@@ -1,11 +1,11 @@
 .dashboard-main {
-    width: min(100% - 48px, 1250px);
+    width: min(100% - clamp(16px, 3.2vw, 48px), 1250px);
 }
 
 .dashboard-stack {
     width: 100%;
     display: grid;
-    gap: 28px;
+    gap: clamp(18px, 2.4vw, 28px);
 }
 
 .dash-panel {
@@ -34,24 +34,24 @@
 }
 
 .recent-panel {
-    min-height: 230px;
-    padding: 30px 34px;
+    min-height: clamp(0px, 17vw, 230px);
+    padding: clamp(22px, 2.4vw, 30px) clamp(16px, 2.8vw, 34px);
 }
 
 .recent-grid {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 22px 32px;
+    grid-template-columns: repeat(auto-fit, minmax(clamp(118px, 12vw, 150px), 1fr));
+    gap: clamp(18px, 2.2vw, 22px) clamp(12px, 2.6vw, 32px);
     align-items: stretch;
 }
 
 .recent-item {
     min-width: 0;
-    min-height: 138px;
+    min-height: clamp(112px, 13vw, 138px);
     display: grid;
     grid-template-rows: auto 1fr;
     place-items: center;
-    gap: 14px;
+    gap: clamp(10px, 1.8vw, 14px);
     padding: 8px 4px 0;
     color: var(--text);
     text-align: center;
@@ -64,14 +64,14 @@
 }
 
 .recent-icon {
-    --icon-star-size: 38px;
+    --icon-star-size: clamp(28px, 7vw, 38px);
     position: relative;
     width: clamp(86px, 7.3vw, 104px);
     height: clamp(86px, 7.3vw, 104px);
     display: grid;
     place-items: center;
-    border: 1.5px solid var(--neo-blue);
-    border-radius: 30px;
+    border: 1px solid var(--neo-blue);
+    border-radius: clamp(20px, 4.8vw, 30px);
     background: var(--btn-bg);
     color: var(--btn-icon);
     box-shadow: 0 0 0 3px rgba(26, 46, 255, .12);
@@ -98,7 +98,7 @@
     display: -webkit-box;
     overflow: hidden;
     color: rgba(255, 255, 255, .82);
-    font-size: 13px;
+    font-size: clamp(11px, 1.5vw, 13px);
     font-weight: 700;
     line-height: 1.2;
     -webkit-line-clamp: 2;
@@ -118,13 +118,13 @@
 }
 
 .level-bar {
-    --neo-progress-comet-width: 210px;
-    --neo-progress-star-size: 48px;
-    --neo-progress-trail-height: 6px;
+    --neo-progress-comet-width: clamp(134px, 17vw, 210px);
+    --neo-progress-star-size: clamp(36px, 4.6vw, 48px);
+    --neo-progress-trail-height: clamp(4px, .65vw, 6px);
     position: relative;
     width: 100%;
-    height: 56px;
-    padding: 12px 116px 12px 14px;
+    height: clamp(46px, 5.2vw, 56px);
+    padding: clamp(10px, 1.4vw, 12px) clamp(82px, 10vw, 116px) clamp(10px, 1.4vw, 12px) clamp(11px, 1.5vw, 14px);
     border-radius: 999px;
     background: rgba(18, 18, 18, .78);
     border: 1px solid rgba(255, 255, 255, .08);
@@ -150,11 +150,11 @@
     right: 12px;
     top: 50%;
     z-index: 4;
-    min-height: 34px;
+    min-height: clamp(28px, 3.5vw, 34px);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0 18px;
+    padding: 0 clamp(10px, 1.7vw, 18px);
     border: 1px solid rgba(255, 255, 255, .1);
     border-radius: 999px;
     background: rgba(20, 20, 20, .74);
@@ -167,17 +167,17 @@
 .dashboard-bottom {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 184px 184px;
-    gap: 26px;
+    gap: clamp(14px, 2.2vw, 26px);
     align-items: stretch;
 }
 
 .shop-panel {
-    min-height: 184px;
+    min-height: clamp(130px, 15vw, 184px);
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 8px;
-    padding: 28px 34px;
+    gap: clamp(6px, 1vw, 8px);
+    padding: clamp(22px, 2.4vw, 28px) clamp(20px, 2.8vw, 34px);
     color: inherit;
     text-decoration: none;
     transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
@@ -191,36 +191,36 @@
 
 .shop-panel strong {
     color: #fff;
-    font-size: 29px;
+    font-size: clamp(23px, 2.7vw, 29px);
     line-height: 1.08;
 }
 
 .shop-panel small {
     max-width: 460px;
     color: #cfcfcf;
-    font-size: 15px;
+    font-size: clamp(13px, 1.5vw, 15px);
 }
 
 .mini-panel {
-    min-height: 184px;
+    min-height: clamp(112px, 15vw, 184px);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    padding: 18px;
+    gap: clamp(7px, 1.3vw, 10px);
+    padding: clamp(14px, 2vw, 18px);
     text-align: center;
 }
 
 .mini-panel strong {
     color: var(--btn-icon);
-    font-size: 34px;
+    font-size: clamp(26px, 3.6vw, 34px);
     line-height: 1;
 }
 
 .mini-panel span {
     color: rgba(255, 255, 255, .72);
-    font-size: 13px;
+    font-size: clamp(12px, 1.5vw, 13px);
     line-height: 1.25;
 }
 
@@ -319,7 +319,7 @@ body.neo-dashboard-revealing .topbar-actions {
 
 @media (max-width: 1100px) {
     .dashboard-main {
-        width: min(100% - 48px, 1250px);
+        width: min(100% - clamp(20px, 3.2vw, 48px), 1250px);
     }
 }
 
@@ -355,49 +355,49 @@ body.neo-dashboard-revealing .topbar-actions {
 
 @media (max-width: 560px) {
     .dashboard-main {
-        width: min(100% - 24px, 1250px);
+        width: min(100% - clamp(14px, 4vw, 24px), 1250px);
     }
 
     .recent-panel {
         min-height: 0;
-        padding: 24px 18px;
+        padding: clamp(18px, 5vw, 24px) clamp(12px, 4vw, 18px);
     }
 
     .recent-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 28px 16px;
+        gap: clamp(18px, 5vw, 28px) clamp(9px, 3.4vw, 16px);
     }
 
     .recent-item {
-        min-height: 126px;
+        min-height: clamp(104px, 32vw, 126px);
     }
 
     .recent-icon {
-        --icon-star-size: 34px;
-        width: 82px;
-        height: 82px;
-        border-radius: 26px;
+        --icon-star-size: clamp(26px, 8vw, 34px);
+        width: clamp(64px, 22vw, 82px);
+        height: clamp(64px, 22vw, 82px);
+        border-radius: clamp(19px, 6.6vw, 26px);
     }
 
     .recent-icon > svg:not(.icon-hover-star) {
-        width: 38px;
-        height: 38px;
+        width: clamp(30px, 10vw, 38px);
+        height: clamp(30px, 10vw, 38px);
     }
 
     .recent-item b {
-        font-size: 12px;
+        font-size: clamp(11px, 3.2vw, 12px);
     }
 
     .level-bar {
-        height: 52px;
-        padding-right: 96px;
+        height: clamp(44px, 13vw, 52px);
+        padding-right: clamp(72px, 24vw, 96px);
     }
 
     .level-badge {
         right: 9px;
-        min-height: 32px;
-        padding: 0 13px;
-        font-size: 13px;
+        min-height: clamp(26px, 8vw, 32px);
+        padding: 0 clamp(9px, 3vw, 13px);
+        font-size: clamp(11px, 3.3vw, 13px);
     }
 
     .dashboard-bottom {
@@ -410,5 +410,35 @@ body.neo-dashboard-revealing .topbar-actions {
 
     .shop-panel strong {
         font-size: 24px;
+    }
+}
+
+@media (max-width: 430px) {
+    .recent-grid {
+        gap: clamp(16px, 5vw, 22px) clamp(8px, 3vw, 12px);
+    }
+
+    .recent-icon {
+        width: clamp(62px, 19vw, 74px);
+        height: clamp(62px, 19vw, 74px);
+        border-radius: clamp(18px, 5.8vw, 22px);
+    }
+
+    .recent-icon > svg:not(.icon-hover-star) {
+        width: clamp(28px, 8.8vw, 34px);
+        height: clamp(28px, 8.8vw, 34px);
+    }
+
+    .level-bar {
+        --neo-progress-comet-width: clamp(118px, 35vw, 150px);
+        --neo-progress-star-size: clamp(32px, 9.5vw, 40px);
+        height: clamp(42px, 12vw, 50px);
+        padding-right: clamp(64px, 20vw, 86px);
+    }
+
+    .level-badge {
+        min-height: 30px;
+        padding: 0 11px;
+        font-size: 12px;
     }
 }
