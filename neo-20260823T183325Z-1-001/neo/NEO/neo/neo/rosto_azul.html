@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Rosto Azul Animado</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  svg {
+    width: min(520px, 92vw);
+    height: auto;
+    aspect-ratio: 16 / 13;
+    display: block;
+  }
+  .part {
+    fill: #1a2eff;
+  }
+</style>
+</head>
+<body>
+
+<svg viewBox="0 0 300 220" xmlns="http://www.w3.org/2000/svg">
+  <rect class="part" id="eyeLeft" x="95" y="70" width="30" height="60" rx="15" ry="15"/>
+  <rect class="part" id="eyeRight" x="175" y="70" width="30" height="60" rx="15" ry="15"/>
+  <path id="eyeRightWink" d="M 175 100 Q 190 84 205 100" stroke="#1a2eff" stroke-width="10" stroke-linecap="round" fill="none" opacity="0"/>
+  <path id="mouth" d="M 128 150 L 172 150" stroke="#1a2eff" stroke-width="22" stroke-linecap="round" fill="none"/>
+</svg>
+
+<script>
+  const eyeLeft = document.getElementById('eyeLeft');
+  const eyeRight = document.getElementById('eyeRight');
+  const eyeRightWink = document.getElementById('eyeRightWink');
+  const mouth = document.getElementById('mouth');
+
+  const eyeH = 60, eyeRx = 15;
+  const eyeCenterY = 100;
+
+  function mouthPath(curveAmount) {
+    const leftX = 128, rightX = 172;
+    const y0 = 150;
+    const maxCurve = 22;
+    const cy = y0 + maxCurve * curveAmount;
+    return `M ${leftX} ${y0} Q 150 ${cy} ${rightX} ${y0}`;
+  }
+
+  mouth.setAttribute('d', mouthPath(0));
+
+  function setEyeHeight(el, scaleY) {
+    const newH = Math.max(eyeH * scaleY, 6);
+    const newY = eyeCenterY - newH / 2;
+    const newRx = Math.min(eyeRx, newH / 2);
+    el.setAttribute('height', newH);
+    el.setAttribute('y', newY);
+    el.setAttribute('rx', newRx);
+    el.setAttribute('ry', newRx);
+  }
+
+  function easeInOutSine(t) {
+    return -(Math.cos(Math.PI * t) - 1) / 2;
+  }
+
+  function easeOutBack(t) {
+    const c1 = 1.70158;
+    const c3 = c1 + 1;
+    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+  }
+
+  const duration = 2400;
+  let startTime = null;
+  const T = {
+    eyesOpenStart: 0.10,
+    eyesOpenEnd: 0.28,
+    smileStart: 0.42,
+    smileEnd: 0.60,
+    winkStart: 0.75,
+    winkClose: 0.80
+  };
+
+  function animate(timestamp) {
+    if (!startTime) startTime = timestamp;
+    const elapsed = Math.min(timestamp - startTime, duration);
+    const t = elapsed / duration;
+
+    let leftScale;
+    if (t < T.eyesOpenStart) {
+      leftScale = 0.08;
+    } else if (t < T.eyesOpenEnd) {
+      const localT = (t - T.eyesOpenStart) / (T.eyesOpenEnd - T.eyesOpenStart);
+      leftScale = 0.08 + easeInOutSine(localT) * 0.92;
+    } else {
+      leftScale = 1;
+    }
+    setEyeHeight(eyeLeft, leftScale);
+
+    let rightScale, winkOpacity;
+    if (t < T.eyesOpenStart) {
+      rightScale = 0.08;
+      winkOpacity = 0;
+    } else if (t < T.eyesOpenEnd) {
+      const localT = (t - T.eyesOpenStart) / (T.eyesOpenEnd - T.eyesOpenStart);
+      rightScale = 0.08 + easeInOutSine(localT) * 0.92;
+      winkOpacity = 0;
+    } else if (t < T.winkStart) {
+      rightScale = 1;
+      winkOpacity = 0;
+    } else if (t < T.winkClose) {
+      const localT = (t - T.winkStart) / (T.winkClose - T.winkStart);
+      const eased = easeOutBack(localT);
+      rightScale = Math.max(1 - eased * 1.05, 0);
+      winkOpacity = Math.min(localT * 1.6, 1);
+    } else {
+      rightScale = 0;
+      winkOpacity = 1;
+    }
+
+    eyeRight.setAttribute('opacity', 1 - winkOpacity);
+    if (rightScale > 0) setEyeHeight(eyeRight, rightScale);
+    eyeRightWink.setAttribute('opacity', winkOpacity);
+
+    let curveAmount;
+    if (t < T.smileStart) {
+      curveAmount = 0;
+    } else if (t < T.smileEnd) {
+      const localT = (t - T.smileStart) / (T.smileEnd - T.smileStart);
+      curveAmount = easeInOutSine(localT);
+    } else {
+      curveAmount = 1;
+    }
+    mouth.setAttribute('d', mouthPath(curveAmount));
+
+    if (elapsed < duration) requestAnimationFrame(animate);
+  }
+
+  requestAnimationFrame(animate);
+  setTimeout(() => window.parent.postMessage({ type: 'neo-face-reveal' }, '*'), 1820);
+  setTimeout(() => window.parent.postMessage({ type: 'neo-face-done' }, '*'), 2520);
+</script>
+
+</body>
+</html>

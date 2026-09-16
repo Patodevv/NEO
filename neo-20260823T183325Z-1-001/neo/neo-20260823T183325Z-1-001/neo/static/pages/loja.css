@@ -1,0 +1,273 @@
+.store-heading {
+    min-height: clamp(190px, 19vw, 235px);
+    padding: clamp(24px, 3vw, 34px);
+    overflow: hidden;
+    border-color: rgba(73, 105, 255, .3);
+    background:
+        linear-gradient(90deg, rgba(10, 18, 39, .98) 0%, rgba(10, 18, 39, .92) 38%, rgba(10, 18, 39, .58) 61%, rgba(10, 18, 39, .14) 100%),
+        url('../images/store-banner-bg.webp') center right / cover no-repeat;
+    box-shadow: var(--panel-shadow), inset 0 0 0 1px rgba(26, 46, 255, .08);
+}
+
+.store-heading .neo-page-heading-copy {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 520px);
+}
+
+@media (max-width: 620px) {
+    .store-heading {
+        min-height: 210px;
+        justify-content: center;
+        background:
+            linear-gradient(90deg, rgba(10, 18, 39, .98) 0%, rgba(10, 18, 39, .9) 58%, rgba(10, 18, 39, .42) 100%),
+            url('../images/store-banner-bg.webp') 68% center / cover no-repeat;
+    }
+}
+
+.store-price {
+    display: inline-flex;
+    align-items: center;
+    gap: clamp(5px, 1vw, 8px);
+    min-width: 0;
+}
+
+.store-price .coin {
+    width: clamp(13px, 1.8vw, 16px);
+    height: clamp(13px, 1.8vw, 16px);
+    flex: 0 0 clamp(13px, 1.8vw, 16px);
+}
+
+.store-price b {
+    color: #fff;
+    overflow: hidden;
+    font-size: clamp(12px, 1.6vw, 15px);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.store-filters {
+    width: fit-content;
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: clamp(6px, 1vw, 8px);
+    padding: clamp(5px, 1vw, 7px);
+    border: 1px solid var(--panel-border);
+    border-radius: 18px;
+    background: var(--panel-bg);
+    overflow: visible;
+}
+
+.store-filters button {
+    min-height: clamp(32px, 5vw, 38px);
+    padding: 0 clamp(10px, 1.8vw, 16px);
+    border: 1px solid transparent;
+    border-radius: clamp(11px, 2vw, 13px);
+    background: transparent;
+    color: var(--muted);
+    font-size: clamp(11px, 1.4vw, 12px);
+    font-weight: 800;
+    white-space: nowrap;
+    transition: color .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.store-filters button:hover,
+.store-filters button:focus-visible {
+    color: #fff;
+    background: color-mix(in srgb, var(--neo-blue) 16%, transparent);
+    outline: none;
+}
+
+.store-filters button.is-active {
+    color: var(--neo-blue);
+    border-color: var(--neo-blue);
+    background: var(--btn-bg);
+    box-shadow: 0 0 0 3px rgba(26, 46, 255, .16);
+}
+
+.store-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(12px, 2vw, 18px);
+    overflow: visible;
+}
+
+.store-grid > .neo-empty-state {
+    grid-column: 1 / -1;
+}
+
+.store-item[hidden] {
+    display: none;
+}
+
+.store-item {
+    --icon-star-size: 32px;
+    position: relative;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1.7vw, 15px);
+    padding: clamp(14px, 2vw, 18px);
+    border: 1px solid var(--panel-border);
+    border-radius: clamp(16px, 2.2vw, 20px);
+    background: var(--panel-bg);
+    box-shadow: var(--panel-shadow);
+    transition: background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.store-item:hover,
+.store-item:focus-within {
+    border-color: var(--neo-blue);
+    background: color-mix(in srgb, var(--neo-blue) 10%, var(--panel-bg));
+    box-shadow: var(--panel-shadow), 0 0 0 4px var(--neo-blue-glow);
+    transform: translateY(-2px);
+}
+
+.store-item > .icon-hover-star {
+    left: -14px;
+    top: -14px;
+}
+
+.store-preview {
+    height: clamp(112px, 16vw, 154px);
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--panel-border);
+    border-radius: clamp(13px, 2vw, 16px);
+    background: #111;
+    overflow: hidden;
+}
+
+.store-preview > img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+}
+
+.store-avatar-demo {
+    width: clamp(70px, 9vw, 92px);
+    height: clamp(70px, 9vw, 92px);
+    display: grid;
+    place-items: center;
+    border: 3px solid var(--neo-blue);
+    border-radius: clamp(19px, 2.8vw, 26px);
+    background: #102247;
+    box-shadow: 0 0 0 5px rgba(26, 46, 255, .12);
+    overflow: hidden;
+}
+
+.store-preview.anel_ouro .store-avatar-demo {
+    border-color: #d7bb5f;
+    box-shadow: 0 0 0 5px rgba(215, 187, 95, .12);
+}
+
+.store-preview.anel_neon .store-avatar-demo {
+    border-color: #40d8ff;
+    box-shadow: 0 0 0 5px rgba(64, 216, 255, .12);
+}
+
+.store-preview.anel_foco .store-avatar-demo {
+    border-color: #38d16a;
+    box-shadow: 0 0 0 5px rgba(56, 209, 106, .12);
+}
+
+.store-avatar-demo img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.store-avatar-demo span {
+    color: #fff;
+    font-size: clamp(26px, 3.4vw, 34px);
+    font-weight: 900;
+}
+
+.store-item-copy {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+}
+
+.store-item-copy > span {
+    color: var(--neo-blue);
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.store-item-copy h2 {
+    overflow: hidden;
+    color: #fff;
+    font-size: clamp(15px, 2vw, 18px);
+    line-height: 1.18;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.store-item-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(10px, 1.7vw, 14px);
+    margin-top: auto;
+    padding-top: clamp(10px, 1.6vw, 14px);
+    border-top: 1px solid var(--panel-border);
+}
+
+.store-price {
+    color: #fff;
+}
+
+.store-item-footer form {
+    margin: 0;
+}
+
+.store-item-footer button {
+    min-width: clamp(92px, 11vw, 112px);
+    gap: clamp(6px, 1vw, 8px);
+}
+
+.store-item-footer button svg {
+    width: clamp(15px, 1.8vw, 17px);
+    height: clamp(15px, 1.8vw, 17px);
+}
+
+.store-item-footer button:disabled {
+    opacity: .72;
+}
+
+@media (max-width: 920px) {
+    .store-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 620px) {
+    .store-filters {
+        width: 100%;
+    }
+
+    .store-filters button {
+        flex: 1 1 calc(50% - 6px);
+    }
+
+    .store-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .store-item-footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .store-item-footer form,
+    .store-item-footer button {
+        width: 100%;
+    }
+}

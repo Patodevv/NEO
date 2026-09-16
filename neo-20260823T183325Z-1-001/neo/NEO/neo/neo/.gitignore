@@ -1,0 +1,6 @@
+.env
+config/.schema_v2.ready
+static/uploads/perfis/*
+static/uploads/produtos/*
+!static/uploads/perfis/.gitkeep
+!static/uploads/produtos/.gitkeep

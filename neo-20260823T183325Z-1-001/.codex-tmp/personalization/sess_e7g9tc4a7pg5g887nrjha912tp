@@ -1,0 +1,1 @@
+csrf_token|s:64:"7a6ef3de933e8913e1589820407c96c363df6dde3c54c2c8871c5d7e29db60da";neo_onboarding_guest|a:1:{s:7:"answers";a:3:{s:4:"nome";s:4:"Lara";s:6:"gostos";a:3:{s:8:"selected";a:2:{i:0;s:5:"jogos";i:1;s:6:"musica";}s:5:"other";s:0:"";s:10:"references";s:0:"";}s:6:"ensino";a:2:{s:5:"value";s:5:"medio";s:5:"other";s:0:"";}}}
