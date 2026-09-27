@@ -37,7 +37,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'foto') 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'aplicar_item') {
     validarCsrf();
     try {
-        aplicarDecoracaoPerfil($pdo, (int)$usuario['id'], (int)($_POST['produto_id'] ?? 0));
+        aplicarItemCosmetico($pdo, (int)$usuario['id'], (int)($_POST['produto_id'] ?? 0));
+        $usuario = usuarioAtual($pdo);
+    } catch (DomainException $e) {
+        $erro = $e->getMessage();
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'remover_item') {
+    validarCsrf();
+    try {
+        removerItemCosmetico($pdo, (int)$usuario['id'], (string)($_POST['categoria'] ?? ''));
         $usuario = usuarioAtual($pdo);
     } catch (DomainException $e) {
         $erro = $e->getMessage();
@@ -54,6 +64,11 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([$usuario['id']]);
 $progressosMaterias = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$perfilAdaptativo = adaptiveProfile($usuario);
+$progressosMaterias = array_values(array_filter(
+    $progressosMaterias,
+    static fn(array $progresso): bool => adaptiveSubjectAllowed($perfilAdaptativo, (string)$progresso['nome'])
+));
 $stmtResumoPerfil = $pdo->prepare("
     SELECT
         (SELECT COUNT(*) FROM ultimos_acessos WHERE user_id = ?) AS livros_acessados,
@@ -68,10 +83,12 @@ $xpAtual = (int)($usuario['xp'] ?? 0);
 $nivel = max(1, (int)($usuario['nivel'] ?? 1));
 $xpProximo = xpParaProximoNivel($nivel);
 $progresso = $xpProximo > 0 ? min(100, round(($xpAtual / $xpProximo) * 100)) : 0;
-$cossasPerfil = (int)($usuario['cossas'] ?? 0);
 $decoracaoAtual = $usuario['decoracao_perfil'] ?? '';
-$decoracaoAtualNome = 'Padrão';
 $nomeCompleto = trim((string)$usuario['nome'] . ' ' . (string)($usuario['sobrenome'] ?? ''));
+$cosmeticosPerfil = cosmeticosAtivosUsuario($pdo, $usuario);
+$decoracaoProdutoAtual = $cosmeticosPerfil['decoracao_perfil'] ?? null;
+$decoracaoImagemAtual = is_array($decoracaoProdutoAtual) ? trim((string)($decoracaoProdutoAtual['imagem'] ?? '')) : '';
+$decoracaoInline = '';
 $rotulosGenero = [
     'feminino' => 'Feminino',
     'masculino' => 'Masculino',
@@ -81,12 +98,6 @@ $rotulosGenero = [
 $generoPerfil = $rotulosGenero[$usuario['genero'] ?? ''] ?? 'Não informado';
 $idadePerfil = !empty($usuario['idade']) ? (int)$usuario['idade'] . ' anos' : 'Não informada';
 $membroDesde = !empty($usuario['criado_em']) ? date('m/Y', strtotime($usuario['criado_em'])) : 'Não informado';
-foreach ($inventario as $itemInventario) {
-    if (($itemInventario['codigo'] ?? '') === $decoracaoAtual) {
-        $decoracaoAtualNome = $itemInventario['nome'];
-        break;
-    }
-}
 
 $tituloPagina = 'Perfil';
 $paginaAtual = 'perfil';
@@ -103,8 +114,8 @@ require __DIR__ . '/includes/head.php';
             <div class="error"><?= htmlspecialchars($erro) ?></div>
         <?php endif; ?>
 
-        <section class="profile-summary neo-panel <?= htmlspecialchars($decoracaoAtual) ?>">
-            <div class="profile-avatar-ring">
+        <section class="profile-summary neo-panel <?= htmlspecialchars($decoracaoAtual) ?>"<?= $decoracaoInline !== '' ? ' style="' . htmlspecialchars($decoracaoInline, ENT_QUOTES, 'UTF-8') . '"' : '' ?>>
+            <div class="profile-avatar-ring<?= $decoracaoImagemAtual !== '' ? ' has-frame-art' : '' ?>">
                 <div class="profile-avatar">
                     <?php if (!empty($usuario['foto'])): ?>
                         <img src="<?= htmlspecialchars($usuario['foto']) ?>" alt="" loading="lazy" decoding="async">
@@ -112,23 +123,19 @@ require __DIR__ . '/includes/head.php';
                         <span><?= htmlspecialchars(strtoupper(substr($usuario['nome'], 0, 1))) ?></span>
                     <?php endif; ?>
                 </div>
+                <?php if ($decoracaoImagemAtual !== ''): ?>
+                    <img class="profile-frame-art" src="<?= htmlspecialchars($decoracaoImagemAtual) ?>" alt="" loading="lazy" decoding="async">
+                <?php endif; ?>
             </div>
 
             <div class="profile-summary-copy">
-                <span class="neo-page-kicker">Perfil NEO</span>
                 <h1><?= htmlspecialchars($nomeCompleto) ?></h1>
-                <span class="profile-equipped">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 14 9l6 2-6 2-2 6-2-6-6-2 6-2 2-6Z"></path></svg>
-                    <?= htmlspecialchars($decoracaoAtualNome) ?>
-                </span>
-            </div>
-
-            <div class="profile-level-card">
-                <div class="profile-level-top">
-                    <span>Nível <?= $nivel ?> · <?= $xpAtual ?> / <?= $xpProximo ?> EXP</span>
-                    <span class="profile-wallet"><span class="coin"></span><b><?= saldoCossasVisual($usuario) ?></b></span>
+                <div class="profile-level-card">
+                    <div class="profile-level-top">
+                        <span>Nível <?= $nivel ?> · <?= $xpAtual ?> / <?= $xpProximo ?> EXP</span>
+                    </div>
+                    <div class="progress neo-progress-track"><i class="neo-progress-fill" style="width: <?= $progresso ?>%;"><?= cometaProgressoNeo() ?></i></div>
                 </div>
-                <div class="progress neo-progress-track"><i class="neo-progress-fill" style="width: <?= $progresso ?>%;"><?= cometaProgressoNeo() ?></i></div>
             </div>
         </section>
 
@@ -147,8 +154,8 @@ require __DIR__ . '/includes/head.php';
                     <p>Confira seu mapa de conhecimento, revisões, rotina e preferências.</p>
                 </div>
             </div>
-            <a class="primary" href="aprendizado.php">Meu aprendizado</a>
-            <a class="ghost" href="register.php?editar=1">Editar personalização</a>
+            <a class="primary neo-star-hover" href="aprendizado.php" data-manel-tip="Abre seu mapa de aprendizado, rotina e progresso."><?= estrelaHoverNeo() ?>Meu aprendizado</a>
+            <a class="ghost neo-star-hover" href="register.php?editar=1" data-manel-tip="Atualiza suas preferências para o NEO adaptar melhor os estudos."><?= estrelaHoverNeo() ?>Editar personalização</a>
         </section>
 
         <section class="profile-account neo-panel">
@@ -176,7 +183,8 @@ require __DIR__ . '/includes/head.php';
                 <label for="foto">Trocar foto de perfil</label>
                 <div class="photo-input-row">
                     <input type="file" id="foto" name="foto" accept="image/png,image/jpeg,image/webp,image/gif" required>
-                    <button type="submit" class="primary">
+                    <button type="submit" class="primary neo-star-hover">
+                        <?= estrelaHoverNeo() ?>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"></path><path d="m7 9 5-5 5 5"></path><path d="M5 20h14"></path></svg>
                         Salvar foto
                     </button>
@@ -190,23 +198,48 @@ require __DIR__ . '/includes/head.php';
                     <span class="neo-page-kicker">Aparência</span>
                     <h2>Inventário</h2>
                 </div>
-                <a href="loja.php" class="ghost">Abrir loja</a>
+                <a href="loja.php" class="ghost neo-star-hover"><?= estrelaHoverNeo() ?>Abrir loja</a>
             </div>
 
             <?php if (!$inventario): ?>
                 <div class="profile-inline-empty">
                     <span>Você ainda não possui itens cosméticos.</span>
-                    <a href="loja.php" class="ghost">Ver itens</a>
+                    <a href="loja.php" class="ghost neo-star-hover"><?= estrelaHoverNeo() ?>Ver itens</a>
                 </div>
             <?php else: ?>
                 <div class="inventory-grid">
                     <?php foreach ($inventario as $item): ?>
-                        <?php $itemEmUso = ($usuario['decoracao_perfil'] ?? '') === $item['codigo']; ?>
-                        <article class="inventory-item neo-star-hover <?= htmlspecialchars($item['classe_visual'] ?? '') ?>">
+                        <?php
+                        $itemDados = metadadosProduto($item);
+                        $itemEmUso = produtoEquipadoPorUsuario($usuario, $item);
+                        $itemEquipavel = produtoEquipavel((string)$item['categoria']);
+                        $accentItem = $item['categoria'] === 'decoracao_perfil' ? '' : valorCssSeguro($itemDados['accent'] ?? ($itemDados['manel_color'] ?? ($itemDados['name_color'] ?? '')));
+                        $accent2Item = $item['categoria'] === 'decoracao_perfil' ? '' : valorCssSeguro($itemDados['accent2'] ?? '');
+                        $classeVarianteManelItem = $item['categoria'] === 'skin_manel' ? varianteManelClasse($itemDados['manel_variant'] ?? '') : '';
+                        $styleItem = trim(($accentItem !== '' ? '--store-accent: ' . $accentItem . '; --profile-accent: ' . $accentItem . '; ' : '') . ($accent2Item !== '' ? '--profile-accent-2: ' . $accent2Item . '; ' : ''));
+                        ?>
+                        <article class="inventory-item neo-star-hover <?= htmlspecialchars($item['classe_visual'] ?? '') ?>"<?= $styleItem !== '' ? ' style="' . htmlspecialchars($styleItem, ENT_QUOTES, 'UTF-8') . '"' : '' ?>>
                             <?= estrelaHoverNeo() ?>
-                            <div class="inventory-preview <?= htmlspecialchars($item['codigo'] ?? '') ?>">
-                                <?php if (!empty($item['imagem'])): ?>
+                            <div class="inventory-preview<?= $item['categoria'] === 'decoracao_perfil' ? ' inventory-frame-stage' : '' ?> <?= htmlspecialchars($item['codigo'] ?? '') ?>">
+                                <?php if ($item['categoria'] === 'decoracao_perfil' && !empty($item['imagem'])): ?>
+                                    <img class="inventory-frame-preview" src="<?= htmlspecialchars($item['imagem']) ?>" alt="<?= htmlspecialchars($item['nome']) ?>" loading="lazy" decoding="async">
+                                <?php elseif (!empty($item['imagem'])): ?>
                                     <img src="<?= htmlspecialchars($item['imagem']) ?>" alt="" loading="lazy" decoding="async">
+                                <?php elseif ($item['categoria'] === 'tema_site'): ?>
+                                    <div class="store-theme-demo">
+                                        <span></span><i></i><b></b>
+                                    </div>
+                                <?php elseif ($item['categoria'] === 'skin_manel'): ?>
+                                    <div class="store-manel-demo <?= htmlspecialchars($classeVarianteManelItem) ?>" aria-hidden="true">
+                                        <svg viewBox="0 0 300 220" focusable="false">
+                                            <?= decoracoesRostoManelSvg() ?>
+                                            <rect x="95" y="70" width="30" height="60" rx="15" ry="15"></rect>
+                                            <rect x="175" y="70" width="30" height="60" rx="15" ry="15"></rect>
+                                            <path d="M 128 147 Q 150 166 172 147"></path>
+                                        </svg>
+                                    </div>
+                                <?php elseif ($item['categoria'] === 'cor_nome'): ?>
+                                    <div class="store-name-demo">NEO</div>
                                 <?php else: ?>
                                     <div class="inventory-avatar-demo">
                                         <?php if (!empty($usuario['foto'])): ?>
@@ -219,13 +252,17 @@ require __DIR__ . '/includes/head.php';
                             </div>
                             <span><?= htmlspecialchars(rotuloCategoriaProduto($item['categoria'])) ?></span>
                             <h3><?= htmlspecialchars($item['nome']) ?></h3>
-                            <?php if ($item['categoria'] === 'decoracao_perfil'): ?>
+                            <?php if ($itemEquipavel): ?>
                                 <form method="post">
                                     <?= campoCsrf() ?>
-                                    <input type="hidden" name="acao" value="aplicar_item">
+                                    <input type="hidden" name="acao" value="<?= $itemEmUso ? 'remover_item' : 'aplicar_item' ?>">
                                     <input type="hidden" name="produto_id" value="<?= (int)$item['id'] ?>">
-                                    <button type="submit" class="<?= $itemEmUso ? 'ghost' : 'primary' ?>" <?= $itemEmUso ? 'disabled' : '' ?>>
-                                        <?= $itemEmUso ? 'Equipado' : 'Equipar' ?>
+                                    <?php if ($itemEmUso): ?>
+                                        <input type="hidden" name="categoria" value="<?= htmlspecialchars((string)$item['categoria']) ?>">
+                                    <?php endif; ?>
+                                    <button type="submit" class="<?= $itemEmUso ? 'ghost' : 'primary' ?> neo-star-hover">
+                                        <?= estrelaHoverNeo() ?>
+                                        <?= $itemEmUso ? 'Remover' : 'Equipar' ?>
                                     </button>
                                 </form>
                             <?php endif; ?>
@@ -245,16 +282,17 @@ require __DIR__ . '/includes/head.php';
             <?php if (!$progressosMaterias): ?>
                 <div class="profile-inline-empty">
                     <span>Responda atividades para iniciar sua progressão.</span>
-                    <a href="materias.php" class="ghost">Começar a estudar</a>
+                    <a href="materias.php" class="ghost neo-star-hover" data-manel-tip="Escolha uma matéria para começar seu progresso."><?= estrelaHoverNeo() ?>Começar a estudar</a>
                 </div>
             <?php else: ?>
                 <div class="mastery-grid">
                     <?php foreach ($progressosMaterias as $progressoMateria): ?>
                         <?php $desempenhoMateria = max(0, min(100, round((float)$progressoMateria['desempenho_recente']))); ?>
-                        <article class="mastery-item">
-                            <div><span><?= htmlspecialchars($progressoMateria['nome']) ?></span><b>Nível <?= (int)$progressoMateria['nivel'] ?></b></div>
+                        <article class="mastery-item <?= classeTemaMateria((string)$progressoMateria['nome']) ?>">
+                            <span class="mastery-subject-icon" aria-hidden="true"><?= iconeMateriaDashboard((string)$progressoMateria['nome']) ?></span>
+                            <div class="mastery-copy"><span><?= htmlspecialchars($progressoMateria['nome']) ?></span><b>Nível <?= (int)$progressoMateria['nivel'] ?></b></div>
                             <strong><?= (int)$progressoMateria['xp_total'] ?> EXP</strong>
-                            <div class="progress neo-progress-track"><i class="neo-progress-fill" style="width: <?= $desempenhoMateria ?>%;"><?= cometaProgressoNeo() ?></i></div>
+                            <div class="progress neo-progress-track"><i class="neo-progress-fill" style="width: <?= $desempenhoMateria ?>%; background: var(--materia-cor, var(--neo-blue));"><?= cometaProgressoNeo() ?></i></div>
                             <small><?= $desempenhoMateria ?>% de desempenho recente</small>
                         </article>
                     <?php endforeach; ?>

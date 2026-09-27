@@ -9,8 +9,8 @@
     justify-content: space-between;
     gap: clamp(6px, 1.2vw, 16px);
     padding: 0 clamp(8px, 2vw, 22px) 0 clamp(56px, 6.8vw, 74px);
-    border-bottom: 1px solid rgba(120, 145, 255, 0.16);
-    background: rgba(4, 10, 27, 0.97);
+    border-bottom: 1px solid var(--neo-chrome-border, rgba(120, 145, 255, 0.16));
+    background: var(--neo-chrome-bg, rgba(4, 10, 27, 0.97));
     box-shadow: 0 6px 18px rgba(1, 5, 16, .28);
     z-index: 120;
     margin-bottom: 0;
@@ -36,8 +36,8 @@
     width: 324px;
     height: 7px;
     border-radius: 999px;
-    background: #071bbd;
-    box-shadow: 0 0 7px rgba(7, 27, 189, .5);
+    background: color-mix(in srgb, var(--neo-blue) 68%, #030824);
+    box-shadow: 0 0 7px color-mix(in srgb, var(--neo-blue) 50%, transparent);
 }
 
 .burst-trail::before,
@@ -48,7 +48,7 @@
     width: 214px;
     height: 5px;
     border-radius: 999px;
-    background: #1230ff;
+    background: var(--neo-blue);
 }
 
 .burst-trail::before {
@@ -66,7 +66,7 @@
     top: 25px;
     width: 238px;
     height: 4px;
-    background: #2f56ff;
+    background: color-mix(in srgb, var(--neo-blue) 78%, #ffffff);
     box-shadow: none;
     transform: skewX(-18deg);
 }
@@ -81,16 +81,16 @@
 }
 
 .burst-star-shadow {
-    fill: #06116e;
-    stroke: #06116e;
+    fill: var(--hover-star-shadow, color-mix(in srgb, var(--neo-blue) 42%, #020616));
+    stroke: var(--hover-star-shadow, color-mix(in srgb, var(--neo-blue) 42%, #020616));
     stroke-width: 10;
     stroke-linejoin: round;
     stroke-linecap: round;
 }
 
 .burst-star-core {
-    fill: #1230ff;
-    stroke: #e9eeff;
+    fill: var(--hover-star-core, var(--neo-blue));
+    stroke: var(--hover-star-outline, #e9eeff);
     stroke-width: 7;
     stroke-linejoin: round;
     stroke-linecap: round;
@@ -98,7 +98,7 @@
 
 .burst-star-center {
     fill: #ffffff;
-    stroke: #8da2ff;
+    stroke: var(--hover-star-center-stroke, color-mix(in srgb, var(--neo-blue) 58%, #ffffff));
     stroke-width: 5;
     stroke-linejoin: round;
     stroke-linecap: round;
@@ -109,10 +109,10 @@
     width: 26px;
     height: 6px;
     border-radius: 999px;
-    background: #2f56ff;
+    background: color-mix(in srgb, var(--neo-blue) 78%, #ffffff);
     opacity: 0;
-    border: 1px solid #1230ff;
-    box-shadow: 0 0 4px rgba(18, 48, 255, .55);
+    border: 1px solid var(--neo-blue);
+    box-shadow: 0 0 4px color-mix(in srgb, var(--neo-blue) 55%, transparent);
     transform-origin: center;
 }
 
@@ -121,7 +121,7 @@
     top: 16px;
     --particle-x: 30px;
     --particle-y: -16px;
-    background: #2f56ff;
+    background: color-mix(in srgb, var(--neo-blue) 78%, #ffffff);
     transform: rotate(-20deg);
 }
 
@@ -138,7 +138,7 @@
     top: 58px;
     --particle-x: -24px;
     --particle-y: 24px;
-    background: #2f56ff;
+    background: color-mix(in srgb, var(--neo-blue) 78%, #ffffff);
     transform: rotate(58deg);
 }
 
@@ -274,15 +274,111 @@
     justify-content: center;
     gap: clamp(4px, 1.2vw, 7px);
     padding: 4px clamp(7px, 1.6vw, 12px);
-    border: 1px solid rgba(101, 127, 239, .24);
+    border: 1px solid color-mix(in srgb, var(--neo-blue) 24%, transparent);
     border-radius: 999px;
-    background: linear-gradient(145deg, rgba(17, 38, 78, .98), rgba(9, 23, 53, .96));
+    background: linear-gradient(145deg, color-mix(in srgb, var(--panel-bg) 94%, #ffffff 6%), var(--control-bg));
     color: #fff;
     font-size: clamp(11px, 2.8vw, 14px);
     font-weight: 900;
     line-height: 1;
     white-space: nowrap;
     box-shadow: inset 0 1px 0 rgba(142, 162, 255, .06), 0 5px 14px rgba(1, 5, 16, .2);
+}
+
+.side-stat-ai {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    --ai-charge: 0%;
+    min-width: clamp(44px, 7vw, 62px);
+    padding-inline: clamp(7px, 1.2vw, 10px);
+    gap: 5px;
+    border-color: color-mix(in srgb, var(--neo-blue) 20%, transparent);
+    background: var(--control-bg);
+    color: rgba(223, 232, 255, .9);
+    transition: border-color .2s ease, color .2s ease, background-color .2s ease;
+}
+
+.side-stat-ai::after {
+    content: '';
+    position: absolute;
+    inset: 2px auto 2px 2px;
+    width: var(--ai-charge, 0%);
+    max-width: calc(100% - 4px);
+    border-radius: inherit;
+    background: currentColor;
+    opacity: .13;
+    z-index: 0;
+    transition: width .55s cubic-bezier(.22, 1, .36, 1), opacity .2s ease;
+}
+
+.side-stat-ai svg {
+    position: relative;
+    z-index: 1;
+    width: 14px;
+    height: 14px;
+    flex: 0 0 14px;
+    fill: currentColor;
+    filter: none;
+}
+
+.side-stat-ai b {
+    position: relative;
+    z-index: 1;
+    min-width: 18px;
+    overflow: hidden;
+    text-align: left;
+    font-size: clamp(10px, 2.2vw, 12px);
+    letter-spacing: .02em;
+}
+
+.side-stat-ai.is-ready {
+    border-color: rgba(72, 224, 151, .36);
+    color: #74edaa;
+    background: rgba(11, 48, 50, .5);
+}
+
+.side-stat-ai.is-ready svg {
+    filter: drop-shadow(0 0 6px rgba(72, 224, 151, .32));
+}
+
+.side-stat-ai.is-cooling {
+    border-color: rgba(255, 178, 74, .34);
+    color: #72d7ff;
+    background: rgba(8, 35, 73, .58);
+}
+
+.side-stat-ai.is-cooling svg {
+    filter: drop-shadow(0 0 6px rgba(114, 215, 255, .26));
+}
+
+.side-stat-ai.is-error {
+    border-color: rgba(255, 92, 108, .38);
+    color: #ff7a8b;
+    background: rgba(64, 19, 34, .42);
+}
+
+.side-stat-ai.is-offline {
+    border-color: rgba(142, 162, 255, .16);
+    color: rgba(205, 214, 238, .62);
+    background: color-mix(in srgb, var(--control-bg) 64%, transparent);
+}
+
+.side-stat-ai.is-offline::after,
+.side-stat-ai.is-error::after {
+    opacity: .07;
+}
+
+@keyframes aiRechargePulse {
+    0%, 100% {
+        transform: scale(.94) rotate(0deg);
+        opacity: .72;
+    }
+
+    50% {
+        transform: scale(1.06) rotate(8deg);
+        opacity: 1;
+    }
 }
 
 .blue-flame {
@@ -292,9 +388,8 @@
     flex: 0 0 clamp(19px, 4.4vw, 25px);
     display: block;
     overflow: visible;
-    filter: drop-shadow(0 0 8px rgba(50, 157, 255, .48));
+    filter: drop-shadow(0 0 8px var(--neo-blue-glow));
     transform-origin: 50% 84%;
-    animation: streakFlameDance 1.55s ease-in-out infinite;
 }
 
 .blue-flame .flame-outline,
@@ -308,23 +403,21 @@
 }
 
 .blue-flame .flame-outline {
-    fill: #06116e;
+    fill: color-mix(in srgb, var(--neo-blue) 42%, #020616);
 }
 
 .blue-flame .flame-body {
-    fill: #1230ff;
-    stroke: #071bbd;
+    fill: var(--neo-blue);
+    stroke: color-mix(in srgb, var(--neo-blue) 62%, #030824);
     stroke-width: 2.3px;
     stroke-linejoin: round;
-    animation: streakFlameBody 1.2s ease-in-out infinite;
 }
 
 .blue-flame .flame-core {
     fill: #ffffff;
-    stroke: #8feeff;
+    stroke: color-mix(in srgb, var(--neo-blue) 42%, #ffffff);
     stroke-width: 2px;
     stroke-linejoin: round;
-    animation: streakFlameCore 1.04s ease-in-out infinite;
 }
 
 .blue-flame .flame-shine {
@@ -333,29 +426,26 @@
     stroke-width: 4px;
     stroke-linecap: round;
     opacity: .76;
-    animation: streakFlameShine 1.26s ease-in-out infinite;
 }
 
 .blue-flame .flame-ember {
     fill: #ffffff;
-    stroke: #8feeff;
+    stroke: color-mix(in srgb, var(--neo-blue) 42%, #ffffff);
     stroke-width: 1.4px;
     opacity: 0;
-    filter: drop-shadow(0 0 6px rgba(143, 238, 255, .96)) drop-shadow(0 0 12px rgba(18, 48, 255, .78));
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--neo-blue) 36%, #ffffff)) drop-shadow(0 0 12px color-mix(in srgb, var(--neo-blue) 78%, transparent));
     transform-origin: center;
-    animation: streakEmberRise 1.3s ease-out infinite;
 }
 
 .blue-flame .flame-ember-trail {
     fill: none;
-    stroke: #8feeff;
+    stroke: color-mix(in srgb, var(--neo-blue) 42%, #ffffff);
     stroke-width: 5.8px;
     stroke-linecap: round;
     stroke-linejoin: round;
     opacity: 0;
-    filter: drop-shadow(0 0 5px rgba(143, 238, 255, .92)) drop-shadow(0 0 10px rgba(18, 48, 255, .8));
+    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--neo-blue) 36%, #ffffff)) drop-shadow(0 0 10px color-mix(in srgb, var(--neo-blue) 80%, transparent));
     transform-origin: center;
-    animation: streakEmberRise 1.3s ease-out infinite;
 }
 
 .blue-flame .flame-ember-1 {
@@ -368,7 +458,7 @@
 .blue-flame .flame-ember-2 {
     --ember-x: 7px;
     --ember-y: -31px;
-    fill: #aef6ff;
+    fill: color-mix(in srgb, var(--neo-blue) 26%, #ffffff);
     animation-delay: .28s;
     animation-duration: 1.42s;
 }
@@ -383,7 +473,7 @@
 .blue-flame .flame-ember-4 {
     --ember-x: -4px;
     --ember-y: -35px;
-    fill: #dfffff;
+    fill: color-mix(in srgb, var(--neo-blue) 14%, #ffffff);
     animation-delay: .72s;
     animation-duration: 1.5s;
 }
@@ -391,22 +481,49 @@
 .blue-flame .flame-ember-5 {
     --ember-x: 17px;
     --ember-y: -22px;
-    fill: #8feeff;
+    fill: color-mix(in srgb, var(--neo-blue) 42%, #ffffff);
     animation-delay: .92s;
     animation-duration: 1.34s;
 }
 
 .side-stat-streak:hover .blue-flame {
-    animation-duration: .86s;
-    filter: drop-shadow(0 0 12px rgba(143, 238, 255, .55));
+    filter: drop-shadow(0 0 12px color-mix(in srgb, var(--neo-blue) 55%, transparent));
+}
+
+.blue-flame,
+.blue-flame .flame-body,
+.blue-flame .flame-core,
+.blue-flame .flame-shine,
+.blue-flame .flame-ember-trail,
+.blue-flame .flame-ember {
+    animation: none;
+}
+
+.side-stat-streak:hover .blue-flame,
+.side-stat-streak:focus-within .blue-flame {
+    animation: streakFlameDance .86s ease-in-out 2;
 }
 
 .side-stat-streak:hover .flame-body,
+.side-stat-streak:focus-within .flame-body {
+    animation: streakFlameBody .76s ease-in-out 2;
+}
+
 .side-stat-streak:hover .flame-core,
+.side-stat-streak:focus-within .flame-core {
+    animation: streakFlameCore .76s ease-in-out 2;
+}
+
 .side-stat-streak:hover .flame-shine,
+.side-stat-streak:focus-within .flame-shine {
+    animation: streakFlameShine .76s ease-in-out 2;
+}
+
+.side-stat-streak:hover .flame-ember,
+.side-stat-streak:focus-within .flame-ember,
 .side-stat-streak:hover .flame-ember-trail,
-.side-stat-streak:hover .flame-ember {
-    animation-duration: .76s;
+.side-stat-streak:focus-within .flame-ember-trail {
+    animation: streakEmberRise .82s ease-out 2;
 }
 
 @keyframes streakFlameDance {
@@ -530,6 +647,16 @@
     height: clamp(18px, 2.5vw, 26px);
 }
 
+.user-heading-title-meu-aprendizado,
+.user-heading-title-aprendizado {
+    max-width: min(58vw, 760px);
+}
+
+.page-title-meu-aprendizado,
+.page-title-aprendizado {
+    height: clamp(14px, 2vw, 22px);
+}
+
 .topbar-actions {
     position: relative;
     z-index: 2;
@@ -577,8 +704,10 @@
     box-sizing: border-box;
     border-radius: 999px;
     padding: 6px clamp(9px, 1.8vw, 14px);
-    background: linear-gradient(145deg, rgba(17, 38, 78, .98), rgba(9, 23, 53, .96));
-    border: 1px solid rgba(101, 127, 239, .24);
+    background: linear-gradient(145deg, color-mix(in srgb, var(--panel-bg) 94%, #ffffff 6%), var(--control-bg));
+    --coin-border: rgba(255, 205, 88, .78);
+    --coin-glow: rgba(255, 184, 57, .18);
+    border: 1px solid var(--coin-border);
     color: #fff;
     display: inline-flex;
     align-items: center;
@@ -591,8 +720,9 @@
 
 .cossas-pill:hover {
     color: var(--btn-icon-hover);
-    background: linear-gradient(145deg, rgba(23, 49, 98, .99), rgba(12, 30, 67, .98));
-    box-shadow: 0 0 0 3px rgba(26, 46, 255, .13), 0 7px 18px rgba(1, 5, 16, .24);
+    background: linear-gradient(145deg, color-mix(in srgb, var(--neo-blue) 18%, var(--panel-bg)), color-mix(in srgb, var(--neo-blue) 10%, var(--control-bg)));
+    border-color: rgba(255, 215, 104, .95);
+    box-shadow: 0 0 0 3px var(--coin-glow), 0 7px 18px rgba(1, 5, 16, .24);
     transform: translateY(-1px) scale(1.03);
 }
 
@@ -612,7 +742,11 @@
 .topbar .profile {
     width: clamp(28px, 7.6vw, 34px);
     height: clamp(28px, 7.6vw, 34px);
+    position: relative;
     flex: 0 0 clamp(28px, 7.6vw, 34px);
+    display: grid;
+    place-items: center;
+    overflow: visible;
     font-size: clamp(12px, 2.5vw, 14px);
     border-radius: clamp(11px, 3vw, 14px);
     background: var(--btn-bg);
@@ -628,8 +762,53 @@
     transform: translateY(-1px) scale(1.03);
 }
 
-.topbar .profile img {
-    border-radius: 12px;
+.topbar .profile.has-frame-art {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+}
+
+.topbar .profile.has-frame-art:hover {
+    background: transparent;
+    box-shadow: none;
+}
+
+.topbar-profile-photo {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: clamp(11px, 3vw, 14px);
+    background: var(--btn-bg);
+    border: 1px solid var(--neo-blue);
+}
+
+.topbar .profile.has-frame-art .topbar-profile-photo {
+    width: 68%;
+    height: 68%;
+    border-radius: 999px;
+    border-color: transparent;
+    z-index: 1;
+}
+
+.topbar .profile img:not(.profile-frame-art) {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.topbar .profile .profile-frame-art {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 128%;
+    height: 128%;
+    object-fit: contain;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 2;
 }
 
 @media (max-width: 560px) {
@@ -685,6 +864,16 @@
 
     .page-title-configuracoes {
         height: clamp(17px, 5.4vw, 22px);
+    }
+
+    .user-heading-title-meu-aprendizado,
+    .user-heading-title-aprendizado {
+        max-width: 38vw;
+    }
+
+    .page-title-meu-aprendizado,
+    .page-title-aprendizado {
+        height: clamp(11px, 3.8vw, 15px);
     }
 
     .cossas-pill {
@@ -760,4 +949,217 @@
         min-height: 30px;
         padding: 5px 8px;
     }
+}
+
+
+
+
+/* NEO topbar color-synced stars */
+.topbar-mobile-test.neo-star-hover,
+.topbar .profile.neo-star-hover {
+    --button-accent: var(--neo-blue);
+    --hover-star-core: var(--button-accent);
+    --hover-star-shadow: color-mix(in srgb, var(--button-accent) 44%, #030824);
+    --hover-star-center-stroke: color-mix(in srgb, var(--button-accent) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--button-accent) 55%, transparent);
+}
+.topbar-mobile-test.neo-star-hover:hover,
+.topbar-mobile-test.neo-star-hover:focus-visible,
+.topbar-mobile-test.neo-star-hover.is-active,
+.topbar .profile.neo-star-hover:hover,
+.topbar .profile.neo-star-hover:focus-visible {
+    color: var(--button-accent);
+    border-color: var(--button-accent);
+}
+
+
+/* Molduras de perfil normalizadas individualmente: foto atrás, anel por cima, centro único. */
+.store-avatar-demo.has-frame-art,
+.inventory-avatar-demo.has-frame-art,
+.profile-avatar-ring.has-frame-art,
+.topbar .profile.has-frame-art {
+    --frame-photo-size: 72%;
+    --frame-art-size: 132%;
+    position: relative;
+    overflow: visible;
+    contain: layout;
+    isolation: isolate;
+}
+
+.store-avatar-demo.has-frame-art .avatar-photo,
+.store-avatar-demo.has-frame-art > span,
+.inventory-avatar-demo.has-frame-art .avatar-photo,
+.inventory-avatar-demo.has-frame-art > span,
+.profile-avatar-ring.has-frame-art .profile-avatar,
+.topbar .profile.has-frame-art .topbar-profile-photo {
+    position: absolute;
+    left: 50% !important;
+    top: 50% !important;
+    width: var(--frame-photo-size) !important;
+    height: var(--frame-photo-size) !important;
+    aspect-ratio: 1 / 1;
+    overflow: hidden !important;
+    border-radius: 999px !important;
+    clip-path: circle(50% at 50% 50%);
+    transform: translate(-50%, -50%) !important;
+    z-index: 1;
+}
+
+.store-avatar-demo.has-frame-art .avatar-photo,
+.inventory-avatar-demo.has-frame-art .avatar-photo,
+.profile-avatar-ring.has-frame-art .profile-avatar img,
+.topbar .profile.has-frame-art .topbar-profile-photo img {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+    object-fit: cover;
+    object-position: center;
+}
+
+.store-avatar-demo.has-frame-art > .profile-frame-art,
+.inventory-avatar-demo.has-frame-art > .profile-frame-art,
+.profile-avatar-ring > .profile-frame-art,
+.topbar .profile.has-frame-art > .profile-frame-art {
+    position: absolute;
+    left: 50% !important;
+    top: 50% !important;
+    width: var(--frame-art-size) !important;
+    height: var(--frame-art-size) !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: contain;
+    object-position: center;
+    pointer-events: none;
+    transform: translate(-50%, -50%) !important;
+    z-index: 3;
+}
+
+.store-preview.moldura_sapo_pop .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_sapo_pop .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_sapo_pop .profile-avatar-ring,
+.topbar .profile.frame-moldura_sapo_pop,
+.store-preview.moldura_musica_neon .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_musica_neon .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_musica_neon .profile-avatar-ring,
+.topbar .profile.frame-moldura_musica_neon {
+    --frame-photo-size: 76%;
+}
+
+.store-preview.moldura_coroa_real .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_coroa_real .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_coroa_real .profile-avatar-ring,
+.topbar .profile.frame-moldura_coroa_real {
+    --frame-photo-size: 70%;
+    --frame-art-size: 136%;
+}
+
+.store-preview.moldura_asas_celestes .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_asas_celestes .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_asas_celestes .profile-avatar-ring,
+.topbar .profile.frame-moldura_asas_celestes {
+    --frame-photo-size: 68%;
+}
+
+/* Referência final: moldura inteira dentro do palco, foto circular atrás e sem cortes. */
+.store-avatar-demo.has-frame-art,
+.inventory-avatar-demo.has-frame-art,
+.profile-avatar-ring.has-frame-art,
+.topbar .profile.has-frame-art {
+    --frame-photo-size: 72%;
+    --frame-art-size: 100%;
+    position: relative;
+    overflow: visible;
+    contain: layout;
+    isolation: isolate;
+}
+
+.store-preview .store-avatar-demo.has-frame-art {
+    width: clamp(104px, 12vw, 142px) !important;
+    height: clamp(104px, 12vw, 142px) !important;
+}
+
+.inventory-preview .inventory-avatar-demo.has-frame-art {
+    width: 90px !important;
+    height: 90px !important;
+}
+
+.profile-avatar-ring.has-frame-art {
+    width: clamp(98px, 12vw, 132px) !important;
+    height: clamp(98px, 12vw, 132px) !important;
+}
+
+.topbar .profile.has-frame-art {
+    width: clamp(32px, 8vw, 38px) !important;
+    height: clamp(32px, 8vw, 38px) !important;
+    flex-basis: clamp(32px, 8vw, 38px) !important;
+}
+
+.store-avatar-demo.has-frame-art .avatar-photo,
+.store-avatar-demo.has-frame-art > span,
+.inventory-avatar-demo.has-frame-art .avatar-photo,
+.inventory-avatar-demo.has-frame-art > span,
+.profile-avatar-ring.has-frame-art .profile-avatar,
+.topbar .profile.has-frame-art .topbar-profile-photo {
+    position: absolute;
+    left: 50% !important;
+    top: 50% !important;
+    width: var(--frame-photo-size) !important;
+    height: var(--frame-photo-size) !important;
+    aspect-ratio: 1 / 1;
+    overflow: hidden !important;
+    border-radius: 999px !important;
+    clip-path: circle(50% at 50% 50%);
+    transform: translate(-50%, -50%) !important;
+    z-index: 1;
+}
+
+.store-avatar-demo.has-frame-art .avatar-photo,
+.inventory-avatar-demo.has-frame-art .avatar-photo,
+.profile-avatar-ring.has-frame-art .profile-avatar img,
+.topbar .profile.has-frame-art .topbar-profile-photo img {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+    object-fit: cover;
+    object-position: center;
+}
+
+.store-avatar-demo.has-frame-art > .profile-frame-art,
+.inventory-avatar-demo.has-frame-art > .profile-frame-art,
+.profile-avatar-ring > .profile-frame-art,
+.topbar .profile.has-frame-art > .profile-frame-art {
+    position: absolute;
+    left: 50% !important;
+    top: 50% !important;
+    width: var(--frame-art-size) !important;
+    height: var(--frame-art-size) !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: contain;
+    object-position: center;
+    pointer-events: none;
+    transform: translate(-50%, -50%) !important;
+    z-index: 3;
+}
+
+.store-preview.moldura_sapo_pop .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_sapo_pop .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_sapo_pop .profile-avatar-ring,
+.topbar .profile.frame-moldura_sapo_pop,
+.store-preview.moldura_musica_neon .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_musica_neon .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_musica_neon .profile-avatar-ring,
+.topbar .profile.frame-moldura_musica_neon {
+    --frame-photo-size: 76%;
+}
+
+.store-preview.moldura_coroa_real .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_coroa_real .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_coroa_real .profile-avatar-ring,
+.topbar .profile.frame-moldura_coroa_real,
+.store-preview.moldura_asas_celestes .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_asas_celestes .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_asas_celestes .profile-avatar-ring,
+.topbar .profile.frame-moldura_asas_celestes {
+    --frame-photo-size: 69%;
 }

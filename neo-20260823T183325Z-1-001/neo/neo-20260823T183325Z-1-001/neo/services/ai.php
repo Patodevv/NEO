@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/ai_quality.php';
 require_once __DIR__ . '/ai_usage.php';
+require_once __DIR__ . '/ai_safety.php';
 
 function openaiApiKey(): string
 {
@@ -385,6 +386,39 @@ function limiteEsperaRepeticaoIA(): float
     return 35.0;
 }
 
+function coletorCabecalhosIA(array &$headers): callable
+{
+    return static function ($ch, string $linha) use (&$headers): int {
+        $tamanho = strlen($linha);
+        $linha = trim($linha);
+
+        if ($linha !== '' && str_contains($linha, ':')) {
+            [$nome, $valor] = explode(':', $linha, 2);
+            $headers[strtolower(trim($nome))] = trim($valor);
+        }
+
+        return $tamanho;
+    };
+}
+
+function registrarLeituraProvedorIA(
+    string $provedor,
+    string $modelo,
+    int $httpCode,
+    array $headers,
+    ?string $erro = null
+): void {
+    $pdoStatus = $GLOBALS['pdo'] ?? null;
+    registrarStatusProvedorIA(
+        $pdoStatus instanceof PDO ? $pdoStatus : null,
+        $provedor,
+        $modelo,
+        $httpCode,
+        $headers,
+        $erro
+    );
+}
+
 function opcoesRaciocinioProvedorIA(string $provedor, string $modelo, string $esforco = 'low'): array
 {
     $ehGroq = strcasecmp(trim($provedor), 'Groq') === 0;
@@ -524,6 +558,7 @@ function chamarProvedorIA(
             throw new Exception("Nao foi possivel preparar a requisicao para {$provedor}.");
         }
 
+        $headersResposta = [];
         $ch = curl_init($url);
 
         if ($ch === false) {
@@ -539,7 +574,8 @@ function chamarProvedorIA(
             ],
             CURLOPT_POSTFIELDS => $payload,
             CURLOPT_CONNECTTIMEOUT => 15,
-            CURLOPT_TIMEOUT => 120
+            CURLOPT_TIMEOUT => 120,
+            CURLOPT_HEADERFUNCTION => coletorCabecalhosIA($headersResposta),
         ]);
 
         $resposta = curl_exec($ch);
@@ -547,7 +583,9 @@ function chamarProvedorIA(
         if ($resposta === false) {
             $erro = curl_error($ch);
             curl_close($ch);
-            throw new Exception("Erro ao conectar com {$provedor}: {$erro}");
+            $mensagemErro = "Erro ao conectar com {$provedor}: {$erro}";
+            registrarLeituraProvedorIA($provedor, $modelo, 0, $headersResposta, $mensagemErro);
+            throw new Exception($mensagemErro);
         }
 
         $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -564,10 +602,15 @@ function chamarProvedorIA(
                 ?? "Erro desconhecido na API da {$provedor}.";
 
             $ultimoErro = "Erro da {$provedor} ({$httpCode}): {$mensagem}";
+            $erroDeDisponibilidade = $httpCode === 429 || $httpCode >= 500
+                ? $ultimoErro
+                : null;
+            registrarLeituraProvedorIA($provedor, $modelo, $httpCode, $headersResposta, $erroDeDisponibilidade);
 
             if ($httpCode === 400) {
                 $resultadoRecuperado = recuperarGeracaoJsonDoErroIA($dadosResposta);
                 if (is_array($resultadoRecuperado)) {
+                    registrarLeituraProvedorIA($provedor, $modelo, 200, $headersResposta);
                     definirOrigemIA($provedor, $modelo);
                     return $resultadoRecuperado;
                 }
@@ -596,6 +639,8 @@ function chamarProvedorIA(
 
             throw new Exception($ultimoErro);
         }
+
+        registrarLeituraProvedorIA($provedor, $modelo, $httpCode, $headersResposta);
 
         $conteudo = $dadosResposta['choices'][0]['message']['content'] ?? '';
 
@@ -703,6 +748,7 @@ function chamarTextoProvedorIA(
     $repetiuAposFalhaTemporaria = false;
 
     while (true) {
+        $headersResposta = [];
         $ch = curl_init($url);
 
         if ($ch === false) {
@@ -719,6 +765,7 @@ function chamarTextoProvedorIA(
             CURLOPT_POSTFIELDS => $payload,
             CURLOPT_CONNECTTIMEOUT => 15,
             CURLOPT_TIMEOUT => 120,
+            CURLOPT_HEADERFUNCTION => coletorCabecalhosIA($headersResposta),
         ]);
 
         $resposta = curl_exec($ch);
@@ -726,7 +773,9 @@ function chamarTextoProvedorIA(
         if ($resposta === false) {
             $erro = curl_error($ch);
             curl_close($ch);
-            throw new Exception("Erro ao conectar com {$provedor}: {$erro}");
+            $mensagemErro = "Erro ao conectar com {$provedor}: {$erro}";
+            registrarLeituraProvedorIA($provedor, $modelo, 0, $headersResposta, $mensagemErro);
+            throw new Exception($mensagemErro);
         }
 
         $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -740,6 +789,10 @@ function chamarTextoProvedorIA(
 
         if ($httpCode < 200 || $httpCode >= 300) {
             $mensagem = $dadosResposta['error']['message'] ?? "Erro desconhecido na API da {$provedor}.";
+            $erroDeDisponibilidade = $httpCode === 429 || $httpCode >= 500
+                ? "Erro da {$provedor} ({$httpCode}): {$mensagem}"
+                : null;
+            registrarLeituraProvedorIA($provedor, $modelo, $httpCode, $headersResposta, $erroDeDisponibilidade);
             if ($httpCode === 429 && !$repetiuAposLimite) {
                 $espera = segundosEsperaLimiteIA((string)$mensagem);
                 if ($espera !== null && $espera <= limiteEsperaRepeticaoIA()) {
@@ -755,6 +808,8 @@ function chamarTextoProvedorIA(
             }
             throw new Exception("Erro da {$provedor} ({$httpCode}): {$mensagem}");
         }
+
+        registrarLeituraProvedorIA($provedor, $modelo, $httpCode, $headersResposta);
 
         $conteudo = $dadosResposta['choices'][0]['message']['content'] ?? '';
 
@@ -1054,6 +1109,7 @@ function gerarConteudos(
 ): array {
     usarFallbackLocalIA();
     $materia = limitarEntradaPromptIA($materia, 150);
+    validarPedidoIASeguro($materia, 'matéria');
     $gostos = limitarEntradaPromptIA($gostos, 1000);
     $schema = schemaPlanejamentoConteudosIA();
 
@@ -1140,7 +1196,8 @@ function gerarQuestoes(
 ): array {
     $materia = limitarEntradaPromptIA($materia, 150);
     $titulo = limitarEntradaPromptIA($titulo, 300);
-    $corpo = compactarTextoBaseQuestoesIA($corpo, 7200);
+    validarPedidoIASeguro($materia . ' ' . $titulo, 'questões');
+    $corpo = compactarTextoBaseQuestoesIA($corpo, 5200);
     $gostos = limitarEntradaPromptIA($gostos, 1000);
     $schema = [
         'type' => 'object',
@@ -1162,14 +1219,17 @@ function gerarQuestoes(
         ? "Preferencias do estudante: {$gostos}"
         : 'Sem preferencias informadas.';
 
-    try {
-        $resultado = chamarIA(
+    $chamarGeracao = static function (string $textoBase, int $maxTokens, bool $compacto = false) use ($materia, $titulo, $preferencias, $nivel, $schema): array {
+        $limites = $compacto
+            ? 'Limites: enunciado 18 palavras, alternativa 7 palavras, explicação 14 palavras, habilidade 3 palavras.'
+            : 'Limites rígidos: enunciado até 24 palavras, cada alternativa até 10 palavras, explicação até 22 palavras, habilidade até 4 palavras.';
+        return chamarIA(
             [
                 [
                     'role' => 'system',
                     'content' =>
                         diretrizesIA() .
-                        "\n\nVoce cria questoes objetivas para um unico estudante. Use somente os gostos informados para este usuario. Cada questao deve ter uma unica alternativa correta. Responda somente um objeto JSON valido, sem markdown, sem comentarios e sem texto fora do JSON."
+                        "\n\nVoce cria questoes objetivas curtas. Retorne somente JSON valido. Nao use markdown, comentarios ou texto fora do JSON. Cada questao tem uma unica alternativa correta."
                 ],
                 [
                     'role' => 'user',
@@ -1177,20 +1237,30 @@ function gerarQuestoes(
                         "Materia: {$materia}\n" .
                         "Conteudo: {$titulo}\n" .
                         "{$preferencias}\n" .
-                        "Nivel do estudante: {$nivel}\n" .
-                        "Texto base:\n{$corpo}\n\n" .
-                        "Crie exatamente 5 questões apoiadas somente no texto-base. Varie conceito, interpretação e aplicação. Use os interesses apenas quando ajudarem e nunca invente fatos sobre obras ou personagens. " .
-                        "Cada questão deve ter quatro alternativas distintas e plausíveis e uma única correta. Mantenha enunciados com até 45 palavras, alternativas com até 18 palavras e explicações com até 55 palavras. " .
-                        "Informe dificuldade de 1 a 12, habilidade, tipo_questao e estilo_prova. Questões de cálculo ou gráfico devem trazer no enunciado todos os dados necessários. O objeto deve ter exatamente a chave questoes."
+                        "Nivel: {$nivel}\n" .
+                        "Texto-base:\n{$textoBase}\n\n" .
+                        "Gere exatamente 5 questoes diferentes baseadas no texto. Cada uma precisa de enunciado, opcao_a, opcao_b, opcao_c, opcao_d, correta, dificuldade, habilidade, tipo_questao, estilo_prova e explicacao_correta. " .
+                        "{$limites} Use JSON com a chave questoes."
                 ]
             ],
             $schema,
-            'geracao_questoes',
-            2600
+            $compacto ? 'geracao_questoes_compacta' : 'geracao_questoes',
+            $maxTokens,
+            'low'
         );
+    };
+
+    try {
+        $resultado = $chamarGeracao($corpo, 4200);
         $origemGeracao = origemAtualIA();
     } catch (Exception $e) {
-        throw new RuntimeException('Erro no sistema, tente novamente mais tarde.', 0, $e);
+        error_log('[NEO][geracao-questoes-primeira] ' . $e->getMessage());
+        try {
+            $resultado = $chamarGeracao(compactarTextoBaseQuestoesIA($corpo, 3400), 5200, true);
+            $origemGeracao = origemAtualIA();
+        } catch (Throwable $segundaFalha) {
+            throw new RuntimeException('Erro no sistema, tente novamente mais tarde.', 0, $segundaFalha);
+        }
     }
 
     if (
@@ -1199,7 +1269,20 @@ function gerarQuestoes(
         count($resultado['questoes']) !== 5 ||
         problemasNucleoQuestoesLocal($resultado['questoes'])
     ) {
-        throw new RuntimeException('Erro no sistema, tente novamente mais tarde.');
+        try {
+            $resultado = $chamarGeracao(compactarTextoBaseQuestoesIA($corpo, 3400), 5200, true);
+            $origemGeracao = origemAtualIA();
+        } catch (Throwable $segundaFalha) {
+            throw new RuntimeException('Erro no sistema, tente novamente mais tarde.', 0, $segundaFalha);
+        }
+        if (
+            empty($resultado['questoes']) ||
+            !is_array($resultado['questoes']) ||
+            count($resultado['questoes']) !== 5 ||
+            problemasNucleoQuestoesLocal($resultado['questoes'])
+        ) {
+            throw new RuntimeException('Erro no sistema, tente novamente mais tarde.');
+        }
     }
 
     try {
@@ -1412,6 +1495,7 @@ function gerarLivro(
     usarFallbackLocalIA();
     $materia = limitarEntradaPromptIA($materia, 150);
     $titulo = limitarEntradaPromptIA($titulo, 300);
+    validarPedidoIASeguro($materia . ' ' . $titulo, 'livro');
     $gostos = limitarEntradaPromptIA($gostos, 1000);
     $preferencias = trim($gostos) !== ''
         ? "Preferencias do estudante: {$gostos}"
@@ -1469,6 +1553,7 @@ function gerarDicaQuestao(
 ): string {
     $materia = limitarEntradaPromptIA($materia, 150);
     $titulo = limitarEntradaPromptIA($titulo, 300);
+    validarPedidoIASeguro($materia . ' ' . $titulo, 'ajuda');
     $nivelAjuda = max(1, min(3, $nivelAjuda));
     $preGerada = limitarPalavrasIA((string)($questao['dica_' . $nivelAjuda] ?? ''), 70);
     if ($preGerada !== '' && validarDicaFacilitador($preGerada, $questao)) {

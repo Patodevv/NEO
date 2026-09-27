@@ -22,6 +22,21 @@
     transition: color .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 
+.history-row.materia-theme {
+    border-color: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 32%, var(--panel-border));
+}
+
+.history-row.materia-theme .history-activity-icon {
+    border-color: var(--materia-cor, var(--neo-blue));
+    background: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 10%, var(--control-bg));
+    color: var(--materia-cor, var(--neo-blue));
+}
+
+.history-row.materia-theme .neo-icon-button {
+    border-color: var(--materia-cor, var(--neo-blue));
+    color: var(--materia-cor, var(--neo-blue));
+}
+
 .history-row:hover,
 .history-row:focus-within {
     border-color: var(--neo-blue);
@@ -48,7 +63,7 @@
 .history-row:focus-within .history-activity-icon {
     color: #fff;
     background: color-mix(in srgb, var(--neo-blue) 22%, transparent);
-    box-shadow: 0 0 0 3px rgba(26, 46, 255, .18);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neo-blue) 18%, transparent);
     transform: scale(1.03);
 }
 

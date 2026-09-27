@@ -49,7 +49,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $descricao = mb_substr(trim($_POST['descricao'] ?? ''), 0, 3000);
             $preco = max(0, (int)($_POST['preco_cossas'] ?? 0));
             $categoria = normalizarCodigoProduto((string)($_POST['categoria'] ?? 'item')) ?: 'item';
+            if (!in_array($categoria, ['tema_site', 'skin_manel', 'decoracao_perfil', 'cor_nome', 'item'], true)) {
+                throw new DomainException('Escolha um tipo de produto válido.');
+            }
             $classe = preg_replace('/[^a-zA-Z0-9_-]/', '', (string)($_POST['classe_visual'] ?? '')) ?: null;
+            $metadadosProduto = [];
+            $camposMetadadosPorCategoria = [
+                'tema_site' => ['accent', 'accent2', 'page_bg', 'panel_bg', 'control_bg', 'border'],
+                'skin_manel' => ['manel_name', 'manel_color', 'manel_glow', 'manel_variant', 'manel_personality'],
+                'decoracao_perfil' => ['accent', 'accent2'],
+                'cor_nome' => ['name_color'],
+                'item' => [],
+            ];
+            foreach ($camposMetadadosPorCategoria[$categoria] as $campoMeta) {
+                $valorMeta = trim((string)($_POST[$campoMeta] ?? ''));
+                if ($valorMeta !== '') {
+                    $metadadosProduto[$campoMeta] = mb_substr($valorMeta, 0, 180);
+                }
+            }
+            if (isset($metadadosProduto['manel_name'])) {
+                $metadadosProduto['manel_name'] = mb_substr((string)$metadadosProduto['manel_name'], 0, 24);
+            }
+            if (isset($metadadosProduto['manel_variant'])) {
+                $metadadosProduto['manel_variant'] = normalizarCodigoProduto((string)$metadadosProduto['manel_variant']);
+            }
+            if (isset($metadadosProduto['manel_personality'])) {
+                $metadadosProduto['manel_personality'] = normalizarCodigoProduto((string)$metadadosProduto['manel_personality']);
+            }
+            $metadadosJson = $metadadosProduto ? json_encode($metadadosProduto, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null;
             $estoqueTexto = trim((string)($_POST['estoque'] ?? ''));
             $estoque = $estoqueTexto === '' ? null : max(0, (int)$estoqueTexto);
             $limiteTexto = trim((string)($_POST['limite_por_usuario'] ?? '1'));
@@ -80,13 +107,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 $codigoAnterior = (string)$produtoAnterior['codigo'];
                 $stmt = $pdo->prepare("
-                    UPDATE produtos SET codigo=?, nome=?, descricao=?, preco_cossas=?, categoria=?, classe_visual=?, estoque=?, ativo=?, temporario=?, permanente=?, disponivel_de=?, disponivel_ate=?, limite_por_usuario=?, imagem=COALESCE(?, imagem), removido_em=NULL
+                    UPDATE produtos SET codigo=?, nome=?, descricao=?, preco_cossas=?, categoria=?, classe_visual=?, metadados_json=?, estoque=?, ativo=?, temporario=?, permanente=?, disponivel_de=?, disponivel_ate=?, limite_por_usuario=?, imagem=COALESCE(?, imagem), removido_em=NULL
                     WHERE id=?
                 ");
-                $stmt->execute([$codigo, $nome, $descricao ?: null, $preco, $categoria, $classe, $estoque, $ativo, $temporario, $permanente, $de, $ate, $limite, $imagemNova, $id]);
+                $stmt->execute([$codigo, $nome, $descricao ?: null, $preco, $categoria, $classe, $metadadosJson, $estoque, $ativo, $temporario, $permanente, $de, $ate, $limite, $imagemNova, $id]);
                 if ($codigoAnterior !== $codigo) {
                     $pdo->prepare("UPDATE compras_loja SET item_id = ? WHERE produto_id = ?")->execute([$codigo, $id]);
                     $pdo->prepare("UPDATE users SET decoracao_perfil = ? WHERE decoracao_perfil = ?")->execute([$codigo, $codigoAnterior]);
+                    if (colunaExiste($pdo, 'users', 'tema_site')) {
+                        $pdo->prepare("UPDATE users SET tema_site = ? WHERE tema_site = ?")->execute([$codigo, $codigoAnterior]);
+                    }
+                    if (colunaExiste($pdo, 'users', 'skin_manel')) {
+                        $pdo->prepare("UPDATE users SET skin_manel = ? WHERE skin_manel = ?")->execute([$codigo, $codigoAnterior]);
+                    }
+                    if (colunaExiste($pdo, 'users', 'cor_nome')) {
+                        $pdo->prepare("UPDATE users SET cor_nome = ? WHERE cor_nome = ?")->execute([$codigo, $codigoAnterior]);
+                    }
                 }
                 $pdo->commit();
                 if ($imagemNova !== null) {
@@ -94,14 +130,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             } else {
                 $stmt = $pdo->prepare("
-                    INSERT INTO produtos (codigo,nome,descricao,preco_cossas,categoria,classe_visual,estoque,ativo,temporario,permanente,disponivel_de,disponivel_ate,limite_por_usuario,imagem)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    INSERT INTO produtos (codigo,nome,descricao,preco_cossas,categoria,classe_visual,metadados_json,estoque,ativo,temporario,permanente,disponivel_de,disponivel_ate,limite_por_usuario,imagem)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 ");
-                $stmt->execute([$codigo, $nome, $descricao ?: null, $preco, $categoria, $classe, $estoque, $ativo, $temporario, $permanente, $de, $ate, $limite, $imagemNova]);
+                $stmt->execute([$codigo, $nome, $descricao ?: null, $preco, $categoria, $classe, $metadadosJson, $estoque, $ativo, $temporario, $permanente, $de, $ate, $limite, $imagemNova]);
             }
         } elseif ($acao === 'remover_produto') {
             $id = (int)($_POST['produto_id'] ?? 0);
-            $pdo->prepare("UPDATE produtos SET ativo = 0, removido_em = NOW() WHERE id = ?")->execute([$id]);
+            removerProdutoCompleto($pdo, $id);
         }
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) {
@@ -131,7 +167,15 @@ if ($produtoEditarId > 0) {
     $stmt->execute([$produtoEditarId]);
     $produtoEditar = $stmt->fetch(PDO::FETCH_ASSOC);
 }
-
+$metadadosEditar = $produtoEditar ? metadadosProduto($produtoEditar) : [];
+$categoriaProdutoAtual = $produtoEditar['categoria'] ?? 'decoracao_perfil';
+$categoriasProdutoAdmin = [
+    'tema_site' => 'Tema do site',
+    'skin_manel' => 'Skin do Manel',
+    'decoracao_perfil' => 'Decoração de perfil',
+    'cor_nome' => 'Cor do nome',
+    'item' => 'Item especial',
+];
 $produtos = $pdo->query("SELECT * FROM produtos ORDER BY removido_em IS NOT NULL, ativo DESC, nome")->fetchAll(PDO::FETCH_ASSOC);
 
 $usuarios = $pdo->query("
@@ -197,8 +241,67 @@ require __DIR__ . '/includes/head.php';
             <label>Código<input name="codigo" maxlength="100" value="<?= htmlspecialchars($produtoEditar['codigo'] ?? '') ?>" placeholder="gerado a partir do nome"></label>
             <label>Descrição<textarea name="descricao" rows="3"><?= htmlspecialchars($produtoEditar['descricao'] ?? '') ?></textarea></label>
             <label>Preço em Coças<input type="number" name="preco_cossas" min="0" value="<?= (int)($produtoEditar['preco_cossas'] ?? 0) ?>" required></label>
-            <label>Categoria<input name="categoria" maxlength="80" value="<?= htmlspecialchars($produtoEditar['categoria'] ?? 'decoracao_perfil') ?>" required></label>
-            <label>Classe visual existente<input name="classe_visual" maxlength="50" value="<?= htmlspecialchars($produtoEditar['classe_visual'] ?? '') ?>" placeholder="gold, neon ou focus"></label>
+            <input type="hidden" name="categoria" value="<?= htmlspecialchars($categoriaProdutoAtual) ?>" data-product-type-input>
+
+            <div class="admin-product-type" data-product-type-picker>
+                <span>Tipo do produto</span>
+                <div class="admin-product-type-grid">
+                    <?php foreach ($categoriasProdutoAdmin as $categoriaCodigo => $categoriaRotulo): ?>
+                        <?php
+                        $ativoCategoria = $categoriaProdutoAtual === $categoriaCodigo;
+                        $descricoesCategoria = [
+                            'tema_site' => 'Muda cores, fundos, painéis e botões do NEO.',
+                            'skin_manel' => 'Muda nome, cor e brilho do assistente.',
+                            'decoracao_perfil' => 'Cadastra molduras prontas e transparentes para a foto do perfil.',
+                            'cor_nome' => 'Muda a cor do nome no perfil.',
+                            'item' => 'Item comum da loja, sem equipar aparência.',
+                        ];
+                        ?>
+                        <button type="button" class="admin-product-type-card<?= $ativoCategoria ? ' is-active' : '' ?>" data-product-type="<?= htmlspecialchars($categoriaCodigo) ?>" aria-pressed="<?= $ativoCategoria ? 'true' : 'false' ?>">
+                            <b><?= htmlspecialchars($categoriaRotulo) ?></b>
+                            <small><?= htmlspecialchars($descricoesCategoria[$categoriaCodigo] ?? 'Produto da loja.') ?></small>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <label class="admin-product-class">Classe visual<input name="classe_visual" maxlength="50" value="<?= htmlspecialchars($produtoEditar['classe_visual'] ?? '') ?>" placeholder="Ex: ring-cat, theme-aurora, manel-lumi"></label>
+
+            <section class="admin-product-section" data-product-section="tema_site"<?= $categoriaProdutoAtual !== 'tema_site' ? ' hidden' : '' ?>>
+                <div class="admin-product-section-title"><b>Tema do site</b><span>Esses campos mudam a aparência global depois que o usuário compra e equipa.</span></div>
+                <label>Cor principal<input name="accent" maxlength="80" value="<?= htmlspecialchars($metadadosEditar['accent'] ?? '') ?>" placeholder="#2f56ff"></label>
+                <label>Cor secundária<input name="accent2" maxlength="80" value="<?= htmlspecialchars($metadadosEditar['accent2'] ?? '') ?>" placeholder="#72d7ff"></label>
+                <label>Fundo geral<input name="page_bg" maxlength="80" value="<?= htmlspecialchars($metadadosEditar['page_bg'] ?? '') ?>" placeholder="#030817"></label>
+                <label>Fundo das bolhas<input name="panel_bg" maxlength="120" value="<?= htmlspecialchars($metadadosEditar['panel_bg'] ?? '') ?>" placeholder="rgba(9, 24, 58, .92)"></label>
+                <label>Fundo dos botões<input name="control_bg" maxlength="120" value="<?= htmlspecialchars($metadadosEditar['control_bg'] ?? '') ?>" placeholder="rgba(7, 18, 44, .9)"></label>
+                <label>Bordas<input name="border" maxlength="120" value="<?= htmlspecialchars($metadadosEditar['border'] ?? '') ?>" placeholder="rgba(88, 126, 255, .34)"></label>
+            </section>
+
+            <section class="admin-product-section" data-product-section="skin_manel"<?= $categoriaProdutoAtual !== 'skin_manel' ? ' hidden' : '' ?>>
+                <div class="admin-product-section-title"><b>Skin do Manel</b><span>Use para trocar o nome, a cor e o brilho do rosto no canto.</span></div>
+                <label>Nome do assistente<input name="manel_name" maxlength="24" value="<?= htmlspecialchars($metadadosEditar['manel_name'] ?? '') ?>" placeholder="Manel, Lumi..."></label>
+                <label>Cor do assistente<input name="manel_color" maxlength="80" value="<?= htmlspecialchars($metadadosEditar['manel_color'] ?? '') ?>" placeholder="#72d7ff"></label>
+                <label>Brilho do assistente<input name="manel_glow" maxlength="120" value="<?= htmlspecialchars($metadadosEditar['manel_glow'] ?? '') ?>" placeholder="rgba(114, 215, 255, .45)"></label>
+                <label>Variante visual<input name="manel_variant" maxlength="80" value="<?= htmlspecialchars($metadadosEditar['manel_variant'] ?? '') ?>" placeholder="lumi, karol, ravir, ruan..."></label>
+                <label>Personalidade<input name="manel_personality" maxlength="80" value="<?= htmlspecialchars($metadadosEditar['manel_personality'] ?? '') ?>" placeholder="calma, nerd, rockeiro..."></label>
+            </section>
+
+            <section class="admin-product-section" data-product-section="decoracao_perfil"<?= $categoriaProdutoAtual !== 'decoracao_perfil' ? ' hidden' : '' ?>>
+                <div class="admin-product-section-title"><b>Decoração de perfil</b><span>Use uma imagem PNG/WEBP transparente de moldura. Ela será aplicada por cima da foto do perfil.</span></div>
+                <label>Cor principal do card<input name="accent" maxlength="80" value="<?= htmlspecialchars($metadadosEditar['accent'] ?? '') ?>" placeholder="#ff8fcf"></label>
+                <label>Cor secundária do card<input name="accent2" maxlength="80" value="<?= htmlspecialchars($metadadosEditar['accent2'] ?? '') ?>" placeholder="#72d7ff"></label>
+            </section>
+
+            <section class="admin-product-section" data-product-section="cor_nome"<?= $categoriaProdutoAtual !== 'cor_nome' ? ' hidden' : '' ?>>
+                <div class="admin-product-section-title"><b>Cor do nome</b><span>Esse item muda a cor do nome na página de perfil.</span></div>
+                <label>Cor do nome<input name="name_color" maxlength="80" value="<?= htmlspecialchars($metadadosEditar['name_color'] ?? '') ?>" placeholder="#ffd36a"></label>
+            </section>
+
+            <section class="admin-product-section" data-product-section="item"<?= $categoriaProdutoAtual !== 'item' ? ' hidden' : '' ?>>
+                <div class="admin-product-section-title"><b>Item especial</b><span>Use para produtos simples sem efeito visual equipável.</span></div>
+                <p class="admin-product-note">Esse tipo usa apenas os dados básicos, preço, imagem e regras de venda.</p>
+            </section>
+
             <label>Estoque<input type="number" name="estoque" min="0" value="<?= $produtoEditar && $produtoEditar['estoque'] !== null ? (int)$produtoEditar['estoque'] : '' ?>" placeholder="vazio = ilimitado"></label>
             <label>Limite por usuário<input type="number" name="limite_por_usuario" min="1" value="<?= $produtoEditar && $produtoEditar['limite_por_usuario'] !== null ? (int)$produtoEditar['limite_por_usuario'] : 1 ?>" placeholder="vazio = ilimitado"></label>
             <label>Disponível de<input type="datetime-local" name="disponivel_de" value="<?= !empty($produtoEditar['disponivel_de']) ? htmlspecialchars(date('Y-m-d\TH:i', strtotime($produtoEditar['disponivel_de']))) : '' ?>"></label>
@@ -216,7 +319,7 @@ require __DIR__ . '/includes/head.php';
         <div class="admin-table">
             <?php foreach ($produtos as $produto): ?>
                 <div class="admin-row">
-                    <div class="admin-user"><div><b><?= htmlspecialchars($produto['nome']) ?></b><small><?= htmlspecialchars($produto['codigo']) ?> • <?= htmlspecialchars($produto['categoria']) ?></small></div></div>
+                    <div class="admin-user"><div><b><?= htmlspecialchars($produto['nome']) ?></b><small><?= htmlspecialchars($produto['codigo']) ?> • <?= htmlspecialchars(rotuloCategoriaProduto((string)$produto['categoria'])) ?></small></div></div>
                     <span><?= (int)$produto['preco_cossas'] ?> coças</span>
                     <span><?= $produto['estoque'] === null ? 'Estoque ilimitado' : (int)$produto['estoque'] . ' em estoque' ?></span>
                     <span><?= !empty($produto['ativo']) && empty($produto['removido_em']) ? 'Ativo' : 'Inativo' ?></span>
@@ -262,5 +365,34 @@ require __DIR__ . '/includes/head.php';
         </div>
     </section>
 </main>
+<script>
+(() => {
+    const input = document.querySelector('[data-product-type-input]');
+    const buttons = Array.from(document.querySelectorAll('[data-product-type]'));
+    const sections = Array.from(document.querySelectorAll('[data-product-section]'));
+    if (!input || !buttons.length || !sections.length) return;
+
+    const syncType = (type) => {
+        input.value = type;
+        buttons.forEach((button) => {
+            const active = button.dataset.productType === type;
+            button.classList.toggle('is-active', active);
+            button.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+        sections.forEach((section) => {
+            const active = section.dataset.productSection === type;
+            section.hidden = !active;
+            section.querySelectorAll('input, select, textarea').forEach((field) => {
+                field.disabled = !active;
+            });
+        });
+    };
+
+    buttons.forEach((button) => {
+        button.addEventListener('click', () => syncType(button.dataset.productType || 'decoracao_perfil'));
+    });
+    syncType(input.value || 'decoracao_perfil');
+})();
+</script>
 </body>
 </html>

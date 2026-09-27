@@ -339,7 +339,8 @@
         setStep(previous.step, previous.url, true);
     });
     tour.querySelector('[data-tour-skip]').addEventListener('click', finish);
-    document.querySelector('[data-manel-tour-start]').addEventListener('click', begin);
+    var manualTourButton = document.querySelector('[data-manel-tour-start]');
+    if (manualTourButton) manualTourButton.addEventListener('click', begin);
     document.addEventListener('keydown', function (event) {
         if (!state || tour.hidden) return;
         if (event.key === 'Escape') { event.stopImmediatePropagation(); finish(); }
@@ -380,7 +381,6 @@
             window.setTimeout(function () { if (state && state.step === 6) setStep(7); }, 280);
         }
     }, true);
-    document.addEventListener('neo:manel-toggle', function () { if (state && !tour.hidden) finish(); });
     ['pointerover', 'focusin'].forEach(function (name) {
         document.addEventListener(name, function (event) {
             if (!state || state.step !== 9 || tour.hidden) return;
@@ -543,3 +543,4 @@
     window.addEventListener('pageshow', function (event) { if (event.persisted) afterIntro(resume); });
     setupAwakening();
 })();
+

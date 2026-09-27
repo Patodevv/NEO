@@ -326,12 +326,12 @@ require __DIR__ . '/includes/head.php';
 <?php require __DIR__ . '/includes/sidebar.php'; ?>
 <main class="main">
     <?php require __DIR__ . '/includes/topbar.php'; ?>
-    <section class="lesson-page">
+    <section class="lesson-page <?= classeTemaMateria((string)$conteudo['materia_nome']) ?>">
         <section class="lesson-header">
             <div class="lesson-title-panel neo-panel">
                 <h1><?= htmlspecialchars($conteudo['titulo']) ?></h1>
             </div>
-            <a href="conteudos.php?materia_id=<?= (int)$conteudo['materia_id'] ?>" class="lesson-icon-btn" title="Voltar para conteúdos" aria-label="Voltar para conteúdos">
+            <a href="conteudos.php?materia_id=<?= (int)$conteudo['materia_id'] ?>" class="lesson-icon-btn neo-star-hover" aria-label="Voltar para conteúdos" data-manel-tip="Volta para os livros de <?= htmlspecialchars($conteudo['materia_nome'], ENT_QUOTES, 'UTF-8') ?>.">
                 <?= estrelaHoverNeo() ?>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
                     <path d="M15 18l-6-6 6-6"></path>
@@ -353,7 +353,7 @@ require __DIR__ . '/includes/head.php';
             <?= campoCsrf() ?>
             <input type="hidden" name="conteudo_id" value="<?= (int)$conteudo['id'] ?>">
             <input type="hidden" name="acao" value="novas_questoes">
-            <button type="submit" class="question-generate-card" title="Gerar novas questões" aria-label="Gerar novas questões">
+            <button type="submit" class="question-generate-card neo-star-hover" aria-label="Gerar cinco novas questões" data-manel-tip="Gera uma nova atividade com cinco questões deste livro.">
                 <?= estrelaHoverNeo() ?>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
                     <path d="M8 5h9a2 2 0 0 1 2 2v12H7a2 2 0 0 1-2-2V8"></path>
@@ -457,7 +457,7 @@ require __DIR__ . '/includes/head.php';
                     <?php if (!$resultado): ?>
                         <div class="question-support">
                             <?php if ($proximoNivel <= 3): ?>
-                                <button type="submit" name="facilitador_questao_id" value="<?= (int)$q['id'] ?>" class="facilitator-btn" formnovalidate data-ai-message="Preparando uma ajuda para você">
+                                <button type="submit" name="facilitador_questao_id" value="<?= (int)$q['id'] ?>" class="facilitator-btn neo-star-hover" formnovalidate data-ai-message="Preparando uma ajuda para você">
                                     <?= estrelaHoverNeo() ?>
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
                                         <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3Z"></path>
@@ -479,7 +479,7 @@ require __DIR__ . '/includes/head.php';
             <?php endforeach; ?>
 
             <?php if (!$resultado): ?>
-                <button type="submit" class="question-submit">
+                <button type="submit" class="question-submit neo-star-hover">
                     <?= estrelaHoverNeo() ?>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
                         <path d="M5 12h13"></path>
@@ -497,3 +497,4 @@ require __DIR__ . '/includes/head.php';
 <?php endif; ?>
 </body>
 </html>
+

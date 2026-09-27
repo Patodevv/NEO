@@ -26,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'apagar_
         header('Location: materias.php', true, 303);
         exit;
     } catch (Throwable $e) {
+        error_log('[NEO][apagar-materia] ' . get_class($e) . ': ' . $e->getMessage());
         $erroMateria = $e instanceof DomainException
             ? $e->getMessage()
             : 'Não foi possível apagar a matéria agora.';
@@ -48,9 +49,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'adicion
         $stmtMateria = $pdo->prepare('SELECT id, nome FROM materias WHERE nome = ? LIMIT 1');
         $stmtMateria->execute([$materiaSolicitada]);
         $materiaExistente = $stmtMateria->fetch(PDO::FETCH_ASSOC);
-        if ($materiaExistente && materiaDisponivelParaUsuario($usuario, (string)$materiaExistente['nome'])) {
-            throw new DomainException('Essa matéria já está na sua lista.');
-        }
 
         if (!$materiaExistente) {
             $pdo->prepare('INSERT IGNORE INTO materias (nome) VALUES (?)')->execute([$materiaSolicitada]);
@@ -69,26 +67,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'adicion
             throw new DomainException('Essa matéria já está na sua lista.');
         }
 
+        // Remove resíduos criados pela antiga exclusão por arquivamento antes de recriar a matéria.
+        arquivarMateriaUsuario($pdo, $usuario, $novaMateriaId, true);
+        $perfilEstudo = adaptiveProfile($usuario);
+
         $nivel = adaptiveInitialDifficulty($perfilEstudo, $nomeMateria);
-        $salvos = executarOperacaoControladaIA(
+        $introId = executarComBloqueioRecurso(
             $pdo,
             (int)$usuario['id'],
-            'conteudos',
-            'nova-materia:' . $nomeMateria . ':' . $nivel,
-            static function () use ($pdo, $usuario, $novaMateriaId, $nomeMateria, $nivel): int {
-                $gerados = gerarSeisConteudos(
-                    $nomeMateria,
-                    trim((string)($usuario['gostos'] ?? '')),
-                    [],
-                    $nivel
-                );
-                registrarAuditoriaIA($pdo, (int)$usuario['id'], 'conteudos', 'nova-materia:' . $nomeMateria . ':' . $nivel);
-                return salvarConteudosGerados($pdo, (int)$usuario['id'], $novaMateriaId, $gerados, $nivel, 1, []);
-            },
-            'materia:' . $novaMateriaId
+            'materia:' . $novaMateriaId,
+            static fn(): int => criarLivroIntroducaoMateria($pdo, (int)$usuario['id'], $novaMateriaId, $nomeMateria, $nivel)
         );
-        if ($salvos !== 6) {
-            throw new RuntimeException('Não foi possível montar a biblioteca inicial dessa matéria.');
+        if ($introId <= 0) {
+            throw new RuntimeException('Não foi possível criar a introdução dessa matéria.');
         }
 
         adicionarMateriaAoPerfil($pdo, $usuario, $nomeMateria);
@@ -142,16 +133,16 @@ require __DIR__ . '/includes/head.php';
                         <?= campoCsrf() ?>
                         <input type="hidden" name="materia_id" value="<?= (int)$m['id'] ?>">
                         <input type="hidden" name="acao" value="gerar_mais">
-                        <button type="submit" class="subject">
+                        <button type="submit" class="subject neo-star-hover <?= classeTemaMateria($m['nome']) ?>" data-manel-tip="Cria o livro de introdução de <?= htmlspecialchars($m['nome'], ENT_QUOTES, 'UTF-8') ?>.">
                 <?php else: ?>
-                    <a class="subject" href="conteudos.php?materia_id=<?= (int)$m['id'] ?>">
+                    <a class="subject neo-star-hover <?= classeTemaMateria($m['nome']) ?>" href="conteudos.php?materia_id=<?= (int)$m['id'] ?>" data-manel-tip="Abre a matéria <?= htmlspecialchars($m['nome'], ENT_QUOTES, 'UTF-8') ?> e mostra seus livros.">
                 <?php endif; ?>
+                    <?= estrelaHoverNeo() ?>
+                    <span class="subject-selection-mark" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 12 4 4 8-8"></path></svg>
+                    </span>
                     <span class="subject-icon <?= classeTemaMateria($m['nome']) ?>">
-                        <?= estrelaHoverNeo() ?>
                         <?= iconeMateriaDashboard($m['nome']) ?>
-                        <span class="subject-selection-mark" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 12 4 4 8-8"></path></svg>
-                        </span>
                     </span>
                     <b><?= htmlspecialchars($m['nome']) ?></b>
                     <small>Nível <?= (int)$m['nivel_materia'] ?> · <?= (int)$m['xp_materia'] ?> EXP</small>
@@ -162,18 +153,18 @@ require __DIR__ . '/includes/head.php';
                     </a>
                 <?php endif; ?>
                 </div>
-            <?php endforeach; ?>
-            <button type="button" class="subject subject-add" data-subject-add-open aria-label="Adicionar uma matéria">
+        <?php endforeach; ?>
+            <button type="button" class="subject subject-add neo-star-hover" data-subject-add-open aria-label="Adicionar uma matéria" data-manel-tip="Abre o formulário para criar uma matéria e seu livro de introdução.">
+                <?= estrelaHoverNeo() ?>
                 <span class="subject-icon">
-                    <?= estrelaHoverNeo() ?>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
                 </span>
                 <b>Adicionar matéria</b>
-                <small>Criar livros personalizados</small>
+                    <small>Começar pela introdução</small>
             </button>
-            <button type="button" class="subject subject-delete-toggle" data-subject-delete-toggle aria-pressed="false" aria-label="Selecionar matérias para excluir">
+            <button type="button" class="subject subject-delete-toggle neo-star-hover" data-subject-delete-toggle aria-pressed="false" aria-label="Selecionar matérias para excluir" data-manel-tip="Ativa a seleção das matérias que você deseja apagar.">
+                <?= estrelaHoverNeo() ?>
                 <span class="subject-icon">
-                    <?= estrelaHoverNeo() ?>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="M7 7l1 13h8l1-13"></path><path d="M10 11v5M14 11v5"></path></svg>
                 </span>
                 <b data-delete-title>Excluir matérias</b>
@@ -181,7 +172,7 @@ require __DIR__ . '/includes/head.php';
             </button>
         </div>
     </section>
-    <a class="neo-icon-button neo-star-hover external-studies-link" href="estudos.php">
+    <a class="neo-icon-button neo-star-hover external-studies-link" href="estudos.php" data-manel-tip="Abre os estudos externos com o Manel.">
         <?= estrelaHoverNeo() ?>
         <?= iconeMateriaDashboard('portugues') ?>
         <span>Estudos externos</span>
@@ -195,7 +186,7 @@ require __DIR__ . '/includes/head.php';
             <?= estrelaHoverNeo() ?>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
         </button>
-        <form method="post" class="subject-request-form" data-ai-loading data-ai-message="Criando a matéria e seus livros">
+        <form method="post" class="subject-request-form" data-ai-loading data-ai-message="Criando a introdução da matéria">
             <?= campoCsrf() ?>
             <input type="hidden" name="acao" value="adicionar_materia">
             <h2 id="subjectRequestTitle">Qual matéria você quer estudar?</h2>
@@ -205,7 +196,7 @@ require __DIR__ . '/includes/head.php';
             <?php endif; ?>
             <label class="sr-only" for="materia_solicitada">Nome da matéria</label>
             <input id="materia_solicitada" type="text" name="materia_solicitada" value="<?= htmlspecialchars($materiaSolicitada) ?>" minlength="2" maxlength="70" placeholder="Ex.: Programação, Música ou Mecânica" autocomplete="off" required>
-            <button type="submit" class="subject-request-submit neo-star-hover">
+            <button type="submit" class="subject-request-submit neo-star-hover" data-manel-tip="Cria a matéria e prepara seu livro de introdução.">
                 <?= estrelaHoverNeo() ?>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
                 <span>Criar matéria</span>
@@ -223,12 +214,12 @@ require __DIR__ . '/includes/head.php';
         <h2 id="subjectDeleteTitle">Apagar matérias selecionadas?</h2>
         <p id="subjectDeleteText" data-subject-delete-summary></p>
         <div class="subject-delete-buttons">
-            <button type="button" class="subject-delete-cancel neo-star-hover" data-subject-delete-close><?= estrelaHoverNeo() ?>Cancelar</button>
+            <button type="button" class="subject-delete-cancel neo-star-hover" data-subject-delete-close data-manel-tip="Fecha a confirmação sem apagar matérias."><?= estrelaHoverNeo() ?>Cancelar</button>
             <form method="post" data-subject-delete-form>
                 <?= campoCsrf() ?>
                 <input type="hidden" name="acao" value="apagar_materia">
                 <div data-subject-delete-inputs></div>
-                <button type="submit" class="subject-delete-confirm neo-star-hover"><?= estrelaHoverNeo() ?>Apagar</button>
+                <button type="submit" class="subject-delete-confirm neo-star-hover" data-manel-tip="Apaga as matérias selecionadas e todos os vínculos delas na sua conta."><?= estrelaHoverNeo() ?>Apagar</button>
             </form>
         </div>
     </section>
@@ -280,7 +271,7 @@ require __DIR__ . '/includes/head.php';
             item.querySelector('.subject')?.setAttribute('aria-pressed', active ? 'true' : 'false');
         });
         var count = selected.size;
-        status.textContent = count ? count + (count === 1 ? ' selecionada' : ' selecionadas') + ' · confirmar' : 'Selecione as matérias';
+        status.textContent = count ? count + (count === 1 ? ' selecionada' : ' selecionadas') + ' · confirmar' : 'Clique de novo para cancelar';
         toggle.classList.toggle('has-selection', count > 0);
     }
 
@@ -322,7 +313,11 @@ require __DIR__ . '/includes/head.php';
             selecting = true;
             document.body.classList.add('subject-delete-mode');
             toggle.setAttribute('aria-pressed', 'true');
-            status.textContent = 'Selecione as matérias';
+            status.textContent = 'Clique de novo para cancelar';
+            return;
+        }
+        if (!selected.size) {
+            leaveSelectionMode();
             return;
         }
         if (selected.size) openDeleteModal();
@@ -349,3 +344,4 @@ require __DIR__ . '/includes/head.php';
 </script>
 </body>
 </html>
+

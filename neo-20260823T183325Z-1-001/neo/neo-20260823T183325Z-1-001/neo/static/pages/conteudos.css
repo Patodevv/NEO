@@ -6,10 +6,18 @@
 
 .content-header {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) clamp(56px, 8.4vw, 104px);
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: clamp(10px, 2vw, 24px);
     align-items: stretch;
     overflow: visible;
+}
+
+.content-header-actions {
+    min-width: clamp(56px, 8.4vw, 104px);
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: clamp(56px, 8.4vw, 104px);
+    gap: clamp(10px, 1.4vw, 14px);
 }
 
 .content-summary {
@@ -106,6 +114,19 @@
     transform: translateY(-2px);
 }
 
+.content-delete-toggle {
+    --btn-icon: #ff4b68;
+    --neo-blue-glow: rgba(255, 75, 104, .25);
+}
+
+.content-delete-toggle:hover,
+.content-delete-toggle:focus-visible,
+.content-delete-toggle[aria-pressed="true"] {
+    background: color-mix(in srgb, #ff4b68 18%, var(--panel-bg));
+    color: #fff;
+    box-shadow: var(--panel-shadow), 0 0 0 4px rgba(255, 75, 104, .2);
+}
+
 .content-icon-btn svg:not(.icon-hover-star) {
     position: relative;
     z-index: 1;
@@ -116,11 +137,13 @@
 .content-icon-btn:hover .icon-hover-star,
 .content-icon-btn:focus-visible .icon-hover-star {
     opacity: 1;
-    animation: neoCornerStarSpin 1.45s cubic-bezier(.45,0,.2,1) infinite;
+    animation: neoCornerStarSpin .52s cubic-bezier(.22,1,.36,1) both;
 }
 
 .content-list-wrap {
     width: 100%;
+    margin: -6px;
+    padding: 6px;
     overflow: visible;
 }
 
@@ -128,9 +151,14 @@
     display: flex;
     flex-direction: column;
     gap: clamp(10px, 1.5vw, 14px);
-    margin: -6px;
-    padding: 6px;
+    margin: 0;
+    padding: 0;
     overflow: visible;
+}
+
+.content-row > .icon-hover-star {
+    left: calc(var(--icon-star-size, 38px) * -.42);
+    top: calc(var(--icon-star-size, 38px) * -.42);
 }
 
 .content-generate-row {
@@ -142,9 +170,14 @@
 }
 
 .content-row {
+    --icon-star-size: 38px;
+    --hover-star-core: var(--materia-cor, var(--neo-blue));
+    --hover-star-shadow: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 44%, #030824);
+    --hover-star-center-stroke: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 55%, transparent);
     min-height: clamp(56px, 6vw, 64px);
     display: grid;
-    grid-template-columns: minmax(0, 1fr) clamp(38px, 5vw, 52px);
+    grid-template-columns: minmax(0, 1fr);
     align-items: center;
     gap: clamp(8px, 1.4vw, 14px);
     padding: clamp(8px, 1.2vw, 10px) clamp(9px, 1.2vw, 10px) clamp(8px, 1.2vw, 10px) clamp(12px, 1.8vw, 18px);
@@ -157,7 +190,57 @@
     transition: color .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 
+body.content-delete-mode .content-row {
+    grid-template-columns: minmax(0, 1fr) clamp(38px, 5vw, 52px);
+}
+
+.content-row.is-selected {
+    border-color: #ff4b68;
+    background: color-mix(in srgb, #ff4b68 9%, var(--panel-bg));
+    box-shadow: 0 0 0 3px rgba(255, 75, 104, .15);
+}
+
+.content-delete-status {
+    margin-bottom: 12px;
+    padding: 12px 16px;
+    border: 1px solid rgba(255, 75, 104, .42);
+    border-radius: 15px;
+    background: color-mix(in srgb, #ff4b68 8%, var(--panel-bg));
+    color: rgba(255, 255, 255, .82);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.content-empty-state {
+    margin-bottom: 14px;
+}
+
+.content-empty-state > span {
+    color: var(--materia-cor, var(--neo-blue));
+}
+
+.content-empty-state > span svg {
+    width: 30px;
+    height: 30px;
+}
+
+.content-action-shell {
+    display: block;
+    border-radius: clamp(17px, 2.2vw, 22px);
+    outline: none;
+    overflow: visible;
+}
+
+.content-action-shell:focus-visible {
+    box-shadow: 0 0 0 3px rgba(47, 86, 255, .3);
+}
+
 .content-generate-list-btn {
+    --icon-star-size: 32px;
+    --hover-star-core: var(--materia-cor, var(--neo-blue));
+    --hover-star-shadow: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 44%, #030824);
+    --hover-star-center-stroke: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 55%, transparent);
     width: 100%;
     min-height: clamp(56px, 6vw, 64px);
     display: grid;
@@ -165,9 +248,9 @@
     align-items: center;
     gap: clamp(9px, 1.7vw, 18px);
     padding: clamp(9px, 1.4vw, 12px) clamp(10px, 1.8vw, 18px);
-    border: 1px solid rgba(47, 86, 255, .52);
+    border: 1px solid color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 52%, transparent);
     border-radius: clamp(17px, 2.2vw, 22px);
-    background: color-mix(in srgb, var(--neo-blue) 28%, var(--panel-bg));
+    background: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 20%, var(--panel-bg));
     color: #fff;
     text-align: left;
     cursor: pointer;
@@ -176,11 +259,29 @@
 
 .content-generate-list-btn:hover,
 .content-generate-list-btn:focus-visible {
-    background: #1230ff;
-    border-color: #2f56ff;
-    box-shadow: 0 0 0 3px rgba(47, 86, 255, .2);
+    background: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 32%, var(--panel-bg));
+    border-color: var(--materia-cor, var(--neo-blue));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 20%, transparent);
     outline: none;
     transform: translateY(-2px);
+}
+
+.content-generate-list-btn:disabled {
+    cursor: not-allowed;
+    opacity: .58;
+    background: color-mix(in srgb, var(--panel-bg) 86%, var(--materia-cor, var(--neo-blue)));
+    border-color: rgba(132, 151, 214, .22);
+    color: rgba(255, 255, 255, .68);
+    box-shadow: none;
+    transform: none;
+}
+
+.content-generate-list-btn:disabled:hover,
+.content-generate-list-btn:disabled:focus-visible {
+    background: color-mix(in srgb, var(--panel-bg) 86%, var(--materia-cor, var(--neo-blue)));
+    border-color: rgba(132, 151, 214, .22);
+    box-shadow: none;
+    transform: none;
 }
 
 .content-generate-list-btn b {
@@ -188,7 +289,7 @@
     height: clamp(30px, 3.5vw, 36px);
     display: grid;
     place-items: center;
-    border: 1px solid rgba(255, 255, 255, .64);
+    border: 1px solid color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 54%, rgba(255, 255, 255, .5));
     border-radius: 999px;
     background: rgba(255, 255, 255, .12);
     color: #fff;
@@ -199,7 +300,7 @@
 .content-generate-list-btn:hover b,
 .content-generate-list-btn:focus-visible b {
     background: rgba(255, 255, 255, .18);
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, .12);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 16%, transparent);
     transform: scale(1.03);
 }
 
@@ -228,6 +329,7 @@
 }
 
 .content-row-main {
+    position: relative;
     min-width: 0;
     min-height: clamp(40px, 5vw, 48px);
     display: grid;
@@ -281,16 +383,11 @@
     color: #fff;
 }
 
-.content-delete-form {
-    margin: 0;
-    justify-self: end;
-}
-
-.content-delete-btn {
+.content-select-btn {
     --delete-red: #ff3b5c;
     width: clamp(36px, 5vw, 44px);
     height: clamp(36px, 5vw, 44px);
-    display: grid;
+    display: none;
     place-items: center;
     padding: 0;
     border: 1px solid var(--delete-red);
@@ -301,19 +398,33 @@
     transition: color .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 
-.content-delete-btn:hover,
-.content-delete-btn:focus-visible {
+.content-delete-mode .content-select-btn {
+    display: grid;
+}
+
+.content-select-btn span {
+    width: 15px;
+    height: 15px;
+    border: 2px solid currentColor;
+    border-radius: 5px;
+    transition: background .18s ease, transform .18s ease;
+}
+
+.content-select-btn[aria-pressed="true"] span {
+    background: currentColor;
+    box-shadow: inset 0 0 0 3px var(--btn-bg);
+    transform: scale(1.08);
+}
+
+.content-select-btn:hover,
+.content-select-btn:focus-visible,
+.content-select-btn[aria-pressed="true"] {
     background: color-mix(in srgb, var(--delete-red) 24%, transparent);
     color: #fff;
     border-color: var(--delete-red);
     box-shadow: 0 0 0 3px rgba(255, 59, 92, .24);
     outline: none;
     transform: translateY(-2px) scale(1.04);
-}
-
-.content-delete-btn svg {
-    width: clamp(17px, 2.3vw, 20px);
-    height: clamp(17px, 2.3vw, 20px);
 }
 
 body.content-modal-open {
@@ -329,6 +440,126 @@ body.content-modal-open {
     padding: 24px;
     opacity: 0;
     transition: opacity .18s ease;
+}
+
+.content-delete-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10520;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    opacity: 0;
+    transition: opacity .18s ease;
+}
+
+.content-delete-modal[hidden] {
+    display: none;
+}
+
+.content-delete-modal.is-open {
+    opacity: 1;
+}
+
+.content-delete-panel {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 500px);
+    display: grid;
+    justify-items: center;
+    gap: 13px;
+    padding: clamp(24px, 4vw, 34px);
+    border: 1px solid rgba(255, 75, 104, .42);
+    border-radius: 24px;
+    background: var(--panel-bg);
+    box-shadow: var(--panel-shadow), 0 0 0 4px rgba(255, 75, 104, .08);
+    text-align: center;
+    opacity: 0;
+    transform: translateY(12px) scale(.98);
+    transition: opacity .18s ease, transform .22s cubic-bezier(.22, 1, .36, 1);
+}
+
+.content-delete-modal.is-open .content-delete-panel {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.content-delete-symbol {
+    width: 56px;
+    height: 56px;
+    display: grid;
+    place-items: center;
+    border: 1px solid #ff4b68;
+    border-radius: 18px;
+    background: rgba(255, 75, 104, .1);
+    color: #ff6881;
+}
+
+.content-delete-symbol svg {
+    width: 27px;
+    height: 27px;
+}
+
+.content-delete-panel h2 {
+    color: #fff;
+    font-size: clamp(20px, 4vw, 26px);
+    line-height: 1.12;
+}
+
+.content-delete-panel p {
+    max-width: 420px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.content-delete-confirm-form {
+    width: 100%;
+}
+
+.content-delete-modal-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.content-delete-modal-actions button {
+    position: relative;
+    min-height: 48px;
+    border: 1px solid var(--panel-border);
+    border-radius: 15px;
+    background: var(--btn-bg);
+    color: #fff;
+    font: inherit;
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+.content-delete-modal-actions button:hover,
+.content-delete-modal-actions button:focus-visible {
+    transform: translateY(-2px);
+    outline: none;
+}
+
+.content-delete-cancel:hover,
+.content-delete-cancel:focus-visible {
+    border-color: var(--neo-blue);
+    background: color-mix(in srgb, var(--neo-blue) 18%, var(--btn-bg));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neo-blue) 18%, transparent);
+}
+
+.content-delete-confirm {
+    border-color: #ff4b68 !important;
+    color: #ff879a !important;
+}
+
+.content-delete-confirm:hover,
+.content-delete-confirm:focus-visible {
+    background: color-mix(in srgb, #ff4b68 22%, var(--btn-bg));
+    color: #fff !important;
+    box-shadow: 0 0 0 3px rgba(255, 75, 104, .18);
 }
 
 .content-request-modal[hidden] {
@@ -358,8 +589,8 @@ body.content-modal-open {
     padding: clamp(88px, 14vh, 104px) clamp(20px, 3vw, 30px) clamp(22px, 3vw, 30px);
     border: 1px solid var(--panel-border);
     border-radius: clamp(20px, 4vw, 26px);
-    background: #0c1b3b;
-    box-shadow: var(--panel-shadow), 0 0 0 4px rgba(26, 46, 255, .12);
+    background: var(--panel-bg);
+    box-shadow: var(--panel-shadow), 0 0 0 4px color-mix(in srgb, var(--neo-blue) 12%, transparent);
     overflow-y: auto;
     opacity: 0;
     transform: translateY(12px) scale(.98);
@@ -401,7 +632,7 @@ body.content-modal-open {
 .content-request-close:focus-visible {
     color: #fff;
     background: var(--neo-blue-hover);
-    box-shadow: 0 0 0 3px rgba(26, 46, 255, .34);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neo-blue) 34%, transparent);
     outline: none;
     transform: translateY(-2px);
 }
@@ -451,8 +682,8 @@ body.content-modal-open {
 
 .content-request-form input[type="text"]:focus {
     border-color: var(--neo-blue);
-    background: rgba(11, 26, 57, .94);
-    box-shadow: 0 0 0 3px rgba(26, 46, 255, .34);
+    background: color-mix(in srgb, var(--neo-blue) 10%, var(--control-bg));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neo-blue) 34%, transparent);
 }
 
 .content-request-form input[type="text"]::placeholder {
@@ -480,7 +711,7 @@ body.content-modal-open {
 .content-request-submit:focus-visible {
     color: #fff;
     background: var(--neo-blue-hover);
-    box-shadow: 0 0 0 3px rgba(26, 46, 255, .34);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neo-blue) 34%, transparent);
     outline: none;
     transform: translateY(-2px);
 }
@@ -496,7 +727,7 @@ body.content-modal-open {
     }
 
     .content-header {
-        grid-template-columns: minmax(0, 1fr) clamp(62px, 11vw, 82px);
+        grid-template-columns: minmax(0, 1fr) auto;
         gap: clamp(10px, 2vw, 14px);
     }
 
@@ -519,11 +750,15 @@ body.content-modal-open {
         min-height: clamp(68px, 10vw, 82px);
         border-radius: clamp(18px, 3vw, 22px);
     }
+
+    .content-header-actions {
+        grid-auto-columns: clamp(62px, 11vw, 82px);
+    }
 }
 
 @media (max-width: 560px) {
     .content-header {
-        grid-template-columns: minmax(0, 1fr) 62px;
+        grid-template-columns: minmax(0, 1fr) auto;
         gap: 10px;
     }
 
@@ -556,6 +791,11 @@ body.content-modal-open {
         border-radius: 18px;
     }
 
+    .content-header-actions {
+        grid-auto-columns: 52px;
+        gap: 8px;
+    }
+
     .content-icon-btn svg:not(.icon-hover-star) {
         width: 22px;
         height: 22px;
@@ -567,10 +807,14 @@ body.content-modal-open {
 
     .content-row {
         min-height: 60px;
-        grid-template-columns: minmax(0, 1fr) 44px;
+        grid-template-columns: minmax(0, 1fr);
         gap: 12px;
         padding: 10px 12px;
         border-radius: 18px;
+    }
+
+    body.content-delete-mode .content-row {
+        grid-template-columns: minmax(0, 1fr) 44px;
     }
 
     .content-generate-list-btn {
@@ -612,7 +856,7 @@ body.content-modal-open {
         -webkit-box-orient: vertical;
     }
 
-    .content-delete-btn {
+    .content-select-btn {
         width: 40px;
         height: 40px;
         border-radius: 14px;
@@ -636,15 +880,11 @@ body.content-modal-open {
 
 @media (max-width: 430px) {
     .content-header {
-        grid-template-columns: minmax(0, 1fr) clamp(50px, 15vw, 56px);
+        grid-template-columns: minmax(0, 1fr) auto;
     }
 
     .content-summary {
         min-height: clamp(58px, 17vw, 64px);
-    }
-
-    .content-header > .content-icon-btn {
-        grid-column: 2;
     }
 
     .content-row {
@@ -662,7 +902,7 @@ body.content-modal-open {
         width: 42px;
     }
 
-    .content-delete-btn {
+    .content-select-btn {
         width: 38px;
         height: 38px;
     }
@@ -671,4 +911,61 @@ body.content-modal-open {
         grid-template-columns: 48px minmax(0, 1fr);
         gap: 9px;
     }
+}
+
+
+
+
+
+
+
+
+.content-delete-toggle,
+.content-delete-confirm,
+.content-select-btn,
+.subject.subject-delete-toggle,
+.subject-delete-confirm {
+    --hover-star-core: #ff4d5e;
+    --hover-star-shadow: #70152a;
+    --hover-star-center-stroke: #ff8ba0;
+    --hover-star-glow: rgba(255, 77, 94, .58);
+}
+
+/* NEO content color-synced stars */
+.content-icon-btn.neo-star-hover:not(.content-delete-toggle),
+.content-request-submit.neo-star-hover,
+.content-request-close.neo-star-hover,
+.content-delete-cancel.neo-star-hover {
+    --button-accent: var(--materia-cor, var(--neo-blue));
+    --hover-star-core: var(--button-accent);
+    --hover-star-shadow: color-mix(in srgb, var(--button-accent) 44%, #030824);
+    --hover-star-center-stroke: color-mix(in srgb, var(--button-accent) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--button-accent) 55%, transparent);
+}
+.content-icon-btn.neo-star-hover:not(.content-delete-toggle):hover,
+.content-icon-btn.neo-star-hover:not(.content-delete-toggle):focus-visible,
+.content-request-submit.neo-star-hover:hover,
+.content-request-submit.neo-star-hover:focus-visible,
+.content-request-close.neo-star-hover:hover,
+.content-request-close.neo-star-hover:focus-visible,
+.content-delete-cancel.neo-star-hover:hover,
+.content-delete-cancel.neo-star-hover:focus-visible {
+    color: var(--button-accent);
+    border-color: var(--button-accent);
+}
+.content-generate-list-btn.neo-star-hover:hover,
+.content-generate-list-btn.neo-star-hover:focus-visible,
+.content-generate-list-btn.neo-star-hover:hover :where(b, span),
+.content-generate-list-btn.neo-star-hover:focus-visible :where(b, span),
+.content-row.neo-star-hover:hover .content-row-main span,
+.content-row.neo-star-hover:focus-within .content-row-main span {
+    color: var(--materia-cor, var(--neo-blue));
+}
+.content-delete-toggle,
+.content-delete-confirm,
+.content-select-btn {
+    --hover-star-core: #ff4d5e;
+    --hover-star-shadow: #70152a;
+    --hover-star-center-stroke: #ff8ba0;
+    --hover-star-glow: rgba(255, 77, 94, .58);
 }

@@ -41,17 +41,27 @@ function usuarioAtual(PDO $pdo): ?array
     }
     $GLOBALS['neo_personalization_user'] = $usuario;
 
-    if (!empty($usuario['decoracao_perfil']) && tabelaExiste($pdo, 'produtos')) {
-        $stmt = $pdo->prepare("
-            SELECT COUNT(*)
-            FROM compras_loja cl JOIN produtos p ON p.id = cl.produto_id
-            WHERE cl.user_id = ? AND p.codigo = ? AND cl.status = 'concluida'
-              AND (cl.expira_em IS NULL OR cl.expira_em >= NOW())
-        ");
-        $stmt->execute([(int)$usuario['id'], $usuario['decoracao_perfil']]);
-        if ((int)$stmt->fetchColumn() === 0) {
-            $pdo->prepare("UPDATE users SET decoracao_perfil = NULL WHERE id = ?")->execute([(int)$usuario['id']]);
-            $usuario['decoracao_perfil'] = null;
+    if (tabelaExiste($pdo, 'produtos')) {
+        foreach ([
+            'decoracao_perfil' => 'decoracao_perfil',
+            'tema_site' => 'tema_site',
+            'skin_manel' => 'skin_manel',
+            'cor_nome' => 'cor_nome',
+        ] as $campo => $categoria) {
+            if (empty($usuario[$campo]) || !colunaExiste($pdo, 'users', $campo)) {
+                continue;
+            }
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*)
+                FROM compras_loja cl JOIN produtos p ON p.id = cl.produto_id
+                WHERE cl.user_id = ? AND p.codigo = ? AND p.categoria = ? AND cl.status = 'concluida'
+                  AND (cl.expira_em IS NULL OR cl.expira_em >= NOW())
+            ");
+            $stmt->execute([(int)$usuario['id'], $usuario[$campo], $categoria]);
+            if ((int)$stmt->fetchColumn() === 0) {
+                $pdo->prepare("UPDATE users SET `{$campo}` = NULL WHERE id = ?")->execute([(int)$usuario['id']]);
+                $usuario[$campo] = null;
+            }
         }
     }
 

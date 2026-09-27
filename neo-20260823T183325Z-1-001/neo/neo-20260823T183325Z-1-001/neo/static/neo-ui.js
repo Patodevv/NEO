@@ -36,6 +36,39 @@
         }
     };
 
+
+    function syncCheckedLabel(label) {
+        if (!label) return;
+        var input = label.querySelector('input[type="radio"], input[type="checkbox"]');
+        label.classList.toggle('is-checked', !!(input && input.checked));
+    }
+
+    function syncCheckedLabels(root) {
+        var scope = root && root.querySelectorAll ? root : document;
+        scope.querySelectorAll('.learning-answer, .study-option, .neo-setup-choice').forEach(syncCheckedLabel);
+    }
+
+    document.addEventListener('change', function (event) {
+        var input = event.target;
+        if (!input || !input.matches || !input.matches('input[type="radio"], input[type="checkbox"]')) return;
+        var label = input.closest('.learning-answer, .study-option, .neo-setup-choice');
+        if (!label) return;
+        var form = input.form || document;
+        if (input.type === 'radio' && input.name) {
+            form.querySelectorAll('input[type="radio"]').forEach(function (item) {
+                if (item.name === input.name) syncCheckedLabel(item.closest('.learning-answer, .study-option, .neo-setup-choice'));
+            });
+        } else {
+            syncCheckedLabel(label);
+        }
+    });
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () { syncCheckedLabels(document); }, { once: true });
+    } else {
+        syncCheckedLabels(document);
+    }
+
     document.addEventListener('submit', function (event) {
         var form = event.target.closest && event.target.closest('form[data-ai-loading]');
         if (!form || event.defaultPrevented) return;
@@ -161,6 +194,295 @@
         });
     })();
 
+    (function setupManelTooltips() {
+        if (!document.querySelector('[data-neo-companion]') || document.body.classList.contains('neo-onboarding-page')) return;
+
+        var selector = 'a[href],button:not([disabled]),summary,[role="button"]:not([aria-disabled="true"]),[data-manel-tip]:not([disabled]),label,input:not([type="hidden"]):not([disabled]),select:not([disabled]),textarea:not([disabled])';
+        var face = document.querySelector('[data-neo-companion]');
+        var tooltip = document.createElement('div');
+        tooltip.className = 'neo-manel-tooltip';
+        tooltip.id = 'neoManelTooltip';
+        tooltip.setAttribute('role', 'tooltip');
+        tooltip.setAttribute('aria-hidden', 'true');
+        tooltip.hidden = true;
+        var manelName = clean(face.getAttribute('data-manel-name')) || 'Manel';
+        var manelPersonality = clean(face.getAttribute('data-manel-personality')).toLowerCase();
+        tooltip.innerHTML = '<span class="neo-manel-tooltip-copy"><b></b><span data-neo-tooltip-text></span></span>';
+        var tooltipName = tooltip.querySelector('b');
+        if (tooltipName) tooltipName.textContent = manelName;
+        document.body.appendChild(tooltip);
+
+        var tooltipText = tooltip.querySelector('[data-neo-tooltip-text]');
+        var current = null;
+        var showTimer = 0;
+        var hideTimer = 0;
+        var previousDescription = null;
+        var typingTimer = 0;
+        var typingToken = 0;
+
+        function clean(value) {
+            return String(value || '').replace(/\s+/g, ' ').trim().replace(/[→←↗⌄]+$/u, '').trim();
+        }
+
+        function quote(value) {
+            var label = clean(value).replace(/^(abrir|ver|ir para|acessar)\s+/iu, '');
+            return label ? ' “' + label.slice(0, 88) + '”' : '';
+        }
+
+        function personalityLine(message) {
+            message = clean(message);
+            if (!message) return '';
+            if (message.indexOf('Sou o ') === 0 || message.indexOf('Sou a ') === 0) return message;
+            return message;
+        }
+
+        function visibleLabel(element) {
+            if (element.matches('label')) {
+                var labelledControl = element.querySelector('input,select,textarea');
+                var labelClone = element.cloneNode(true);
+                labelClone.querySelectorAll('input,select,textarea,option').forEach(function (control) { control.remove(); });
+                return clean(labelClone.textContent || labelledControl?.getAttribute('placeholder') || labelledControl?.getAttribute('aria-label'));
+            }
+            if (element.matches('input')) {
+                var inputId = element.id && window.CSS && typeof window.CSS.escape === 'function' ? window.CSS.escape(element.id) : element.id;
+                var label = inputId ? document.querySelector('label[for="' + inputId + '"]') : element.closest('label');
+                return clean(label ? label.textContent : element.value);
+            }
+            if (element.matches('select')) {
+                var selectId = element.id && window.CSS && typeof window.CSS.escape === 'function' ? window.CSS.escape(element.id) : element.id;
+                var selectLabel = selectId ? document.querySelector('label[for="' + selectId + '"]') : element.closest('label');
+                if (!selectLabel) return clean(element.getAttribute('aria-label') || 'uma opção');
+                var clone = selectLabel.cloneNode(true);
+                clone.querySelectorAll('select,option').forEach(function (control) { control.remove(); });
+                return clean(clone.textContent || element.getAttribute('aria-label') || 'uma opção');
+            }
+            if (element.matches('textarea')) return clean(element.getAttribute('aria-label') || element.getAttribute('placeholder') || 'mensagem');
+            if (element.matches('.subject')) return clean(element.querySelector('b')?.textContent);
+            if (element.matches('.content-row-main')) return clean(element.querySelector('span')?.textContent);
+            if (element.matches('.recent-item')) return clean(element.querySelector('b,strong,.recent-title')?.textContent || element.textContent);
+            if (element.matches('.learning-week-folder')) return clean(element.querySelector('strong')?.textContent);
+            if (element.matches('summary')) return clean(element.querySelector('b,h2,h3,strong')?.textContent || element.textContent);
+            return clean(element.getAttribute('aria-label') || element.textContent || element.getAttribute('value'));
+        }
+
+        function routeDescription(element, label) {
+            if (!element.matches('a[href]')) return '';
+            var url;
+            try { url = new URL(element.getAttribute('href'), window.location.href); } catch (error) { return ''; }
+            if (url.origin !== window.location.origin) return 'Abre um endereço externo em outra página.';
+            var page = url.pathname.split('/').pop() || 'index.php';
+            if (element.matches('.content-row-main')) return 'Abre o livro' + quote(label) + ' para leitura.';
+            if (element.matches('.subject')) return 'Abre a matéria' + quote(label) + ' e mostra seus livros.';
+            if (element.matches('.recent-item')) return 'Retoma o conteúdo' + quote(label) + '.';
+            var routes = {
+                'index.php': 'Abre a página inicial e sua próxima atividade.',
+                'materias.php': 'Abre suas matérias e livros.',
+                'historico.php': 'Mostra seu histórico de atividades e resultados.',
+                'loja.php': 'Abre a loja de itens visuais do perfil.',
+                'aprendizado.php': 'Abre sua rotina, progresso, revisões e simulados.',
+                'perfil.php': 'Abre seu perfil e suas conquistas.',
+                'config.php': 'Abre as configurações da conta.',
+                'estudos.php': 'Abre os estudos externos com o Manel.',
+                'conteudos.php': 'Mostra os livros desta matéria.',
+                'livro.php': 'Abre este livro para leitura.',
+                'questoes.php': 'Abre as questões deste conteúdo.',
+                'logout.php': 'Encerra sua sessão no NEO.'
+            };
+            return routes[page] || (label ? 'Abre' + quote(label) + '.' : 'Abre esta opção.');
+        }
+
+        function descriptionFor(element) {
+            if (!element || element.matches('[data-manel-tip="off"]')) return '';
+            var explicit = clean(element.getAttribute('data-manel-tip'));
+            if (explicit) return explicit;
+            var savedTitle = clean(element.getAttribute('data-neo-original-title'));
+            var label = visibleLabel(element) || savedTitle;
+            var normalized = clean(label).toLocaleLowerCase('pt-BR');
+
+            if (element.matches('label') && element.querySelector('input[type="checkbox"],input[type="radio"]')) return 'Seleciona' + quote(label) + '.';
+            if (element.matches('input[type="checkbox"],input[type="radio"]')) return 'Seleciona' + quote(label) + '.';
+            if (element.matches('input[type="file"]')) return 'Escolhe uma imagem do seu dispositivo para' + quote(label || 'este campo') + '.';
+            if (element.matches('input,textarea')) return 'Campo para' + quote(label || element.getAttribute('placeholder') || 'digitar sua resposta') + '.';
+            if (element.matches('select')) return 'Escolhe uma opção para' + quote(label || 'este campo') + '.';
+            if (element.matches('summary')) return 'Abre ou fecha os detalhes de' + quote(label) + '.';
+            if (/apagar|excluir|remover|lixeira/.test(normalized)) return 'Apaga' + quote(label.replace(/^(apagar|excluir|remover)\s*/iu, '')) + ' depois da sua confirmação.';
+            if (/cancelar/.test(normalized)) return 'Cancela esta ação e volta sem alterar nada.';
+            if (/fechar/.test(normalized)) return 'Fecha esta janela.';
+            if (/voltar|anterior/.test(normalized)) return 'Volta para a etapa anterior.';
+            if (/adicionar matéria|criar matéria/.test(normalized)) return 'Abre a criação de uma nova matéria.';
+            if (/gerar mais livros/.test(normalized)) return 'Cria a próxima sequência de livros desta matéria.';
+            if (/pedir um conteúdo/.test(normalized)) return 'Cria um livro sobre o tema que você escolher.';
+            if (/preparar meu simulado/.test(normalized)) return 'Monta um simulado com as opções selecionadas.';
+            if (/salvar|confirmar|concluir|entrar|enviar|comprar/.test(normalized)) return (label || 'Confirma esta ação') + '.';
+
+            var route = routeDescription(element, label);
+            if (route) return route;
+            if (element.matches('.learning-week-folder')) return clean(element.getAttribute('aria-label')) + '.';
+            if (savedTitle && savedTitle !== label) return savedTitle + '.';
+            return label ? 'Usa a opção' + quote(label) + '.' : '';
+        }
+
+        function prepare(element) {
+            if (!element || !element.matches(selector)) return;
+            var title = element.getAttribute('title');
+            if (title !== null) {
+                if (clean(title)) element.setAttribute('data-neo-original-title', clean(title));
+                element.removeAttribute('title');
+            }
+        }
+
+        function restoreDescription() {
+            if (!current) return;
+            if (previousDescription === null) current.removeAttribute('aria-describedby');
+            else current.setAttribute('aria-describedby', previousDescription);
+            previousDescription = null;
+        }
+
+        function positionTooltip() {
+            if (!face || !face.isConnected) return;
+            var margin = 12;
+            var gap = 16;
+            var minWidth = 178;
+            var maxWidth = 330;
+            var rect = face.getBoundingClientRect();
+            var availableLeft = Math.max(0, rect.left - gap - margin);
+            var availableRight = Math.max(0, window.innerWidth - rect.right - gap - margin);
+            var availableBelow = Math.max(minWidth, window.innerWidth - margin * 2);
+            var side = availableLeft >= minWidth || availableLeft >= availableRight ? 'left' : (availableRight >= minWidth ? 'right' : 'below');
+            var allowedWidth = side === 'left' ? availableLeft : (side === 'right' ? availableRight : availableBelow);
+            tooltip.classList.remove('is-below', 'is-left', 'is-right');
+            tooltip.classList.add(side === 'below' ? 'is-below' : (side === 'right' ? 'is-right' : 'is-left'));
+            tooltip.style.maxWidth = Math.max(minWidth, Math.min(maxWidth, allowedWidth)) + 'px';
+            var box = tooltip.getBoundingClientRect();
+            var left;
+            var top;
+
+            if (side === 'left') {
+                left = rect.left - box.width - gap;
+                top = rect.top + rect.height * 0.48 - box.height / 2;
+            } else if (side === 'right') {
+                left = rect.right + gap;
+                top = rect.top + rect.height * 0.48 - box.height / 2;
+            } else {
+                left = rect.left + rect.width / 2 - box.width / 2;
+                top = rect.bottom + gap;
+            }
+
+            left = Math.max(margin, Math.min(window.innerWidth - box.width - margin, left));
+            top = Math.max(margin, Math.min(window.innerHeight - box.height - margin, top));
+
+            var arrowY = Math.max(16, Math.min(box.height - 16, rect.top + rect.height * 0.48 - top));
+            var arrowX = Math.max(16, Math.min(box.width - 16, rect.left + rect.width / 2 - left));
+            tooltip.style.setProperty('--tooltip-arrow-y', Math.round(arrowY) + 'px');
+            tooltip.style.setProperty('--tooltip-arrow-x', Math.round(arrowX) + 'px');
+            tooltip.style.left = Math.round(left) + 'px';
+            tooltip.style.top = Math.round(top) + 'px';
+        }
+
+        function typeTooltipText(message) {
+            window.clearInterval(typingTimer);
+            typingToken += 1;
+            var token = typingToken;
+            var index = 0;
+            tooltipText.textContent = '';
+            tooltip.classList.add('is-typing');
+            typingTimer = window.setInterval(function () {
+                if (token !== typingToken) {
+                    window.clearInterval(typingTimer);
+                    return;
+                }
+                index = Math.min(message.length, index + 3);
+                tooltipText.textContent = message.slice(0, index);
+                if (index >= message.length) {
+                    window.clearInterval(typingTimer);
+                    tooltip.classList.remove('is-typing');
+                    document.dispatchEvent(new CustomEvent('neo:manel-face-state', { detail: { state: 'neutral' } }));
+                }
+            }, 10);
+        }
+
+        function show(element) {
+            prepare(element);
+            var message = personalityLine(descriptionFor(element));
+            if (!message || !element.isConnected) return;
+            restoreDescription();
+            current = element;
+            previousDescription = element.getAttribute('aria-describedby');
+            element.setAttribute('aria-describedby', tooltip.id);
+            window.clearInterval(typingTimer);
+            typingToken += 1;
+            tooltip.style.width = '';
+            tooltipText.textContent = message;
+            tooltip.hidden = false;
+            tooltip.setAttribute('aria-hidden', 'false');
+            tooltip.classList.remove('is-visible', 'is-typing');
+            positionTooltip();
+            tooltip.style.width = Math.ceil(tooltip.getBoundingClientRect().width) + 'px';
+            typeTooltipText(message);
+            window.requestAnimationFrame(function () {
+                if (current === element) tooltip.classList.add('is-visible');
+            });
+            document.dispatchEvent(new CustomEvent('neo:manel-face-state', { detail: { state: 'speaking' } }));
+        }
+
+        function hide(immediate) {
+            window.clearTimeout(showTimer);
+            window.clearTimeout(hideTimer);
+            if (!current && tooltip.hidden) return;
+            var finish = function () {
+                restoreDescription();
+                current = null;
+                tooltip.hidden = true;
+                tooltip.setAttribute('aria-hidden', 'true');
+                window.clearInterval(typingTimer);
+                typingToken += 1;
+                tooltipText.textContent = '';
+                tooltip.style.width = '';
+                tooltip.classList.remove('is-visible', 'is-below', 'is-left', 'is-right', 'is-typing');
+                document.dispatchEvent(new CustomEvent('neo:manel-face-state', { detail: { state: 'neutral' } }));
+            };
+            tooltip.classList.remove('is-visible');
+            if (immediate) finish();
+            else hideTimer = window.setTimeout(finish, 130);
+        }
+
+        function findInteractive(node) {
+            var element = node && node.closest ? node.closest(selector) : null;
+            if (!element || element.closest('.neo-manel-tooltip')) return null;
+            if (element.matches('[disabled],[aria-disabled="true"]') && !element.hasAttribute('data-manel-tip')) return null;
+            if (document.querySelector('[data-manel-tour]:not([hidden])')) return null;
+            return element;
+        }
+
+        document.querySelectorAll(selector).forEach(prepare);
+        document.addEventListener('pointerover', function (event) {
+            if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+            var element = findInteractive(event.target);
+            if (!element || (event.relatedTarget && element.contains(event.relatedTarget))) return;
+            window.clearTimeout(hideTimer);
+            window.clearTimeout(showTimer);
+            showTimer = window.setTimeout(function () { show(element); }, 320);
+        });
+        document.addEventListener('pointerout', function (event) {
+            var element = findInteractive(event.target);
+            if (!element || (event.relatedTarget && element.contains(event.relatedTarget))) return;
+            hide(false);
+        });
+        document.addEventListener('focusin', function (event) {
+            var element = findInteractive(event.target);
+            if (!element) return;
+            window.clearTimeout(showTimer);
+            showTimer = window.setTimeout(function () { if (element.matches(':focus-visible')) show(element); }, 120);
+        });
+        document.addEventListener('focusout', function (event) {
+            if (current === findInteractive(event.target)) hide(false);
+        });
+        document.addEventListener('pointerdown', function () { hide(true); }, true);
+        document.addEventListener('keydown', function (event) { if (event.key === 'Escape') hide(true); });
+        window.addEventListener('scroll', function () { hide(true); }, { passive: true, capture: true });
+        window.addEventListener('resize', function () { if (current) positionTooltip(); }, { passive: true });
+    })();
+
     (function setupCompanionFace() {
         var face = document.querySelector('[data-neo-companion]');
         if (!face) return;
@@ -170,7 +492,10 @@
             neutral: neutralMouth || 'M 128 150 L 172 150',
             happy: 'M 128 147 Q 150 166 172 147',
             surprised: 'M 142 151 Q 150 140 158 151 Q 150 162 142 151',
-            sleeping: 'M 132 154 L 168 154'
+            sleeping: 'M 132 154 L 168 154',
+            talkOpen: 'M 135 149 Q 150 166 165 149 Q 150 181 135 149',
+            talkWide: 'M 126 146 Q 150 174 174 146',
+            talkSmall: 'M 137 151 Q 150 160 163 151'
         };
         var targetX = 0;
         var targetY = 0;
@@ -191,12 +516,15 @@
         var wakeTimer = null;
         var speakingTimer = null;
         var reactingTimer = null;
+        var tooltipSpeechTimer = null;
         var animationFrame = null;
+        var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
         var lastActivityAt = Date.now();
         var lastPointerAt = 0;
         var lastFrameAt = 0;
         var lastSleepScheduleAt = 0;
         var lastActivitySignalAt = 0;
+        var lastPointerSignalAt = 0;
         var faceRect = null;
         var sleepDelay = randomBetween(36000, 56000);
 
@@ -212,6 +540,25 @@
             if (mouth && mouthShapes[shape]) {
                 mouth.setAttribute('d', mouthShapes[shape]);
             }
+        }
+        function stopTooltipSpeech() {
+            if (tooltipSpeechTimer) window.clearInterval(tooltipSpeechTimer);
+            tooltipSpeechTimer = null;
+            face.classList.remove('is-tooltip-speaking');
+            setMouth('neutral');
+        }
+
+        function startTooltipSpeech() {
+            if (!mouth) return;
+            if (tooltipSpeechTimer) window.clearInterval(tooltipSpeechTimer);
+            face.classList.add('is-tooltip-speaking');
+            var shapes = ['talkOpen', 'talkSmall', 'talkWide', 'talkSmall'];
+            var index = 0;
+            setMouth(shapes[index]);
+            tooltipSpeechTimer = window.setInterval(function () {
+                index = (index + 1) % shapes.length;
+                setMouth(shapes[index]);
+            }, 130);
         }
 
         function clearStateClasses() {
@@ -236,6 +583,7 @@
             setMouth('neutral');
             state = 'neutral';
             expressionTimer = null;
+            startEyeAnimation();
         }
 
         function playExpression(nextState, duration) {
@@ -250,6 +598,7 @@
                 curiousY = randomBetween(-5, 5);
             }
             expressionTimer = window.setTimeout(finishExpression, duration);
+            startEyeAnimation();
             return true;
         }
 
@@ -261,7 +610,9 @@
                 face.classList.remove('is-blinking');
                 state = 'neutral';
                 expressionTimer = null;
+                startEyeAnimation();
             }, longBlink ? 260 : 130);
+            startEyeAnimation();
             return true;
         }
 
@@ -318,7 +669,9 @@
                 face.classList.add('is-sleeping');
                 state = 'sleeping';
                 expressionTimer = null;
+                startEyeAnimation();
             }, 1450);
+            startEyeAnimation();
         }
 
         function wakeFace() {
@@ -333,7 +686,9 @@
                 face.classList.remove('is-waking');
                 state = 'neutral';
                 wakeTimer = null;
+                startEyeAnimation();
             }, 620);
+            startEyeAnimation();
         }
 
         function registerActivity(event) {
@@ -374,14 +729,25 @@
                 if (state === 'happy') wantedY -= 1.7;
                 if (state === 'surprised') wantedY -= .8;
             } else {
-                var drift = timestamp / 1000;
-                wantedX = Math.sin(drift * .85) * 1.45 + Math.sin(drift * .37) * .55;
-                wantedY = Math.cos(drift * .58) * .85;
-                if (state === 'happy') wantedY -= 1.6;
+                wantedX = 0;
+                wantedY = state === 'happy' ? -1.6 : 0;
             }
 
             targetX = wantedX;
             targetY = wantedY;
+        }
+
+        function shouldKeepEyeAnimation() {
+            if (state !== 'neutral') return true;
+            if (face.classList.contains('is-study-talking') || face.classList.contains('is-thinking')) return true;
+            if (pointerActive && Date.now() - lastPointerAt < 1300) return true;
+            return Math.abs(targetX - currentX) > .04 || Math.abs(targetY - currentY) > .04 || Math.abs(velocityX) > .03 || Math.abs(velocityY) > .03;
+        }
+
+        function startEyeAnimation() {
+            if ((reducedMotion && reducedMotion.matches) || animationFrame || document.visibilityState === 'hidden') return;
+            lastFrameAt = 0;
+            animationFrame = window.requestAnimationFrame(animateEyes);
         }
 
         function animateEyes(timestamp) {
@@ -389,7 +755,7 @@
                 animationFrame = null;
                 return;
             }
-            if (lastFrameAt && timestamp - lastFrameAt < 32) {
+            if (lastFrameAt && timestamp - lastFrameAt < 48) {
                 animationFrame = window.requestAnimationFrame(animateEyes);
                 return;
             }
@@ -406,19 +772,27 @@
             currentY += velocityY * (delta / 16.67);
             face.style.setProperty('--eye-x', currentX.toFixed(2) + 'px');
             face.style.setProperty('--eye-y', currentY.toFixed(2) + 'px');
+            if (!shouldKeepEyeAnimation()) {
+                animationFrame = null;
+                lastFrameAt = 0;
+                return;
+            }
             animationFrame = window.requestAnimationFrame(animateEyes);
         }
 
         document.addEventListener('mousemove', function (event) {
+            if (event.timeStamp - lastPointerSignalAt < 120) return;
+            lastPointerSignalAt = event.timeStamp;
             pointerX = event.clientX;
             pointerY = event.clientY;
             pointerActive = true;
             lastPointerAt = Date.now();
-            if (event.timeStamp - lastActivitySignalAt > 250) {
+            startEyeAnimation();
+            if (event.timeStamp - lastActivitySignalAt > 400) {
                 lastActivitySignalAt = event.timeStamp;
                 registerActivity(event);
             }
-        });
+        }, { passive: true });
 
         document.addEventListener('mouseleave', function () {
             pointerActive = false;
@@ -437,7 +811,6 @@
         });
 
         face.addEventListener('click', function () {
-            document.dispatchEvent(new CustomEvent('neo:manel-toggle'));
             if (face.classList.contains('is-study-talking')) return;
             if (state === 'sleeping' || state === 'sleepy') {
                 wakeFace();
@@ -455,10 +828,12 @@
                 face.classList.remove('is-reacting');
                 state = 'neutral';
                 setMouth('neutral');
+                startEyeAnimation();
             }, 520);
             speakingTimer = window.setTimeout(function () {
                 face.classList.remove('is-speaking');
             }, 1400);
+            startEyeAnimation();
         });
 
         document.addEventListener('neo:face-arrived', function () {
@@ -469,10 +844,7 @@
             face.classList.add('is-reacting');
             if (mouth) mouth.setAttribute('d', 'M 128 150 Q 150 172 172 150');
             expressionTimer = window.setTimeout(finishExpression, 520);
-            if (!animationFrame) {
-                lastFrameAt = 0;
-                animationFrame = window.requestAnimationFrame(animateEyes);
-            }
+            startEyeAnimation();
         });
 
         document.addEventListener('neo:manel-face-state', function (event) {
@@ -486,8 +858,9 @@
                 lastActivityAt = Date.now();
                 clearStateClasses();
                 state = 'neutral';
+                startTooltipSpeech();
             }
-            if (wasTalking && next !== 'speaking') setMouth('neutral');
+            if (wasTalking && next !== 'speaking') stopTooltipSpeech();
             face.classList.toggle('is-thinking', next === 'thinking');
             face.classList.toggle('is-error', next === 'error');
             if (next === 'success') {
@@ -499,13 +872,13 @@
             if (next === 'error') {
                 playExpression('surprised', 720);
             }
+            if (next === 'speaking' || next === 'thinking') startEyeAnimation();
         });
 
         document.addEventListener('visibilitychange', function () {
             if (document.visibilityState !== 'hidden' && !animationFrame) {
                 refreshFaceRect();
-                lastFrameAt = 0;
-                animationFrame = window.requestAnimationFrame(animateEyes);
+                startEyeAnimation();
             }
         });
 
@@ -518,484 +891,15 @@
         scheduleMood();
         scheduleSleepCheck();
         refreshFaceRect();
-        animationFrame = window.requestAnimationFrame(animateEyes);
+        startEyeAnimation();
     })();
 
-    (function setupManelAssistant() {
-        var panel = document.querySelector('[data-manel-panel]');
-        var face = document.querySelector('[data-neo-companion]');
-        if (!panel || !face) return;
-        if (face.closest('[data-study-page]')) return;
-
-        var messagesEl = panel.querySelector('[data-manel-messages]');
-        var suggestionsEl = panel.querySelector('[data-manel-suggestions]');
-        var form = panel.querySelector('[data-manel-form]');
-        var input = panel.querySelector('[data-manel-input]');
-        var sendButton = panel.querySelector('[data-manel-send]');
-        var closeButton = panel.querySelector('[data-manel-close]');
-        var newButton = panel.querySelector('[data-manel-new]');
-        var csrfMeta = document.querySelector('meta[name="csrf-token"]');
-        var userId = panel.dataset.userId;
-        if (!/^[1-9]\d*$/.test(userId || '')) return;
-        // Legacy shared history has no reliable owner; never import it into an account.
-        var storageKey = 'neo_manel_thread_v1_user_' + userId;
-        var openedKey = 'neo_manel_opened_v1_user_' + userId;
-        var controller = null;
-        var typingTimer = null;
-        var typingCancelled = false;
-        var isBusy = false;
-        var messages = loadMessages();
-
-        function dispatchFaceState(state) {
-            document.dispatchEvent(new CustomEvent('neo:manel-face-state', { detail: { state: state } }));
-        }
-
-        function csrfToken() {
-            return csrfMeta ? csrfMeta.getAttribute('content') || '' : '';
-        }
-
-        function loadMessages() {
-            try {
-                var parsed = JSON.parse(localStorage.getItem(storageKey) || '[]');
-                return Array.isArray(parsed) ? parsed.filter(function (item) {
-                    return item && (item.role === 'user' || item.role === 'assistant') && typeof item.content === 'string';
-                }).slice(-40) : [];
-            } catch (e) {
-                return [];
-            }
-        }
-
-        function saveMessages() {
-            try {
-                localStorage.setItem(storageKey, JSON.stringify(messages.slice(-40)));
-            } catch (e) {}
-        }
-
-        function isOpen() {
-            return !panel.hidden && panel.classList.contains('is-open');
-        }
-
-        function openPanel() {
-            panel.hidden = false;
-            panel.setAttribute('aria-hidden', 'false');
-            face.setAttribute('aria-expanded', 'true');
-            window.requestAnimationFrame(function () {
-                panel.classList.add('is-open');
-                if (input) input.focus();
-            });
-            try {
-                localStorage.setItem(openedKey, '1');
-            } catch (e) {}
-            dispatchFaceState('listening');
-            render();
-        }
-
-        function closePanel() {
-            panel.classList.remove('is-open');
-            panel.setAttribute('aria-hidden', 'true');
-            face.setAttribute('aria-expanded', 'false');
-            window.setTimeout(function () {
-                if (!panel.classList.contains('is-open')) panel.hidden = true;
-            }, 180);
-            try {
-                localStorage.setItem(openedKey, '0');
-            } catch (e) {}
-        }
-
-        function togglePanel() {
-            if (isOpen()) {
-                closePanel();
-            } else {
-                openPanel();
-            }
-        }
-
-        function contextFromPage() {
-            var main = document.querySelector('main');
-            var title = document.querySelector('.page-title, .page-title-image, h1');
-            var lessonTitle = document.querySelector('.lesson-title-panel h1');
-            var subjectTitle = document.querySelector('.content-summary h1');
-            var questionTitle = document.querySelector('.question-card h2');
-            var params = new URLSearchParams(window.location.search);
-            var subjectLink = document.querySelector('a[href*="conteudos.php?materia_id="]');
-            var subjectId = params.get('materia_id') || '';
-            var path = window.location.pathname.split('/').pop() || 'index.php';
-            var text = '';
-
-            if (!subjectId && subjectLink) {
-                try {
-                    subjectId = new URL(subjectLink.getAttribute('href'), window.location.href).searchParams.get('materia_id') || '';
-                } catch (e) {}
-            }
-
-            if (document.querySelector('.reader article')) {
-                text = document.querySelector('.reader article').innerText || '';
-            } else if (main) {
-                text = main.innerText || '';
-            }
-
-            return {
-                page: path.replace('.php', ''),
-                title: title ? (title.getAttribute('alt') || title.textContent || '').trim() : document.title,
-                url: window.location.pathname + window.location.search,
-                subject: subjectTitle ? subjectTitle.textContent.trim() : '',
-                subjectId: subjectId,
-                bookTitle: lessonTitle ? lessonTitle.textContent.trim() : '',
-                bookId: params.get('conteudo_id') || '',
-                question: questionTitle ? questionTitle.textContent.trim() : '',
-                visibleText: text.replace(/\s+/g, ' ').trim().slice(0, 7000),
-                availableActions: availableActions(path, params)
-            };
-        }
-
-        function availableActions(path, params) {
-            var actions = ['navegar', 'conversar', 'resumir', 'explicar'];
-            if (params.get('conteudo_id')) actions.push('gerar_questoes');
-            if (params.get('materia_id') || document.querySelector('.content-summary h1')) {
-                actions.push('gerar_livros', 'pedir_conteudo');
-            }
-            if (path.indexOf('questoes.php') !== -1) actions.push('dar_dica', 'explicar_erro');
-            return actions;
-        }
-
-        function escapeHtml(text) {
-            return String(text).replace(/[&<>"']/g, function (char) {
-                return {
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#039;'
-                }[char];
-            });
-        }
-
-        function inlineMarkdown(text) {
-            var html = escapeHtml(text);
-            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-            html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-            html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-            html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-            return html;
-        }
-
-        function renderMarkdown(text) {
-            var source = String(text || '').replace(/\r\n/g, '\n');
-            var blocks = source.split(/(```[\s\S]*?```)/g);
-            var html = '';
-
-            blocks.forEach(function (block) {
-                if (!block) return;
-                if (block.indexOf('```') === 0) {
-                    var code = block.replace(/^```([a-z0-9_-]+)?\n?/i, '').replace(/```$/i, '');
-                    var langMatch = block.match(/^```([a-z0-9_-]+)/i);
-                    var lang = langMatch ? langMatch[1] : 'código';
-                    html += '<div class="manel-code"><span>' + escapeHtml(lang) + '</span><button type="button" data-copy-code>Copiar</button><pre><code>' + escapeHtml(code.trim()) + '</code></pre></div>';
-                    return;
-                }
-
-                var lines = block.split('\n');
-                var inList = false;
-                var inTable = false;
-                lines.forEach(function (line) {
-                    var trimmed = line.trim();
-                    if (trimmed === '') {
-                        if (inList) {
-                            html += '</ul>';
-                            inList = false;
-                        }
-                        if (inTable) {
-                            html += '</tbody></table>';
-                            inTable = false;
-                        }
-                        return;
-                    }
-
-                    if (/^\|.+\|$/.test(trimmed)) {
-                        if (!inTable) {
-                            if (inList) {
-                                html += '</ul>';
-                                inList = false;
-                            }
-                            html += '<table><tbody>';
-                            inTable = true;
-                        }
-                        if (/^\|\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|$/.test(trimmed)) return;
-                        html += '<tr>' + trimmed.slice(1, -1).split('|').map(function (cell) {
-                            return '<td>' + inlineMarkdown(cell.trim()) + '</td>';
-                        }).join('') + '</tr>';
-                        return;
-                    } else if (inTable) {
-                        html += '</tbody></table>';
-                        inTable = false;
-                    }
-
-                    if (/^#{1,3}\s+/.test(trimmed)) {
-                        if (inList) {
-                            html += '</ul>';
-                            inList = false;
-                        }
-                        html += '<h4>' + inlineMarkdown(trimmed.replace(/^#{1,3}\s+/, '')) + '</h4>';
-                        return;
-                    }
-
-                    if (/^[-*]\s+/.test(trimmed)) {
-                        if (!inList) {
-                            html += '<ul>';
-                            inList = true;
-                        }
-                        html += '<li>' + inlineMarkdown(trimmed.replace(/^[-*]\s+/, '')) + '</li>';
-                        return;
-                    }
-
-                    if (inList) {
-                        html += '</ul>';
-                        inList = false;
-                    }
-                    html += '<p>' + inlineMarkdown(trimmed) + '</p>';
-                });
-
-                if (inList) html += '</ul>';
-                if (inTable) html += '</tbody></table>';
-            });
-
-            return html;
-        }
-
-        function addCopyButtons(scope) {
-            scope.querySelectorAll('[data-copy-code]').forEach(function (button) {
-                button.addEventListener('click', function () {
-                    var code = button.parentElement.querySelector('code');
-                    if (!code) return;
-                    navigator.clipboard.writeText(code.textContent || '').then(function () {
-                        button.textContent = 'Copiado';
-                        window.setTimeout(function () { button.textContent = 'Copiar'; }, 1200);
-                    }).catch(function () {});
-                });
-            });
-        }
-
-        function appendMessage(role, content, pending) {
-            var item = document.createElement('article');
-            item.className = 'manel-message manel-message-' + role + (pending ? ' is-pending' : '');
-            var bubble = document.createElement('div');
-            bubble.className = 'manel-message-bubble';
-            bubble.innerHTML = pending ? '<span class="manel-typing"><i></i><i></i><i></i></span>' : renderMarkdown(content);
-            item.appendChild(bubble);
-            messagesEl.appendChild(item);
-            messagesEl.scrollTop = messagesEl.scrollHeight;
-            addCopyButtons(item);
-            return bubble;
-        }
-
-        function renderSuggestions(values) {
-            suggestionsEl.innerHTML = '';
-            panel.classList.remove('is-suggesting');
-            void panel.offsetWidth;
-            panel.classList.add('is-suggesting');
-            (values && values.length ? values : defaultSuggestions()).slice(0, 6).forEach(function (text, index) {
-                var button = document.createElement('button');
-                button.type = 'button';
-                button.textContent = text;
-                button.style.setProperty('--suggestion-index', index);
-                button.addEventListener('click', function () {
-                    input.value = text;
-                    autoResize();
-                    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-                });
-                suggestionsEl.appendChild(button);
-            });
-        }
-
-        function defaultSuggestions() {
-            var ctx = contextFromPage();
-            if (ctx.bookId) return ['Resumir esse livro', 'Criar questões', 'Flashcards desse livro', 'Revisão de 5 minutos', 'Explicar de forma simples', 'Me testar'];
-            if (ctx.subjectId) return ['Gerar mais livros', 'Pedir um conteúdo', 'Ordem de estudo', 'Revisão da matéria', 'O que estudar agora?', 'Voltar para matérias'];
-            return ['O que estudar agora?', 'Abrir último conteúdo', 'Abrir matérias', 'Ideias de revisão', 'Plano da semana', 'Me explica um tema'];
-        }
-
-        function render() {
-            messagesEl.innerHTML = '';
-            if (!messages.length) {
-                appendMessage('assistant', 'E aí. Sou o **Manel**. Posso te ajudar a estudar, encontrar conteúdos e fazer algumas coisas pelo site. Tenta pedir algo.');
-            } else {
-                messages.forEach(function (message) {
-                    appendMessage(message.role, message.content);
-                });
-            }
-            renderSuggestions(defaultSuggestions());
-        }
-
-        function setBusy(active) {
-            isBusy = active;
-            panel.classList.toggle('is-busy', active);
-            var tutorialButton = panel.querySelector('[data-manel-tour-start]');
-            if (tutorialButton) tutorialButton.disabled = active;
-            sendButton.setAttribute('aria-label', active ? 'Cancelar' : 'Enviar');
-            dispatchFaceState(active ? 'thinking' : 'neutral');
-        }
-
-        function typeAssistantText(bubble, text, done) {
-            var index = 0;
-            typingCancelled = false;
-            window.clearInterval(typingTimer);
-            typingTimer = window.setInterval(function () {
-                if (typingCancelled) {
-                    window.clearInterval(typingTimer);
-                    done(false);
-                    return;
-                }
-                index = Math.min(text.length, index + Math.max(2, Math.ceil(text.length / 140)));
-                bubble.innerHTML = renderMarkdown(text.slice(0, index));
-                messagesEl.scrollTop = messagesEl.scrollHeight;
-                if (index >= text.length) {
-                    window.clearInterval(typingTimer);
-                    addCopyButtons(bubble);
-                    done(true);
-                }
-            }, 18);
-        }
-
-        function executeTool(tool) {
-            if (!tool || !tool.name) return;
-            if (tool.name === 'navigate' && tool.url) {
-                window.setTimeout(function () { window.location.href = tool.url; }, 520);
-                return;
-            }
-            if (tool.name === 'browser_back') {
-                window.setTimeout(function () { window.history.back(); }, 420);
-                return;
-            }
-            if (tool.name === 'submit_post' && tool.url && tool.fields) {
-                window.setTimeout(function () {
-                    if (window.NeoAILoader) window.NeoAILoader.show(tool.message || 'Preparando');
-                    var postForm = document.createElement('form');
-                    postForm.method = 'post';
-                    postForm.action = tool.url;
-                    postForm.hidden = true;
-                    Object.keys(tool.fields).forEach(function (name) {
-                        var hidden = document.createElement('input');
-                        hidden.type = 'hidden';
-                        hidden.name = name;
-                        hidden.value = tool.fields[name];
-                        postForm.appendChild(hidden);
-                    });
-                    document.body.appendChild(postForm);
-                    postForm.submit();
-                }, 680);
-            }
-        }
-
-        function sendMessage(text) {
-            if (!text || isBusy) return;
-            messages.push({ role: 'user', content: text });
-            saveMessages();
-            appendMessage('user', text);
-            input.value = '';
-            autoResize();
-            renderSuggestions([]);
-            var pendingBubble = appendMessage('assistant', '', true);
-            setBusy(true);
-
-            controller = new AbortController();
-            fetch('manel.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': csrfToken()
-                },
-                credentials: 'same-origin',
-                signal: controller.signal,
-                body: JSON.stringify({
-                    csrf_token: csrfToken(),
-                    message: text,
-                    messages: messages.slice(-14),
-                    context: contextFromPage()
-                })
-            }).then(function (response) {
-                return response.json().catch(function () {
-                    throw new Error('invalid-json');
-                }).then(function (data) {
-                    if (!response.ok) throw data;
-                    return data;
-                });
-            }).then(function (data) {
-                var reply = data.reply || 'Pronto.';
-                pendingBubble.parentElement.classList.remove('is-pending');
-                typeAssistantText(pendingBubble, reply, function (completed) {
-                    setBusy(false);
-                    renderSuggestions(data.suggestions || defaultSuggestions());
-                    if (!completed) return;
-                    messages.push({ role: 'assistant', content: reply });
-                    saveMessages();
-                    dispatchFaceState(data.error ? 'error' : 'success');
-                    executeTool(data.tool);
-                });
-            }).catch(function (error) {
-                if (error && error.name === 'AbortError') {
-                    pendingBubble.innerHTML = renderMarkdown('Parei por aqui.');
-                } else {
-                    pendingBubble.innerHTML = renderMarkdown((error && error.reply) || 'Não consegui responder agora. Tenta novamente em alguns segundos.');
-                    dispatchFaceState('error');
-                }
-                pendingBubble.parentElement.classList.remove('is-pending');
-                setBusy(false);
-                renderSuggestions(defaultSuggestions());
-            });
-        }
-
-        function cancelCurrent() {
-            typingCancelled = true;
-            if (controller) controller.abort();
-            setBusy(false);
-        }
-
-        function autoResize() {
-            if (!input) return;
-            input.style.height = 'auto';
-            input.style.height = Math.min(input.scrollHeight, 150) + 'px';
-        }
-
-        document.addEventListener('neo:manel-toggle', togglePanel);
-        document.addEventListener('neo:manel-close', closePanel);
-        if (closeButton) closeButton.addEventListener('click', closePanel);
-        if (newButton) {
-            newButton.addEventListener('click', function () {
-                if (isBusy) cancelCurrent();
-                messages = [];
-                saveMessages();
-                render();
-                dispatchFaceState('success');
-            });
-        }
-        if (input) {
-            input.addEventListener('input', autoResize);
-            input.addEventListener('keydown', function (event) {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                    event.preventDefault();
-                    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-                }
-            });
-        }
-        if (form) {
-            form.addEventListener('submit', function (event) {
-                event.preventDefault();
-                if (isBusy) {
-                    cancelCurrent();
-                    return;
-                }
-                sendMessage((input.value || '').trim());
-            });
-        }
-
-        document.addEventListener('keydown', function (event) {
-            if (event.key === 'Escape' && isOpen()) closePanel();
-        });
-
-        render();
-        try {
-            if (localStorage.getItem(openedKey) === '1' && !document.body.classList.contains('neo-interface-locked')) openPanel();
-        } catch (e) {}
-    })();
 
 })();
+
+
+
+
+
+
+

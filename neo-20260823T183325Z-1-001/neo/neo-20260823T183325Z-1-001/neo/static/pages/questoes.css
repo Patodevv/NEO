@@ -63,7 +63,7 @@
 .facilitator-btn:hover .icon-hover-star,
 .facilitator-btn:focus-visible .icon-hover-star {
     opacity: 1;
-    animation: neoCornerStarSpin 1.45s cubic-bezier(.45,0,.2,1) infinite;
+    animation: neoCornerStarSpin .52s cubic-bezier(.22,1,.36,1) both;
 }
 
 .question-difficulty-card {
@@ -132,7 +132,7 @@
     border: 1px solid var(--border-soft);
     border-radius: clamp(14px, 2vw, 18px);
     padding: clamp(13px, 1.8vw, 16px) clamp(12px, 2vw, 18px);
-    background: rgba(9, 22, 50, .82);
+    background: var(--btn-bg);
     color: var(--text);
     display: grid;
     grid-template-columns: auto auto minmax(0, 1fr);
@@ -166,14 +166,14 @@
 .opcao-label:hover {
     border-color: var(--neo-blue);
     background: var(--neo-blue-hover);
-    box-shadow: 0 0 0 3px rgba(26, 46, 255, .18);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neo-blue) 18%, transparent);
     transform: translateY(-1px);
 }
 
 .opcao-label.certa {
     border-color: var(--neo-blue);
     background: var(--neo-blue-hover);
-    box-shadow: 0 0 0 3px rgba(26, 46, 255, .18);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neo-blue) 18%, transparent);
 }
 
 .opcao-label.certa .option-letter {
@@ -359,7 +359,7 @@
 .question-submit:hover .icon-hover-star,
 .question-submit:focus-visible .icon-hover-star {
     opacity: 1;
-    animation: neoCornerStarSpin 1.45s cubic-bezier(.45,0,.2,1) infinite;
+    animation: neoCornerStarSpin .52s cubic-bezier(.22,1,.36,1) both;
 }
 
 .result-panel {
@@ -461,7 +461,37 @@
 .result-retry-btn:hover .icon-hover-star,
 .result-retry-btn:focus-visible .icon-hover-star {
     opacity: 1;
-    animation: neoCornerStarSpin 1.45s cubic-bezier(.45,0,.2,1) infinite;
+    animation: neoCornerStarSpin .52s cubic-bezier(.22,1,.36,1) both;
+}
+
+/* A matéria controla a identidade visual da leitura e da prática. */
+.lesson-page.materia-theme :where(.lesson-icon-btn, .content-tab, .question-generate-card, .facilitator-btn, .question-submit, .result-retry-btn) {
+    border-color: var(--materia-cor, var(--neo-blue));
+}
+
+.lesson-page.materia-theme :where(.lesson-icon-btn, .content-tab, .question-generate-card, .facilitator-btn, .result-retry-btn) {
+    color: var(--materia-cor, var(--neo-blue));
+}
+
+.lesson-page.materia-theme :where(.lesson-icon-btn, .content-tab, .question-generate-card, .facilitator-btn, .question-submit, .result-retry-btn):hover,
+.lesson-page.materia-theme :where(.lesson-icon-btn, .content-tab, .question-generate-card, .facilitator-btn, .question-submit, .result-retry-btn):focus-visible {
+    background: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 22%, var(--btn-bg));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 20%, transparent);
+}
+
+.lesson-page.materia-theme .opcao-label input {
+    accent-color: var(--materia-cor, var(--neo-blue));
+}
+
+.lesson-page.materia-theme .option-letter,
+.lesson-page.materia-theme .facilitator-hint {
+    border-color: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 52%, transparent);
+    color: var(--materia-cor, var(--neo-blue));
+}
+
+.lesson-page.materia-theme .opcao-label:hover {
+    border-color: var(--materia-cor, var(--neo-blue));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 18%, transparent);
 }
 
 @media (max-width: 820px) {
@@ -566,4 +596,229 @@
     .opcao-label {
         padding: clamp(12px, 3.8vw, 14px);
     }
+}
+
+.lesson-page.materia-theme :where(.question-generate-card, .facilitator-btn, .question-submit, .result-retry-btn, .question-nav-button, .question-btn).neo-star-hover {
+    --hover-star-core: var(--materia-cor, var(--neo-blue));
+    --hover-star-shadow: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 44%, #030824);
+    --hover-star-center-stroke: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 55%, transparent);
+}
+
+/* NEO questions color-synced stars */
+.lesson-page.materia-theme :where(.question-generate-card, .facilitator-btn, .question-submit, .result-retry-btn, .lesson-icon-btn, .content-tab).neo-star-hover,
+.lesson-page.materia-theme .content-tab {
+    --button-accent: var(--materia-cor, var(--neo-blue));
+    --hover-star-core: var(--button-accent);
+    --hover-star-shadow: color-mix(in srgb, var(--button-accent) 44%, #030824);
+    --hover-star-center-stroke: color-mix(in srgb, var(--button-accent) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--button-accent) 55%, transparent);
+}
+.lesson-page.materia-theme :where(.question-generate-card, .facilitator-btn, .question-submit, .result-retry-btn, .lesson-icon-btn, .content-tab):hover,
+.lesson-page.materia-theme :where(.question-generate-card, .facilitator-btn, .question-submit, .result-retry-btn, .lesson-icon-btn, .content-tab):focus-visible {
+    color: var(--button-accent, var(--materia-cor, var(--neo-blue)));
+    border-color: var(--button-accent, var(--materia-cor, var(--neo-blue)));
+}
+
+/* NEO facilitator color sync */
+.lesson-page.materia-theme .facilitator-btn.neo-star-hover {
+    --button-accent: var(--materia-cor, var(--neo-blue));
+    --hover-star-core: var(--button-accent);
+    --hover-star-shadow: color-mix(in srgb, var(--button-accent) 44%, #030824);
+    --hover-star-center-stroke: color-mix(in srgb, var(--button-accent) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--button-accent) 55%, transparent);
+    border-color: var(--button-accent);
+    color: var(--button-accent);
+}
+.lesson-page.materia-theme .facilitator-btn.neo-star-hover:hover,
+.lesson-page.materia-theme .facilitator-btn.neo-star-hover:focus-visible {
+    color: var(--button-accent);
+    border-color: var(--button-accent);
+    background: color-mix(in srgb, var(--button-accent) 22%, var(--btn-bg));
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--button-accent) 22%, transparent);
+}
+.lesson-page.materia-theme .facilitator-btn.neo-star-hover:hover span,
+.lesson-page.materia-theme .facilitator-btn.neo-star-hover:focus-visible span {
+    color: var(--button-accent);
+}
+
+/* NEO answer submit keeps site blue */
+.lesson-page.materia-theme .question-submit.neo-star-hover {
+    --button-accent: var(--neo-blue);
+    --hover-star-core: var(--neo-blue);
+    --hover-star-shadow: color-mix(in srgb, var(--neo-blue) 42%, #020616);
+    --hover-star-center-stroke: color-mix(in srgb, var(--neo-blue) 58%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--neo-blue) 58%, transparent);
+    border-color: var(--neo-blue);
+    color: var(--btn-icon);
+}
+.lesson-page.materia-theme .question-submit.neo-star-hover:hover,
+.lesson-page.materia-theme .question-submit.neo-star-hover:focus-visible {
+    border-color: var(--neo-blue);
+    color: var(--btn-icon-hover);
+    background: var(--neo-blue-hover-strong);
+    box-shadow: 0 0 0 4px var(--neo-blue-glow);
+}
+.lesson-page.materia-theme .question-submit.neo-star-hover > .icon-hover-star {
+    --hover-star-core: var(--neo-blue) !important;
+    --hover-star-shadow: color-mix(in srgb, var(--neo-blue) 42%, #020616) !important;
+    --hover-star-center-stroke: color-mix(in srgb, var(--neo-blue) 58%, #ffffff) !important;
+    --hover-star-glow: color-mix(in srgb, var(--neo-blue) 58%, transparent) !important;
+}
+.lesson-page.materia-theme .question-submit.neo-star-hover > .icon-hover-star .icon-hover-star-shadow {
+    fill: color-mix(in srgb, var(--neo-blue) 42%, #020616) !important;
+    stroke: color-mix(in srgb, var(--neo-blue) 42%, #020616) !important;
+}
+.lesson-page.materia-theme .question-submit.neo-star-hover > .icon-hover-star .icon-hover-star-core {
+    fill: var(--neo-blue) !important;
+    stroke: #e9eeff !important;
+}
+.lesson-page.materia-theme .question-submit.neo-star-hover > .icon-hover-star .icon-hover-star-center {
+    fill: #ffffff !important;
+    stroke: color-mix(in srgb, var(--neo-blue) 58%, #ffffff) !important;
+}
+
+/* NEO: botões dos estudos internos seguem o tema do site e preservam ícones próprios. */
+.lesson-page.materia-theme :where(.question-generate-card, .facilitator-btn, .question-submit, .result-retry-btn, .lesson-icon-btn, .content-tab).neo-star-hover,
+.lesson-page.materia-theme .content-tab {
+    --button-accent: var(--neo-blue);
+    --hover-star-core: var(--neo-blue);
+    --hover-star-shadow: color-mix(in srgb, var(--neo-blue) 44%, #030824);
+    --hover-star-center-stroke: color-mix(in srgb, var(--neo-blue) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--neo-blue) 55%, transparent);
+    border-color: var(--neo-blue);
+    background: color-mix(in srgb, var(--neo-blue) 10%, var(--control-bg, var(--btn-bg)));
+    color: var(--btn-icon);
+}
+.lesson-page.materia-theme :where(.question-generate-card, .facilitator-btn, .question-submit, .result-retry-btn, .lesson-icon-btn, .content-tab).neo-star-hover:hover,
+.lesson-page.materia-theme :where(.question-generate-card, .facilitator-btn, .question-submit, .result-retry-btn, .lesson-icon-btn, .content-tab).neo-star-hover:focus-visible,
+.lesson-page.materia-theme .content-tab.active {
+    border-color: var(--neo-blue);
+    background: color-mix(in srgb, var(--neo-blue) 20%, var(--control-bg, var(--btn-bg)));
+    color: var(--btn-icon);
+    box-shadow: 0 0 0 4px var(--neo-blue-glow);
+}
+.lesson-page.materia-theme .lesson-icon-btn,
+.lesson-page.materia-theme .lesson-icon-btn:hover,
+.lesson-page.materia-theme .lesson-icon-btn:focus-visible {
+    color: var(--materia-cor, var(--btn-icon));
+}
+
+/* NEO theme sync: questões e revisão seguem o tema do site. */
+.question-card,
+.question-generate-card,
+.question-difficulty-card {
+    border-color: color-mix(in srgb, var(--neo-blue) 28%, var(--panel-border));
+    background:
+        radial-gradient(circle at 50% 0, color-mix(in srgb, var(--neo-blue) 18%, transparent), transparent 55%),
+        linear-gradient(145deg, color-mix(in srgb, var(--neo-blue) 30%, #151827), color-mix(in srgb, var(--neo-blue) 18%, #101423));
+}
+
+.opcao-label {
+    border-color: color-mix(in srgb, var(--neo-blue) 22%, var(--border-soft));
+    background:
+        linear-gradient(145deg, color-mix(in srgb, var(--neo-blue) 22%, #101423), color-mix(in srgb, var(--neo-blue) 14%, #0d1120));
+}
+
+.option-letter,
+.lesson-page.materia-theme .option-letter {
+    border-color: color-mix(in srgb, var(--neo-blue) 58%, transparent);
+    color: var(--neo-blue);
+}
+
+.opcao-label input,
+.lesson-page.materia-theme .opcao-label input {
+    accent-color: var(--neo-blue);
+}
+
+.opcao-label:hover,
+.lesson-page.materia-theme .opcao-label:hover {
+    border-color: var(--neo-blue);
+    background:
+        linear-gradient(145deg, color-mix(in srgb, var(--neo-blue) 32%, #101423), color-mix(in srgb, var(--neo-blue) 22%, #0d1120));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neo-blue) 18%, transparent);
+}
+
+.opcao-label.certa {
+    border-color: var(--neo-blue);
+    background:
+        linear-gradient(145deg, color-mix(in srgb, var(--neo-blue) 34%, #101423), color-mix(in srgb, var(--neo-blue) 24%, #0d1120));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neo-blue) 18%, transparent);
+}
+
+.opcao-label.certa .option-letter {
+    border-color: var(--neo-blue);
+    color: var(--neo-blue);
+}
+
+.feedback-ia,
+.facilitator-hint,
+.lesson-page.materia-theme .facilitator-hint {
+    border-color: color-mix(in srgb, var(--neo-blue) 42%, var(--panel-border));
+    background:
+        radial-gradient(circle at 0 0, color-mix(in srgb, var(--neo-blue) 22%, transparent), transparent 58%),
+        linear-gradient(145deg, color-mix(in srgb, var(--neo-blue) 28%, #111421), color-mix(in srgb, var(--neo-blue) 18%, #0c101d));
+}
+
+.feedback-correct {
+    border-color: color-mix(in srgb, var(--neo-blue) 62%, transparent);
+}
+
+.facilitator-hint span,
+.lesson-page.materia-theme .facilitator-hint {
+    color: var(--neo-blue);
+}
+
+.result-panel {
+    border: 1px solid color-mix(in srgb, var(--neo-blue) 34%, var(--panel-border));
+    background:
+        radial-gradient(circle at 0 0, color-mix(in srgb, var(--neo-blue) 20%, transparent), transparent 58%),
+        linear-gradient(145deg, color-mix(in srgb, var(--neo-blue) 30%, #151827), color-mix(in srgb, var(--neo-blue) 18%, #101423));
+    box-shadow: var(--panel-shadow);
+}
+
+.result-retry-btn {
+    background:
+        linear-gradient(145deg, color-mix(in srgb, var(--neo-blue) 22%, #101423), color-mix(in srgb, var(--neo-blue) 14%, #0d1120));
+}
+
+.opcao-label.errada,
+.lesson-page.materia-theme .opcao-label.errada {
+    border-color: var(--danger);
+    background:
+        linear-gradient(145deg, color-mix(in srgb, var(--danger) 30%, #211015), color-mix(in srgb, var(--danger) 18%, #1b0d12));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 18%, transparent);
+}
+
+.opcao-label.errada .option-letter,
+.lesson-page.materia-theme .opcao-label.errada .option-letter {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.opcao-label.certa,
+.lesson-page.materia-theme .opcao-label.certa {
+    border-color: var(--neo-blue);
+    background:
+        linear-gradient(145deg, color-mix(in srgb, var(--neo-blue) 34%, #101423), color-mix(in srgb, var(--neo-blue) 24%, #0d1120));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neo-blue) 18%, transparent);
+}
+
+.opcao-label.certa .option-letter,
+.lesson-page.materia-theme .opcao-label.certa .option-letter {
+    border-color: var(--neo-blue);
+    color: var(--neo-blue);
+}
+
+.feedback-wrong {
+    border-color: color-mix(in srgb, var(--danger) 58%, transparent);
+}
+
+.feedback-correct {
+    border-color: color-mix(in srgb, var(--neo-blue) 62%, transparent);
+}
+.lesson-page.materia-theme .question-submit.neo-star-hover:hover,
+.lesson-page.materia-theme .question-submit.neo-star-hover:focus-visible {
+    color: var(--btn-icon);
+    background: color-mix(in srgb, var(--neo-blue) 20%, var(--control-bg, var(--btn-bg)));
 }

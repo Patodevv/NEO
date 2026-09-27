@@ -49,7 +49,7 @@ require __DIR__ . '/includes/head.php';
                         <circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5V12l3.2 2"></path>
                     </svg>
                     <b>Nenhuma atividade registrada</b>
-                    <a href="materias.php" class="primary">Começar a estudar</a>
+                    <a href="materias.php" class="primary neo-star-hover" data-manel-tip="Abre suas matérias para começar uma atividade."><?= estrelaHoverNeo() ?><span>Começar a estudar</span></a>
                 </div>
             <?php endif; ?>
 
@@ -58,13 +58,9 @@ require __DIR__ . '/includes/head.php';
                 $pct = $h['total'] > 0 ? round(($h['acertos'] / $h['total']) * 100) : 0;
                 $dataHistorico = strtotime($h['data']);
                 ?>
-                <article class="history-row neo-star-hover">
-                    <span class="history-activity-icon" aria-hidden="true">
-                        <?= estrelaHoverNeo() ?>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M7 4h10a2 2 0 0 1 2 2v14H5V6a2 2 0 0 1 2-2Z"></path>
-                            <path d="m8 10 2 2 5-5"></path><path d="M8 16h8"></path>
-                        </svg>
+                <article class="history-row <?= classeTemaMateria((string)$h['materia_nome']) ?>">
+                    <span class="history-activity-icon <?= classeTemaMateria((string)$h['materia_nome']) ?>" aria-hidden="true">
+                        <?= iconeMateriaDashboard((string)$h['materia_nome']) ?>
                     </span>
 
                     <div class="history-row-copy">
@@ -87,7 +83,8 @@ require __DIR__ . '/includes/head.php';
                     </span>
 
                     <?php if (empty($h['conteudo_removido_em'])): ?>
-                        <a href="livro.php?conteudo_id=<?= (int)$h['conteudo_id'] ?>" class="neo-icon-button" aria-label="Rever <?= htmlspecialchars($h['conteudo_titulo']) ?>" title="Rever conteúdo">
+                        <a href="livro.php?conteudo_id=<?= (int)$h['conteudo_id'] ?>" class="neo-icon-button neo-star-hover" aria-label="Rever <?= htmlspecialchars($h['conteudo_titulo']) ?>" data-manel-tip="Abre novamente o livro <?= htmlspecialchars($h['conteudo_titulo'], ENT_QUOTES, 'UTF-8') ?>.">
+                            <?= estrelaHoverNeo() ?>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <path d="M5 12h14"></path><path d="m14 7 5 5-5 5"></path>
                             </svg>

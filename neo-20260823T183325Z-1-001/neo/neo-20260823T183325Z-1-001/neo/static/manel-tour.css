@@ -14,11 +14,11 @@ body.neo-face-docking .neo-companion-face {
 }
 
 .neo-face-flight .part {
-    fill: var(--neo-blue);
+    fill: var(--manel-color, var(--neo-transition-accent, var(--neo-blue)));
 }
 
 .neo-face-flight path {
-    stroke: var(--neo-blue);
+    stroke: var(--manel-color, var(--neo-transition-accent, var(--neo-blue)));
 }
 
 .manel-tour[hidden] {
@@ -79,7 +79,7 @@ body.neo-face-docking .neo-companion-face {
     padding: 20px;
     border: 1px solid var(--panel-border);
     border-radius: 24px;
-    background: #0c1b3b;
+    background: var(--bubble-bg-strong, var(--panel-bg));
     box-shadow: var(--panel-shadow);
 }
 
@@ -107,7 +107,7 @@ body.neo-face-docking .neo-companion-face {
     width: 40px;
     height: 40px;
     border-radius: 14px;
-    background: #0c1b3b;
+    background: var(--control-bg);
 }
 
 .manel-tour .manel-icon-btn:hover,

@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . '/ai.php';
+require_once __DIR__ . '/ai_safety.php';
+require_once __DIR__ . '/store.php';
 
 function manelNormalizar(string $texto): string
 {
@@ -20,6 +22,76 @@ function manelNormalizar(string $texto): string
 function manelTextoSeguro(string $texto, int $limite = 2000): string
 {
     return limitarEntradaPromptIA(strip_tags($texto), $limite);
+}
+
+function manelSkinAtiva(PDO $pdo, array $usuario): array
+{
+    try {
+        $skin = cosmeticosAtivosUsuario($pdo, $usuario)['skin_manel'] ?? null;
+        $dados = is_array($skin) ? ($skin['metadados'] ?? []) : [];
+        return is_array($dados) ? $dados : [];
+    } catch (Throwable) {
+        return [];
+    }
+}
+
+function manelNomeAtivo(array $skin): string
+{
+    $nome = trim((string)($skin['manel_name'] ?? 'Manel'));
+    return $nome !== '' ? mb_substr($nome, 0, 24) : 'Manel';
+}
+
+function manelPersonalidadeAtiva(array $skin): string
+{
+    return normalizarCodigoProduto((string)($skin['manel_personality'] ?? ''));
+}
+
+function manelInstrucaoPersonalidade(string $personalidade): string
+{
+    return match ($personalidade) {
+        'calma', 'paciente' => 'Personalidade equipada: fale com calma, paciência e acolhimento, sem pressa e com explicações suaves.',
+        'fria_brincalhona' => 'Personalidade equipada: seja mais fria, direta e brincalhona, com humor seco leve, sem ser rude.',
+        'nerd', 'nerdzao' => 'Personalidade equipada: seja bem nerd, curioso e explicativo, usando analogias técnicas simples quando ajudarem.',
+        'rockeiro' => 'Personalidade equipada: seja descolado, rockeiro, brincalhão e malandro de forma leve, mantendo clareza.',
+        'agressivo_alegre' => 'Personalidade equipada: seja energético, direto, alegre e intenso, incentivando o aluno com força sem ofender.',
+        default => 'Personalidade equipada: mantenha o estilo padrão do Manel, leve, claro e acolhedor.',
+    };
+}
+
+function manelRespostaCurtaComPersonalidade(string $texto, string $personalidade): string
+{
+    $texto = trim($texto);
+    if ($texto === '') {
+        return $texto;
+    }
+    return match ($personalidade) {
+        'fria_brincalhona' => str_replace(
+            ['Me manda uma mensagem que eu te ajudo.', 'Abrindo agora.', 'Vou voltar uma tela.'],
+            ['Manda o que você quer resolver, eu vejo o que dá pra fazer.', 'Tá, já vou abrir.', 'Vou voltar uma tela.'],
+            $texto
+        ),
+        'nerd', 'nerdzao' => str_replace(
+            ['Me manda uma mensagem que eu te ajudo.', 'Abrindo agora.', 'Vou voltar uma tela.'],
+            ['Me manda a dúvida e eu organizo a explicação do jeito mais claro possível.', 'Vou abrir isso agora.', 'Vou voltar uma tela.'],
+            $texto
+        ),
+        'rockeiro' => str_replace(
+            ['Me manda uma mensagem que eu te ajudo.', 'Abrindo agora.', 'Vou voltar uma tela.'],
+            ['Manda aí o que você quer fazer que eu te acompanho.', 'Já vou abrir pra você.', 'Vou voltar uma tela.'],
+            $texto
+        ),
+        'agressivo_alegre' => str_replace(
+            ['Me manda uma mensagem que eu te ajudo.', 'Abrindo agora.', 'Vou voltar uma tela.'],
+            ['Manda a missão que eu te ajudo a resolver.', 'Já vou abrir, vamos nessa.', 'Vou voltar uma tela.'],
+            $texto
+        ),
+        'calma', 'paciente' => str_replace(
+            ['Me manda uma mensagem que eu te ajudo.', 'Abrindo agora.', 'Vou voltar uma tela.'],
+            ['Pode me mandar sua dúvida, eu te ajudo passo a passo.', 'Vou abrir isso para você.', 'Vou voltar uma tela.'],
+            $texto
+        ),
+        default => $texto,
+    };
 }
 
 function manelContextoPagina(array $contexto): array
@@ -47,6 +119,8 @@ function manelContextoPagina(array $contexto): array
 
 function manelMateriasUsuario(PDO $pdo, int $userId): array
 {
+    $usuario = adaptiveUser($pdo, $userId);
+    $perfil = adaptiveProfile($usuario);
     $stmt = $pdo->prepare("
         SELECT m.id, m.nome, COUNT(c.id) AS total
         FROM materias m
@@ -55,11 +129,15 @@ function manelMateriasUsuario(PDO $pdo, int $userId): array
         ORDER BY m.nome
     ");
     $stmt->execute([$userId]);
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    return array_values(array_filter(
+        $stmt->fetchAll(PDO::FETCH_ASSOC),
+        static fn(array $materia): bool => adaptiveSubjectAllowed($perfil, (string)$materia['nome'])
+    ));
 }
 
 function manelUltimoConteudo(PDO $pdo, int $userId): ?array
 {
+    $perfil = adaptiveProfile(adaptiveUser($pdo, $userId));
     $stmt = $pdo->prepare("
         SELECT c.id, c.titulo, m.nome AS materia_nome
         FROM ultimos_acessos ua
@@ -67,11 +145,13 @@ function manelUltimoConteudo(PDO $pdo, int $userId): ?array
         JOIN materias m ON m.id = c.materia_id
         WHERE ua.user_id = ?
         ORDER BY ua.acessado_em DESC
-        LIMIT 1
+        LIMIT 30
     ");
     $stmt->execute([$userId]);
-    $linha = $stmt->fetch(PDO::FETCH_ASSOC);
-    return $linha ?: null;
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $linha) {
+        if (adaptiveSubjectAllowed($perfil, (string)$linha['materia_nome'])) return $linha;
+    }
+    return null;
 }
 
 function manelTemaSolicitado(string $mensagem): string
@@ -101,6 +181,7 @@ function manelDetectarAcao(PDO $pdo, array $usuario, string $mensagem, array $co
         'estudos.php' => ['estudos externos', 'estudo externo'],
         'index.php' => ['inicio', 'dashboard', 'home'],
         'materias.php' => ['materias', 'materia', 'areas'],
+        'aprendizado.php' => ['meu aprendizado', 'aprendizado', 'rotina', 'progresso'],
         'historico.php' => ['historico', 'atividades'],
         'loja.php' => ['loja'],
         'perfil.php' => ['perfil'],
@@ -205,8 +286,21 @@ function manelDetectarAcao(PDO $pdo, array $usuario, string $mensagem, array $co
     }
 
     if (preg_match('/\b(apaga|apagar|exclui|excluir|deleta|deletar|resetar|limpa|limpar)\b/u', $normalizada)) {
+        $pagina = manelNormalizar((string)($contexto['page'] ?? ''));
+        if ($pagina === 'materias') {
+            return [
+                'reply' => 'Ativei a seleção. Escolha as matérias e pressione a lixeira novamente para eu mostrar a confirmação.',
+                'tool' => ['name' => 'ui_action', 'action' => 'open_subject_delete'],
+            ];
+        }
+        if ($pagina === 'conteudos' && $materiaId > 0) {
+            return [
+                'reply' => 'Ativei a seleção de livros. Escolha o que deseja apagar e pressione a lixeira novamente para confirmar.',
+                'tool' => ['name' => 'ui_action', 'action' => 'open_content_delete'],
+            ];
+        }
         return [
-            'reply' => 'Para ações de apagar ou resetar, eu ainda vou te pedir confirmação antes de mexer em qualquer dado. Nessa primeira versão do Manel, faça essa ação pelo botão da própria página.',
+            'reply' => 'Eu só abro exclusões nas páginas de Matérias ou de livros, onde o NEO consegue mostrar exatamente o que será removido antes da confirmação.',
             'tool' => null,
         ];
     }
@@ -274,16 +368,34 @@ function manelResponder(PDO $pdo, array $usuario, string $mensagem, array $histo
 {
     $mensagem = manelTextoSeguro($mensagem, 1200);
     $contexto = manelContextoPagina($contexto);
+    $skinManel = manelSkinAtiva($pdo, $usuario);
+    $nomeManel = manelNomeAtivo($skinManel);
+    $nomeManelPrompt = manelTextoSeguro($nomeManel, 40);
+    $personalidadeManel = manelPersonalidadeAtiva($skinManel);
+    $instrucaoPersonalidade = manelInstrucaoPersonalidade($personalidadeManel);
 
     if ($mensagem === '') {
         return [
-            'reply' => 'Me manda uma mensagem que eu te ajudo.',
+            'reply' => manelRespostaCurtaComPersonalidade('Me manda uma mensagem que eu te ajudo.', $personalidadeManel),
             'suggestions' => manelSugestoes($contexto),
+        ];
+    }
+
+    try {
+        validarPedidoIASeguro($mensagem, 'resposta de IA');
+    } catch (DomainException $e) {
+        return [
+            'reply' => $e->getMessage(),
+            'suggestions' => manelSugestoes($contexto),
+            'blocked' => true,
         ];
     }
 
     $acao = manelDetectarAcao($pdo, $usuario, $mensagem, $contexto);
     if ($acao !== null) {
+        if (isset($acao['reply'])) {
+            $acao['reply'] = manelRespostaCurtaComPersonalidade((string)$acao['reply'], $personalidadeManel);
+        }
         $acao['suggestions'] = manelSugestoes($contexto);
         return $acao;
     }
@@ -309,7 +421,7 @@ function manelResponder(PDO $pdo, array $usuario, string $mensagem, array $histo
             'role' => 'system',
             'content' =>
                 diretrizesIA() .
-                "\n\nVocê é o MANEL, assistente pessoal integrado ao NeoMind. Responda em português do Brasil, com calma, objetividade e personalidade leve. " .
+                "\n\nVocê é {$nomeManelPrompt}, assistente pessoal integrado ao NeoMind. Responda em português do Brasil. {$instrucaoPersonalidade} " .
                 "Ajude em estudos, resumos, explicações, revisão, planejamento e criatividade. " .
                 "Use o contexto da tela quando o usuário disser 'isso', 'esse livro', 'essa questão' ou pedidos parecidos. " .
                 "Quando responder, ofereça próximos passos curtos e úteis quando isso combinar com o pedido. " .

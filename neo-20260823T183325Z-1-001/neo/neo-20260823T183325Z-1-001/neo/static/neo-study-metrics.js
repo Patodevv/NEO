@@ -29,11 +29,26 @@
         observer.observe(card);
         card.addEventListener('focusin', () => { account(); active = id; });
     });
-    document.addEventListener('visibilitychange', () => { tick = performance.now(); });
-    const timer = window.setInterval(account, 1000);
+    let timer = null;
+    function startTimer() {
+        if (timer !== null || document.hidden) return;
+        tick = performance.now();
+        timer = window.setInterval(account, 1000);
+    }
+    function stopTimer() {
+        if (timer === null) return;
+        account();
+        window.clearInterval(timer);
+        timer = null;
+    }
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) stopTimer();
+        else startTimer();
+    });
+    startTimer();
     form.addEventListener('submit', () => {
         account();
         inputs.forEach((input, id) => { input.value = elapsed.has(id) ? (elapsed.get(id) / 1000).toFixed(1) : ''; });
     });
-    window.addEventListener('pagehide', () => { clearInterval(timer); observer.disconnect(); }, { once: true });
+    window.addEventListener('pagehide', () => { stopTimer(); observer.disconnect(); }, { once: true });
 })();

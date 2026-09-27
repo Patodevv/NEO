@@ -1,10 +1,13 @@
 Options -Indexes
 
-<FilesMatch "^(\.env|\.env\..*|teste_db\.php)$">
-    Require all denied
-</FilesMatch>
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Esta árvore é uma cópia antiga que ainda aponta para o mesmo banco.
+    # Encaminhe qualquer URL legada para a aplicação atual para que cadastro,
+    # segurança, exclusões e regras de progressão sejam sempre as mesmas.
+    RewriteRule ^(.*)$ /neo/neo-20260823T183325Z-1-001/neo/neo-20260823T183325Z-1-001/neo/$1 [R=302,L,NE]
+</IfModule>
 
-<IfModule mod_headers.c>
-    Header always set X-Content-Type-Options "nosniff"
-    Header always set X-Frame-Options "SAMEORIGIN"
+<IfModule !mod_rewrite.c>
+    Require all denied
 </IfModule>

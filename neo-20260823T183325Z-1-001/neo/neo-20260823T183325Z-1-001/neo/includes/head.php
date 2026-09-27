@@ -4,6 +4,7 @@ $assetVersion = function (string $arquivo): string {
     return is_file($caminho) ? (string)filemtime($caminho) : (string)time();
 };
 require_once __DIR__ . '/materia_icon.php';
+require_once __DIR__ . '/../services/store.php';
 $mostrarRostoNeo = !empty($mostrarDespertarDashboard);
 $introDisponivel = !empty($usaSidebar) || !empty($forcarIntroNeo);
 $mostrarIntroNeo = $introDisponivel && ($mostrarRostoNeo || !empty($_SESSION['neo_intro_login']) || !empty($forcarIntroNeo));
@@ -25,9 +26,30 @@ if ($mostrarRostoNeo) {
     $classesBody[] = 'neo-interface-locked';
     $classesBody[] = 'neo-face-docking';
 }
+$cosmeticosUsuario = ['vars' => [], 'items' => []];
+if (isset($pdo, $usuario) && is_array($usuario) && !empty($usuario['id']) && function_exists('estiloCosmeticosUsuario')) {
+    try {
+        $cosmeticosUsuario = estiloCosmeticosUsuario($pdo, $usuario);
+    } catch (Throwable) {
+        $cosmeticosUsuario = ['vars' => [], 'items' => []];
+    }
+}
+$estiloBodyCosmetico = estiloInlineVars($cosmeticosUsuario['vars'] ?? []);
+$skinManelAtiva = $cosmeticosUsuario['items']['skin_manel'] ?? null;
+$nomeManelAtivo = 'Manel';
+$varianteManelAtiva = '';
+$personalidadeManelAtiva = '';
+if (is_array($skinManelAtiva)) {
+    $dadosSkinManel = $skinManelAtiva['metadados'] ?? [];
+    if (!empty($dadosSkinManel['manel_name'])) {
+        $nomeManelAtivo = mb_substr(trim((string)$dadosSkinManel['manel_name']), 0, 24);
+    }
+    $varianteManelAtiva = varianteManelClasse($dadosSkinManel['manel_variant'] ?? '');
+    $personalidadeManelAtiva = normalizarCodigoProduto((string)($dadosSkinManel['manel_personality'] ?? ''));
+}
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR"<?= $estiloBodyCosmetico !== '' ? ' style="' . htmlspecialchars($estiloBodyCosmetico, ENT_QUOTES, 'UTF-8') . '"' : '' ?>>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -46,6 +68,7 @@ if ($mostrarRostoNeo) {
     <?php foreach (($cssPaginas ?? []) as $cssPagina): ?>
         <link rel="stylesheet" href="static/pages/<?= htmlspecialchars($cssPagina) ?>.css?v=<?= $assetVersion('static/pages/' . $cssPagina . '.css') ?>">
     <?php endforeach; ?>
+    <link rel="stylesheet" href="static/profile-frames.css?v=<?= $assetVersion('static/profile-frames.css') ?>">
 
     <?php if (!empty($usaSidebar)): ?>
     <script>
@@ -65,7 +88,7 @@ if ($mostrarRostoNeo) {
     </script>
     <?php endif; ?>
 </head>
-<body<?= $classesBody ? ' class="' . htmlspecialchars(implode(' ', array_unique($classesBody))) . '"' : '' ?>>
+<body<?= $classesBody ? ' class="' . htmlspecialchars(implode(' ', array_unique($classesBody))) . '"' : '' ?><?= $estiloBodyCosmetico !== '' ? ' style="' . htmlspecialchars($estiloBodyCosmetico, ENT_QUOTES, 'UTF-8') . '"' : '' ?>>
 <?php if ($introDisponivel): ?>
 <div class="neo-intro-overlay" data-login-intro="<?= $mostrarIntroNeo ? '1' : '0' ?>" data-parent-curtain="<?= $introCadastroNeo ? '1' : '0' ?>" aria-hidden="true">
     <?php if ($introCadastroNeo): ?><span class="neo-intro-curtain neo-intro-curtain-top"></span><span class="neo-intro-curtain neo-intro-curtain-bottom"></span><?php endif; ?>
@@ -135,57 +158,7 @@ if ($mostrarRostoNeo) {
 <script src="static/neo-ui.js?v=<?= $assetVersion('static/neo-ui.js') ?>" defer></script>
 <?php if (!empty($usaSidebar)): ?>
 <?php if (empty($rostoNoPainelEstudo)) require __DIR__ . '/companion_face.php'; ?>
-<aside class="manel-panel" data-manel-panel data-user-id="<?= (int)($usuario['id'] ?? 0) ?>" aria-hidden="true" hidden>
-    <header class="manel-header">
-        <div class="manel-title">
-            <span class="manel-mini-face" aria-hidden="true">
-                <svg viewBox="0 0 300 220" focusable="false">
-                    <rect class="manel-mini-eye" x="95" y="70" width="30" height="60" rx="15" ry="15"></rect>
-                    <rect class="manel-mini-eye" x="175" y="70" width="30" height="60" rx="15" ry="15"></rect>
-                    <path class="manel-mini-mouth" d="M 128 150 L 172 150"></path>
-                </svg>
-            </span>
-            <strong>Manel</strong>
-        </div>
-        <div class="manel-actions">
-            <button type="button" class="manel-icon-btn neo-star-hover" data-manel-tour-start title="Ver tutorial" aria-label="Ver tutorial">
-                <?= estrelaHoverNeo() ?>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="9"></circle>
-                    <path d="M9.5 9a2.5 2.5 0 0 1 5 .5c0 1.5-2.5 2-2.5 3.5M12 16h.01"></path>
-                </svg>
-            </button>
-            <button type="button" class="manel-icon-btn neo-star-hover" data-manel-new title="Nova conversa" aria-label="Nova conversa">
-                <?= estrelaHoverNeo() ?>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M12 5v14"></path>
-                    <path d="M5 12h14"></path>
-                </svg>
-            </button>
-            <button type="button" class="manel-icon-btn neo-star-hover" data-manel-close title="Fechar" aria-label="Fechar Manel">
-                <?= estrelaHoverNeo() ?>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
-                    <path d="M6 6l12 12M18 6 6 18"></path>
-                </svg>
-            </button>
-        </div>
-    </header>
-    <div class="manel-messages" data-manel-messages></div>
-    <div class="manel-suggestions" data-manel-suggestions></div>
-    <form class="manel-form" data-manel-form>
-        <textarea data-manel-input rows="1" maxlength="2000" placeholder="Fale com o Manel"></textarea>
-        <button type="submit" class="manel-send neo-star-hover" data-manel-send aria-label="Enviar">
-            <?= estrelaHoverNeo() ?>
-            <svg class="manel-send-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M5 12h13"></path>
-                <path d="M13 6l6 6-6 6"></path>
-            </svg>
-            <svg class="manel-stop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="7" y="7" width="10" height="10" rx="2"></rect>
-            </svg>
-        </button>
-    </form>
-</aside>
 <?php require __DIR__ . '/manel_tour.php'; ?>
 <script src="static/neo-welcome.js?v=<?= $assetVersion('static/neo-welcome.js') ?>" data-neo-welcome data-user-id="<?= (int)($usuario['id'] ?? 0) ?>" data-first-access="<?= $mostrarRostoNeo ? '1' : '0' ?>" defer></script>
 <?php endif; ?>
+

@@ -1,0 +1,142 @@
+/* Molduras de perfil: a foto fica no vão interno, centralizada sob a arte. */
+.store-avatar-demo.has-frame-art,
+.inventory-avatar-demo.has-frame-art,
+.profile-avatar-ring.has-frame-art,
+.topbar .profile.has-frame-art {
+    --frame-art-size: 120%;
+    --frame-photo-size: 56%;
+    --frame-photo-left: 50%;
+    --frame-photo-top: 50%;
+    position: relative;
+    overflow: visible;
+    isolation: isolate;
+}
+
+.store-avatar-demo.has-frame-art .avatar-photo,
+.store-avatar-demo.has-frame-art > span,
+.inventory-avatar-demo.has-frame-art .avatar-photo,
+.inventory-avatar-demo.has-frame-art > span,
+.profile-avatar-ring.has-frame-art .profile-avatar,
+.topbar .profile.has-frame-art .topbar-profile-photo {
+    position: absolute;
+    left: var(--frame-photo-left) !important;
+    top: var(--frame-photo-top) !important;
+    width: var(--frame-photo-size) !important;
+    height: var(--frame-photo-size) !important;
+    aspect-ratio: 1;
+    overflow: hidden !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    clip-path: circle(50% at 50% 50%);
+    transform: translate(-50%, -50%) !important;
+    z-index: 1;
+}
+
+.store-avatar-demo.has-frame-art .avatar-photo,
+.inventory-avatar-demo.has-frame-art .avatar-photo,
+.profile-avatar-ring.has-frame-art .profile-avatar img,
+.topbar .profile.has-frame-art .topbar-profile-photo img {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+    object-fit: cover;
+    object-position: center;
+}
+
+.store-avatar-demo.has-frame-art > .profile-frame-art,
+.inventory-avatar-demo.has-frame-art > .profile-frame-art,
+.profile-avatar-ring > .profile-frame-art,
+.topbar .profile.has-frame-art > .profile-frame-art {
+    position: absolute;
+    left: 50% !important;
+    top: 50% !important;
+    width: var(--frame-art-size) !important;
+    height: var(--frame-art-size) !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: contain;
+    object-position: center;
+    pointer-events: none;
+    transform: translate(-50%, -50%) !important;
+    z-index: 2;
+}
+
+/* Círculo interno medido em cada imagem. A margem evita que a foto invada o aro. */
+.store-preview.moldura_gato_neon .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_gato_neon .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_gato_neon .profile-avatar-ring,
+.topbar .profile.frame-moldura_gato_neon,
+.store-preview.anel_ouro .store-avatar-demo.has-frame-art,
+.inventory-preview.anel_ouro .inventory-avatar-demo.has-frame-art,
+.profile-summary.anel_ouro .profile-avatar-ring,
+.topbar .profile.frame-anel_ouro { --frame-photo-size: 60%; --frame-photo-left: 50.2%; --frame-photo-top: 50.2%; }
+
+.store-preview.moldura_sapo_pop .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_sapo_pop .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_sapo_pop .profile-avatar-ring,
+.topbar .profile.frame-moldura_sapo_pop { --frame-photo-size: 64%; --frame-photo-left: 50%; --frame-photo-top: 50.2%; }
+
+.store-preview.moldura_asas_celestes .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_asas_celestes .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_asas_celestes .profile-avatar-ring,
+.topbar .profile.frame-moldura_asas_celestes { --frame-photo-size: 57%; --frame-photo-left: 50.2%; --frame-photo-top: 50.2%; }
+
+.store-preview.moldura_raposa_fogo .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_raposa_fogo .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_raposa_fogo .profile-avatar-ring,
+.topbar .profile.frame-moldura_raposa_fogo { --frame-photo-size: 63%; --frame-photo-left: 50.2%; --frame-photo-top: 50%; }
+
+.store-preview.moldura_coroa_real .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_coroa_real .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_coroa_real .profile-avatar-ring,
+.topbar .profile.frame-moldura_coroa_real { --frame-photo-size: 38%; --frame-photo-left: 53.4%; --frame-photo-top: 56%; }
+
+.store-preview.moldura_mago_estelar .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_mago_estelar .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_mago_estelar .profile-avatar-ring,
+.topbar .profile.frame-moldura_mago_estelar { --frame-photo-size: 34%; --frame-photo-left: 50.9%; --frame-photo-top: 50.9%; }
+
+.store-preview.moldura_cristal_azul .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_cristal_azul .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_cristal_azul .profile-avatar-ring,
+.topbar .profile.frame-moldura_cristal_azul { --frame-photo-size: 32%; --frame-photo-left: 41.6%; --frame-photo-top: 53.6%; }
+
+.store-preview.moldura_chama_rubi .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_chama_rubi .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_chama_rubi .profile-avatar-ring,
+.topbar .profile.frame-moldura_chama_rubi { --frame-photo-size: 32%; --frame-photo-left: 43.4%; --frame-photo-top: 44.4%; }
+
+.store-preview.moldura_concha_oceano .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_concha_oceano .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_concha_oceano .profile-avatar-ring,
+.topbar .profile.frame-moldura_concha_oceano { --frame-photo-size: 25%; --frame-photo-left: 44.4%; --frame-photo-top: 58.8%; }
+
+.store-preview.moldura_circuito_ciano .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_circuito_ciano .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_circuito_ciano .profile-avatar-ring,
+.topbar .profile.frame-moldura_circuito_ciano { --frame-photo-size: 60%; --frame-photo-left: 50.2%; --frame-photo-top: 50%; }
+
+.store-preview.moldura_lua_sonho .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_lua_sonho .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_lua_sonho .profile-avatar-ring,
+.topbar .profile.frame-moldura_lua_sonho { --frame-photo-size: 67%; --frame-photo-left: 50.2%; --frame-photo-top: 50.2%; }
+
+.store-preview.moldura_musica_neon .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_musica_neon .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_musica_neon .profile-avatar-ring,
+.topbar .profile.frame-moldura_musica_neon { --frame-photo-size: 72%; --frame-photo-left: 50.2%; --frame-photo-top: 50%; }
+
+.store-preview.moldura_dragao_rubi .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_dragao_rubi .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_dragao_rubi .profile-avatar-ring,
+.topbar .profile.frame-moldura_dragao_rubi { --frame-photo-size: 61%; --frame-photo-left: 50.2%; --frame-photo-top: 50.2%; }
+
+.store-preview.moldura_trevo_verde .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_trevo_verde .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_trevo_verde .profile-avatar-ring,
+.topbar .profile.frame-moldura_trevo_verde { --frame-photo-size: 34%; --frame-photo-left: 47.2%; --frame-photo-top: 52.6%; }
+
+.store-preview.moldura_gema_real .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_gema_real .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_gema_real .profile-avatar-ring,
+.topbar .profile.frame-moldura_gema_real { --frame-photo-size: 32%; --frame-photo-left: 45.1%; --frame-photo-top: 54.5%; }

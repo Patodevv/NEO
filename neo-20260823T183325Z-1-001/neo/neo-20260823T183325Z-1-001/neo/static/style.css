@@ -11,11 +11,13 @@ body.neo-learning-focus .profile-wallet { display:none; }
 
 :root {
     --neo-blue: #1a2eff;
-    --neo-blue-glow: rgba(26, 46, 255, 0.4);
-    --neo-blue-hover: rgba(26, 46, 255, 0.28);
-    --neo-blue-hover-strong: rgba(26, 46, 255, 0.36);
+    --neo-blue-glow: color-mix(in srgb, var(--neo-blue) 40%, transparent);
+    --neo-blue-hover: color-mix(in srgb, var(--neo-blue) 28%, transparent);
+    --neo-blue-hover-strong: color-mix(in srgb, var(--neo-blue) 36%, transparent);
+    --neo-accent-soft: color-mix(in srgb, var(--neo-blue) 16%, transparent);
+    --neo-accent-ring: color-mix(in srgb, var(--neo-blue) 34%, transparent);
     --btn-bg: rgba(9, 22, 50, 0.82);
-    --btn-icon: #1a2eff;
+    --btn-icon: var(--neo-blue);
     --btn-icon-hover: #ffffff;
     --page-bg: #071126;
     --surface: #13294f;
@@ -27,35 +29,119 @@ body.neo-learning-focus .profile-wallet { display:none; }
     --panel-radius: 18px;
     --panel-shadow: 0 0 20px rgba(0, 0, 0, .16);
     --control-bg: rgba(8, 21, 49, .84);
+    --bubble-bg: color-mix(in srgb, var(--control-bg) 92%, #000 8%);
+    --bubble-bg-strong: color-mix(in srgb, var(--panel-bg) 96%, #000 4%);
+    --neo-chrome-bg: color-mix(in srgb, var(--page-bg) 88%, #000 12%);
+    --neo-chrome-border: color-mix(in srgb, var(--neo-blue) 22%, transparent);
+    --scrollbar-track: color-mix(in srgb, var(--panel-bg) 92%, #000 8%);
+    --scrollbar-thumb: color-mix(in srgb, var(--neo-blue) 82%, #ffffff 18%);
+    --hover-star-core: var(--neo-blue);
+    --hover-star-shadow: color-mix(in srgb, var(--neo-blue) 44%, #030824);
+    --hover-star-outline: color-mix(in srgb, var(--neo-blue) 12%, #ffffff);
+    --hover-star-center-stroke: color-mix(in srgb, var(--neo-blue) 58%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--neo-blue) 58%, transparent);
+    --neo-star-bright: color-mix(in srgb, var(--neo-blue) 32%, #ffffff);
+    --neo-transition-accent: var(--neo-blue);
+    --neo-transition-accent-soft: color-mix(in srgb, var(--neo-transition-accent) 16%, transparent);
+    --neo-transition-accent-glow: color-mix(in srgb, var(--neo-transition-accent) 58%, transparent);
+    --neo-transition-accent-light: color-mix(in srgb, var(--neo-transition-accent) 42%, #ffffff);
+    --neo-transition-accent-dark: color-mix(in srgb, var(--neo-transition-accent) 48%, #030824);
     --text: #f5f5f5;
     --muted: #9a9a9a;
     --muted-strong: #b7b7b7;
     --danger: #e5484d;
+    --neo-theme-image-filter: none;
+    --neo-theme-image-tint: transparent;
+    --neo-theme-image-tint-opacity: 0;
+    --manel-color: var(--neo-blue);
+    --manel-glow: color-mix(in srgb, var(--neo-blue) 42%, transparent);
+    --profile-name-color: #ffffff;
+    --profile-accent: var(--neo-blue);
+    --profile-accent-2: var(--neo-blue);
 }
 
 /* A mesma identidade visual acompanha cada matéria em todas as telas. */
 .materia-theme--matematica { --materia-cor: #58a6ff; }
+.materia-theme--geometria { --materia-cor: #4fa4ff; }
+.materia-theme--estatistica { --materia-cor: #47b7e8; }
 .materia-theme--linguagens { --materia-cor: #ff7a90; }
+.materia-theme--literatura { --materia-cor: #d98cff; }
+.materia-theme--idiomas { --materia-cor: #ff75a4; }
+.materia-theme--comunicacao { --materia-cor: #ff9b6a; }
 .materia-theme--redacao { --materia-cor: #ff8a65; }
 .materia-theme--fisica { --materia-cor: #9b8cff; }
+.materia-theme--eletricidade { --materia-cor: #b47cff; }
+.materia-theme--eletronica { --materia-cor: #748fff; }
 .materia-theme--quimica { --materia-cor: #ef72d6; }
 .materia-theme--biologia { --materia-cor: #59d17d; }
+.materia-theme--ambiente { --materia-cor: #46d39a; }
+.materia-theme--agricultura { --materia-cor: #9dcc52; }
+.materia-theme--clima { --materia-cor: #59bdea; }
+.materia-theme--geologia { --materia-cor: #d69b5f; }
 .materia-theme--historia { --materia-cor: #f0a34a; }
 .materia-theme--geografia { --materia-cor: #39c6b4; }
 .materia-theme--codigo { --materia-cor: #35c5f0; }
+.materia-theme--inteligencia-artificial { --materia-cor: #8e8cff; }
+.materia-theme--seguranca-digital { --materia-cor: #4d9cff; }
+.materia-theme--redes { --materia-cor: #42cfca; }
+.materia-theme--dados { --materia-cor: #43bee8; }
+.materia-theme--robotica { --materia-cor: #ff8c66; }
+.materia-theme--hardware { --materia-cor: #7195ff; }
 .materia-theme--musica,
 .materia-theme--guitarra,
 .materia-theme--piano,
-.materia-theme--bateria { --materia-cor: #ffc857; }
+.materia-theme--bateria,
+.materia-theme--violino,
+.materia-theme--canto,
+.materia-theme--sopro { --materia-cor: #ffc857; }
 .materia-theme--saude { --materia-cor: #ff6677; }
+.materia-theme--medicina { --materia-cor: #ff6677; }
+.materia-theme--farmacia { --materia-cor: #ef78b8; }
+.materia-theme--nutricao { --materia-cor: #8dd34f; }
+.materia-theme--psicologia { --materia-cor: #bd83f5; }
+.materia-theme--odontologia { --materia-cor: #64d2d5; }
+.materia-theme--veterinaria { --materia-cor: #62cf81; }
 .materia-theme--direito { --materia-cor: #d9b36c; }
 .materia-theme--negocios { --materia-cor: #44d1a6; }
+.materia-theme--contabilidade { --materia-cor: #62c99a; }
+.materia-theme--economia { --materia-cor: #d6b64f; }
+.materia-theme--marketing { --materia-cor: #ff746d; }
+.materia-theme--gestao { --materia-cor: #48c6ae; }
+.materia-theme--empreendedorismo { --materia-cor: #ff9960; }
+.materia-theme--logistica { --materia-cor: #5ea7e8; }
 .materia-theme--arte { --materia-cor: #f58bd2; }
+.materia-theme--fotografia { --materia-cor: #de8fff; }
+.materia-theme--cinema { --materia-cor: #ff7f9c; }
+.materia-theme--teatro { --materia-cor: #e89a69; }
+.materia-theme--danca { --materia-cor: #f47dc4; }
+.materia-theme--moda { --materia-cor: #ff8fc9; }
+.materia-theme--beleza { --materia-cor: #ff80b7; }
+.materia-theme--animacao { --materia-cor: #ed79d9; }
+.materia-theme--design { --materia-cor: #c884ff; }
 .materia-theme--engenharia { --materia-cor: #ff9f43; }
+.materia-theme--automotiva { --materia-cor: #ff8b4d; }
+.materia-theme--aviacao { --materia-cor: #66b5ff; }
+.materia-theme--engenharia-civil { --materia-cor: #e5a95d; }
+.materia-theme--arquitetura { --materia-cor: #e7b66c; }
+.materia-theme--oficios { --materia-cor: #df9f57; }
+.materia-theme--nautica { --materia-cor: #4eb8dc; }
 .materia-theme--astronomia { --materia-cor: #798bff; }
 .materia-theme--esporte { --materia-cor: #a3e635; }
+.materia-theme--futebol { --materia-cor: #86df45; }
+.materia-theme--basquete { --materia-cor: #ff944d; }
+.materia-theme--natacao { --materia-cor: #45c5ed; }
+.materia-theme--academia { --materia-cor: #d5e64e; }
+.materia-theme--jogos { --materia-cor: #9a82ff; }
+.materia-theme--xadrez { --materia-cor: #d3aa72; }
 .materia-theme--culinaria { --materia-cor: #ff934f; }
+.materia-theme--confeitaria { --materia-cor: #ff8fb5; }
 .materia-theme--ideias { --materia-cor: #b58cff; }
+.materia-theme--educacao { --materia-cor: #6ba8ff; }
+.materia-theme--sociologia { --materia-cor: #b08fe5; }
+.materia-theme--religiao { --materia-cor: #d5ad72; }
+.materia-theme--politica { --materia-cor: #d9a85f; }
+.materia-theme--seguranca-publica { --materia-cor: #6a9be8; }
+.materia-theme--turismo { --materia-cor: #45cbbd; }
 .materia-theme--geral { --materia-cor: #7e9bff; }
 
 .materia-icon {
@@ -65,29 +151,76 @@ body.neo-learning-focus .profile-wallet { display:none; }
 
 html {
     min-height: 100%;
+    background: var(--page-bg);
 }
 
 body {
+    position: relative;
+    isolation: isolate;
     min-height: 100vh;
-    background-color: var(--page-bg);
-    background-image:
-        linear-gradient(rgba(3, 8, 23, .16), rgba(3, 8, 23, .34)),
-        url('images/neo-global-bg-v2.webp');
-    background-position: center center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
+    overflow-x: hidden;
+    background: var(--page-bg);
     color: var(--text);
     font-family: Arial, Helvetica, sans-serif;
     line-height: 1.4;
 }
 
-@media (max-width: 760px) {
-    body {
-        background-position: center top;
-        background-size: auto 100dvh;
-        background-attachment: scroll;
+
+/* NEO performance: render large repeated blocks only near the viewport. */
+@supports (content-visibility: auto) {
+    .card,
+    .neo-panel,
+    .inventory-item,
+    .learning-section,
+    .learning-session,
+    .learning-recent-exams > a,
+    .history-row,
+    .question-card,
+    .book-section,
+    .content-card {
+        content-visibility: auto;
+        contain-intrinsic-size: auto 360px;
     }
+
+    .store-offer-card,
+    .learning-overview,
+    .topbar,
+    .sidebar {
+        content-visibility: visible;
+    }
+}
+
+.page-title-image,
+.sidebar .logo img {
+    filter: var(--neo-theme-image-filter);
+}
+
+.store-heading,
+.dash-panel.personal-study-panel,
+.shop-panel {
+    position: relative;
+    isolation: isolate;
+}
+
+.store-heading::after,
+.dash-panel.personal-study-panel::after,
+.shop-panel::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    background: var(--neo-theme-image-tint);
+    mix-blend-mode: color;
+    opacity: var(--neo-theme-image-tint-opacity);
+    pointer-events: none;
+}
+
+.store-heading > *,
+.dash-panel.personal-study-panel > *,
+.shop-panel > * {
+    position: relative;
+    z-index: 1;
 }
 
 a {
@@ -106,7 +239,7 @@ textarea {
 
 * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(26, 46, 255, .7) rgba(12, 28, 61, .9);
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
 *::-webkit-scrollbar {
@@ -115,13 +248,13 @@ textarea {
 }
 
 *::-webkit-scrollbar-track {
-    background: rgba(12, 28, 61, .9);
+    background: var(--scrollbar-track);
 }
 
 *::-webkit-scrollbar-thumb {
-    border: 3px solid rgba(12, 28, 61, .9);
+    border: 3px solid var(--scrollbar-track);
     border-radius: 999px;
-    background: #1a2eff;
+    background: var(--scrollbar-thumb);
 }
 
 button {
@@ -265,8 +398,8 @@ body.neo-interface-locked .sidebar-toggle {
     padding: 32px;
     border: 1px solid var(--panel-border);
     border-radius: 26px;
-    background: #0c1b3b;
-    box-shadow: var(--panel-shadow), 0 0 0 4px rgba(26, 46, 255, .12);
+    background: var(--bubble-bg-strong);
+    box-shadow: var(--panel-shadow), 0 0 0 4px color-mix(in srgb, var(--neo-transition-accent) 12%, transparent);
     text-align: center;
 }
 
@@ -281,6 +414,10 @@ body.neo-interface-locked .sidebar-toggle {
 }
 
 .neo-ai-loader-comet {
+    --hover-star-core: var(--neo-transition-accent);
+    --hover-star-shadow: var(--neo-transition-accent-dark);
+    --hover-star-center-stroke: var(--neo-transition-accent-light);
+    --hover-star-glow: var(--neo-transition-accent-glow);
     position: relative;
     width: 146px;
     height: 78px;
@@ -295,7 +432,7 @@ body.neo-interface-locked .sidebar-toggle {
     width: 92px;
     height: 7px;
     border-radius: 999px;
-    background: #1a2eff;
+    background: var(--neo-transition-accent);
     transform-origin: right center;
     animation: neoAiTrail .5s ease-in-out infinite alternate;
 }
@@ -304,7 +441,7 @@ body.neo-interface-locked .sidebar-toggle {
     top: 24px;
     width: 70px;
     height: 5px;
-    background: #3950ff;
+    background: color-mix(in srgb, var(--neo-transition-accent) 76%, #ffffff);
     animation-delay: -.18s;
 }
 
@@ -312,7 +449,7 @@ body.neo-interface-locked .sidebar-toggle {
     top: 49px;
     width: 62px;
     height: 5px;
-    background: #071bbd;
+    background: color-mix(in srgb, var(--neo-transition-accent) 68%, #030824);
     animation-delay: -.32s;
 }
 
@@ -323,27 +460,27 @@ body.neo-interface-locked .sidebar-toggle {
     width: 62px;
     height: 62px;
     overflow: visible;
-    filter: drop-shadow(0 0 8px rgba(26, 46, 255, .58));
+    filter: drop-shadow(0 0 8px var(--hover-star-glow));
     animation: neoAiStarSpin 1.15s linear infinite;
 }
 
 .neo-ai-star-shadow {
-    fill: #06116e;
-    stroke: #06116e;
+    fill: var(--hover-star-shadow);
+    stroke: var(--hover-star-shadow);
     stroke-width: 12;
     stroke-linejoin: round;
 }
 
 .neo-ai-star-core {
-    fill: #1230ff;
-    stroke: #e9eeff;
+    fill: var(--hover-star-core);
+    stroke: color-mix(in srgb, var(--neo-transition-accent) 20%, #ffffff);
     stroke-width: 9;
     stroke-linejoin: round;
 }
 
 .neo-ai-star-center {
     fill: #fff;
-    stroke: #8da2ff;
+    stroke: var(--hover-star-center-stroke);
     stroke-width: 6;
     stroke-linejoin: round;
 }
@@ -468,9 +605,11 @@ body.neo-interface-locked .sidebar-toggle {
 .ghost,
 .back,
 .save-btn {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 8px;
     min-height: clamp(38px, 5vw, 44px);
     border-radius: clamp(12px, 2.2vw, 14px);
     text-decoration: none;
@@ -508,11 +647,14 @@ body.neo-interface-locked .sidebar-toggle {
 }
 
 .ghost:hover,
-.back:hover {
+.ghost:focus-visible,
+.back:hover,
+.back:focus-visible {
     color: var(--btn-icon-hover);
     border-color: var(--neo-blue);
     background: var(--neo-blue-hover);
     box-shadow: 0 0 0 4px var(--neo-blue-glow);
+    outline: none;
     transform: translateY(-1px);
 }
 
@@ -593,7 +735,7 @@ body.neo-interface-locked .sidebar-toggle {
     padding: 12px 14px;
     border: 1px solid var(--border-soft);
     border-radius: 14px;
-    background: rgba(12, 28, 61, .9);
+    background: var(--bubble-bg-strong);
     color: var(--text);
     resize: vertical;
     transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
@@ -604,7 +746,7 @@ body.neo-interface-locked .sidebar-toggle {
 .settings-form textarea:focus,
 .settings-form select:focus {
     border-color: var(--neo-blue);
-    box-shadow: 0 0 0 4px rgba(26, 46, 255, .16);
+    box-shadow: 0 0 0 4px var(--neo-accent-soft);
     outline: none;
 }
 
@@ -612,9 +754,13 @@ body.neo-interface-locked .sidebar-toggle {
     --neo-progress-comet-width: 126px;
     --neo-progress-star-size: 32px;
     --neo-progress-trail-height: 4px;
+    --neo-progress-color: var(--materia-cor, var(--neo-blue));
+    --neo-progress-color-dark: color-mix(in srgb, var(--neo-progress-color) 44%, #030824);
+    --neo-progress-color-mid: color-mix(in srgb, var(--neo-progress-color) 74%, #8ea0ff);
+    --neo-progress-color-soft: color-mix(in srgb, var(--neo-progress-color) 46%, transparent);
     position: relative;
     overflow: hidden;
-    border: 1px solid var(--panel-border);
+    border: 1px solid color-mix(in srgb, var(--neo-progress-color) 22%, var(--panel-border));
     border-radius: 999px;
     background: var(--control-bg);
 }
@@ -625,8 +771,8 @@ body.neo-interface-locked .sidebar-toggle {
     min-width: 28px;
     height: 100%;
     border-radius: 999px;
-    background: #1230ff;
-    box-shadow: 0 0 10px rgba(18, 48, 255, .38);
+    background: var(--neo-progress-color);
+    box-shadow: 0 0 10px var(--neo-progress-color-soft);
     transition: width .4s ease;
 }
 
@@ -647,10 +793,11 @@ body.neo-interface-locked .sidebar-toggle {
     top: 50%;
     height: var(--neo-progress-trail-height);
     border-radius: 999px;
-    background: #071bbd;
-    box-shadow: 0 0 7px rgba(7, 27, 189, .45);
+    background: var(--neo-progress-color-dark);
+    box-shadow: 0 0 7px var(--neo-progress-color-soft);
     transform: translateY(-50%);
     animation: neoProgressTrail 1.15s ease-in-out infinite alternate;
+    animation-play-state: paused;
 }
 
 .neo-progress-trail::before,
@@ -661,19 +808,21 @@ body.neo-interface-locked .sidebar-toggle {
     width: 68%;
     height: 100%;
     border-radius: inherit;
-    background: #1230ff;
+    background: var(--neo-progress-color);
 }
 
 .neo-progress-trail::before {
     top: calc(var(--neo-progress-trail-height) * -1.7);
     transform: skewX(-28deg);
     animation: neoProgressTrailUpper .9s ease-in-out infinite alternate;
+    animation-play-state: paused;
 }
 
 .neo-progress-trail::after {
     top: calc(var(--neo-progress-trail-height) * 1.7);
     transform: skewX(28deg);
     animation: neoProgressTrailLower 1s ease-in-out infinite alternate;
+    animation-play-state: paused;
 }
 
 .neo-progress-trail-2 {
@@ -681,7 +830,7 @@ body.neo-interface-locked .sidebar-toggle {
     right: calc(var(--neo-progress-star-size) * 1.1);
     top: 39%;
     height: max(3px, calc(var(--neo-progress-trail-height) - 1px));
-    background: #2f56ff;
+    background: var(--neo-progress-color-mid);
     box-shadow: none;
     animation-delay: -.45s;
 }
@@ -698,20 +847,31 @@ body.neo-interface-locked .sidebar-toggle {
     width: var(--neo-progress-star-size);
     height: var(--neo-progress-star-size);
     overflow: visible;
-    filter: drop-shadow(0 0 9px rgba(18, 48, 255, .62));
+    filter: drop-shadow(0 0 9px var(--neo-progress-color-soft));
     animation: neoProgressStarSpin 7.5s linear infinite;
 }
 
+.neo-progress-track:hover .neo-progress-trail,
+.neo-progress-track:hover .neo-progress-trail::before,
+.neo-progress-track:hover .neo-progress-trail::after,
+.neo-progress-track:hover .neo-progress-star,
+.level-row:focus-within .neo-progress-trail,
+.level-row:focus-within .neo-progress-trail::before,
+.level-row:focus-within .neo-progress-trail::after,
+.level-row:focus-within .neo-progress-star {
+    animation-play-state: running;
+}
+
 .neo-progress-star-shadow {
-    fill: #06116e;
-    stroke: #06116e;
+    fill: var(--neo-progress-color-dark);
+    stroke: var(--neo-progress-color-dark);
     stroke-width: 7;
     stroke-linejoin: round;
     stroke-linecap: round;
 }
 
 .neo-progress-star-core {
-    fill: #1230ff;
+    fill: var(--neo-progress-color);
     stroke: #e9eeff;
     stroke-width: 6;
     stroke-linejoin: round;
@@ -720,7 +880,7 @@ body.neo-interface-locked .sidebar-toggle {
 
 .neo-progress-star-center {
     fill: #fff;
-    stroke: #8da2ff;
+    stroke: color-mix(in srgb, var(--neo-progress-color) 52%, #ffffff);
     stroke-width: 4;
     stroke-linejoin: round;
     stroke-linecap: round;
@@ -800,7 +960,7 @@ body.neo-interface-locked .sidebar-toggle {
     border: 0;
     border-radius: 28px;
     background: var(--panel-bg);
-    color: var(--btn-icon);
+    color: var(--materia-cor, var(--btn-icon));
     box-shadow: var(--panel-shadow);
     text-decoration: none;
     isolation: isolate;
@@ -810,8 +970,8 @@ body.neo-interface-locked .sidebar-toggle {
 .lesson-icon-btn:hover,
 .lesson-icon-btn:focus-visible {
     color: var(--btn-icon-hover);
-    background: var(--neo-blue-hover);
-    box-shadow: var(--panel-shadow), 0 0 0 4px var(--neo-blue-glow);
+    background: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 22%, var(--panel-bg));
+    box-shadow: var(--panel-shadow), 0 0 0 4px color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 22%, transparent);
     outline: none;
     transform: translateY(-2px);
 }
@@ -848,10 +1008,10 @@ body.neo-interface-locked .sidebar-toggle {
     display: grid;
     place-items: center;
     padding: 0;
-    border: 1px solid var(--neo-blue);
+    border: 1px solid var(--materia-cor, var(--neo-blue));
     border-radius: 18px;
     background: var(--btn-bg);
-    color: var(--btn-icon);
+    color: var(--materia-cor, var(--btn-icon));
     text-decoration: none;
     cursor: pointer;
     isolation: isolate;
@@ -869,19 +1029,19 @@ body.neo-interface-locked .sidebar-toggle {
     }
 }
 
-.content-tab:hover,
-.content-tab:focus-visible {
+.content-tab:not(.locked):not([aria-disabled="true"]):hover,
+.content-tab:not(.locked):not([aria-disabled="true"]):focus-visible {
     color: var(--btn-icon-hover);
-    background: var(--neo-blue-hover-strong);
-    box-shadow: 0 0 0 4px var(--neo-blue-glow);
+    background: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 28%, var(--btn-bg));
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 24%, transparent);
     outline: none;
     transform: translateY(-2px) scale(1.04);
 }
 
 .content-tab.active {
     background: var(--btn-bg);
-    color: var(--btn-icon);
-    box-shadow: 0 0 0 3px var(--neo-blue-glow), 0 5px 12px rgba(26, 46, 255, .28);
+    color: var(--materia-cor, var(--btn-icon));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 28%, transparent), 0 5px 12px color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 24%, transparent);
 }
 
 .content-tab.active::after {
@@ -892,30 +1052,31 @@ body.neo-interface-locked .sidebar-toggle {
     width: 16px;
     height: 2.5px;
     border-radius: 4px;
-    background: var(--neo-blue);
+    background: var(--materia-cor, var(--neo-blue));
     transform: translateX(-50%);
 }
 
 .content-tab.locked {
-    color: var(--btn-icon);
+    color: var(--materia-cor, var(--btn-icon));
     background: var(--btn-bg);
     cursor: not-allowed;
+    opacity: .58;
 }
 
 .content-tab.locked:hover,
 .content-tab.locked:focus-visible {
-    color: var(--btn-icon-hover);
-    background: var(--neo-blue-hover-strong);
-    box-shadow: 0 0 0 4px var(--neo-blue-glow);
+    color: var(--materia-cor, var(--btn-icon));
+    background: var(--btn-bg);
+    box-shadow: none;
     outline: none;
-    transform: translateY(-2px) scale(1.04);
+    transform: none;
 }
 
 .content-tab.locked:hover .content-tab-lock,
 .content-tab.locked:focus-visible .content-tab-lock {
-    border-color: #fff;
+    border-color: var(--materia-cor, var(--neo-blue));
     color: #fff;
-    background: rgba(26, 46, 255, .7);
+    background: var(--panel-bg);
 }
 
 .content-tab-symbol {
@@ -926,8 +1087,8 @@ body.neo-interface-locked .sidebar-toggle {
     transition: color .18s ease, transform .18s ease;
 }
 
-.content-tab:hover .content-tab-symbol,
-.content-tab:focus-visible .content-tab-symbol {
+.content-tab:not(.locked):not([aria-disabled="true"]):hover .content-tab-symbol,
+.content-tab:not(.locked):not([aria-disabled="true"]):focus-visible .content-tab-symbol {
     color: var(--btn-icon-hover);
     transform: scale(1.12);
 }
@@ -941,11 +1102,11 @@ body.neo-interface-locked .sidebar-toggle {
     height: 22px;
     display: grid;
     place-items: center;
-    border: 1px solid var(--neo-blue);
+    border: 1px solid var(--materia-cor, var(--neo-blue));
     border-radius: 8px;
     background: var(--panel-bg);
     color: #fff;
-    box-shadow: 0 0 0 3px rgba(26, 46, 255, .22);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 20%, transparent);
 }
 
 .content-tab-lock svg {
@@ -953,13 +1114,38 @@ body.neo-interface-locked .sidebar-toggle {
     height: 13px;
 }
 
+
+.materia-theme .neo-star-hover,
+.materia-theme .content-tab,
+.materia-theme .lesson-icon-btn,
+.materia-theme .recent-item,
+.materia-theme .primary,
+.materia-theme .ghost,
+.materia-theme .save-btn,
+.materia-theme .back {
+    --hover-star-core: var(--materia-cor, var(--neo-blue));
+    --hover-star-shadow: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 44%, #030824);
+    --hover-star-center-stroke: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 55%, transparent);
+}
+
+.neo-star-hover[style*="--materia-cor"],
+.neo-star-hover[style*="--subject-color"],
+.neo-star-hover[style*="--mission-color"],
+.neo-star-hover[style*="--folder-color"],
+.neo-star-hover[style*="--session-color"] {
+    --hover-star-core: var(--materia-cor, var(--subject-color, var(--mission-color, var(--folder-color, var(--session-color, var(--neo-blue))))));
+    --hover-star-shadow: color-mix(in srgb, var(--hover-star-core) 44%, #030824);
+    --hover-star-center-stroke: color-mix(in srgb, var(--hover-star-core) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--hover-star-core) 55%, transparent);
+}
 .icon-hover-star {
-    position: absolute;
-    left: -15px;
-    top: -15px;
-    z-index: 5;
-    width: var(--icon-star-size, 38px);
-    height: var(--icon-star-size, 38px);
+    position: absolute !important;
+    left: calc(var(--icon-star-size, 38px) * -.42);
+    top: calc(var(--icon-star-size, 38px) * -.42);
+    z-index: 30;
+    width: var(--icon-star-size, 38px) !important;
+    height: var(--icon-star-size, 38px) !important;
     opacity: 0;
     pointer-events: none;
     transform-origin: 50% 50%;
@@ -967,16 +1153,31 @@ body.neo-interface-locked .sidebar-toggle {
     filter: drop-shadow(0 0 8px var(--hover-star-glow, rgba(18, 48, 255, .58)));
 }
 
+.neo-star-hover,
+.content-tab,
+.recent-item {
+    position: relative;
+    overflow: visible !important;
+}
+
+.neo-star-hover > .icon-hover-star,
+.content-tab > .icon-hover-star,
+.recent-item > .icon-hover-star {
+    left: var(--corner-star-left, calc(var(--icon-star-size, 38px) * -.42));
+    right: auto;
+    top: var(--corner-star-top, calc(var(--icon-star-size, 38px) * -.42));
+}
+
 .icon-hover-star-shadow {
-    fill: var(--hover-star-shadow, #06116e);
-    stroke: var(--hover-star-shadow, #06116e);
+    fill: var(--hover-star-shadow, color-mix(in srgb, var(--neo-blue) 42%, #020616));
+    stroke: var(--hover-star-shadow, color-mix(in srgb, var(--neo-blue) 42%, #020616));
     stroke-width: 10;
     stroke-linejoin: round;
     stroke-linecap: round;
 }
 
 .icon-hover-star-core {
-    fill: var(--hover-star-core, #1230ff);
+    fill: var(--hover-star-core, var(--neo-blue));
     stroke: var(--hover-star-outline, #e9eeff);
     stroke-width: 7;
     stroke-linejoin: round;
@@ -985,23 +1186,32 @@ body.neo-interface-locked .sidebar-toggle {
 
 .icon-hover-star-center {
     fill: var(--hover-star-center, #ffffff);
-    stroke: var(--hover-star-center-stroke, #8da2ff);
+    stroke: var(--hover-star-center-stroke, color-mix(in srgb, var(--neo-blue) 58%, #ffffff));
     stroke-width: 5;
     stroke-linejoin: round;
     stroke-linecap: round;
 }
 
 .recent-item:hover .icon-hover-star,
-.subject:hover .icon-hover-star,
-.content-tab:hover .icon-hover-star,
-.content-tab:focus-visible .icon-hover-star,
-.lesson-icon-btn:hover .icon-hover-star,
-.lesson-icon-btn:focus-visible .icon-hover-star,
-.neo-star-hover:hover .icon-hover-star,
-.neo-star-hover:focus-visible .icon-hover-star,
-.neo-star-hover:focus-within .icon-hover-star {
+.subject:not(:disabled):not([aria-disabled="true"]):hover > .icon-hover-star,
+.content-tab:not(.locked):not([aria-disabled="true"]):hover > .icon-hover-star,
+.content-tab:not(.locked):not([aria-disabled="true"]):focus-visible > .icon-hover-star,
+.lesson-icon-btn:not(:disabled):not([aria-disabled="true"]):hover > .icon-hover-star,
+.lesson-icon-btn:not(:disabled):not([aria-disabled="true"]):focus-visible > .icon-hover-star,
+.neo-star-hover:not(:disabled):not([aria-disabled="true"]):hover > .icon-hover-star,
+.neo-star-hover:not(:disabled):not([aria-disabled="true"]):focus-visible > .icon-hover-star,
+.neo-star-hover:not(:disabled):not([aria-disabled="true"]):focus-within > .icon-hover-star {
     opacity: 1;
-    animation: neoCornerStarSpin 1.45s cubic-bezier(.45,0,.2,1) infinite;
+    animation: neoCornerStarSpin .52s cubic-bezier(.22,1,.36,1) both;
+}
+
+.neo-star-hover:disabled > .icon-hover-star,
+.neo-star-hover[aria-disabled="true"] > .icon-hover-star,
+.content-tab.locked > .icon-hover-star,
+.content-tab[aria-disabled="true"] > .icon-hover-star,
+button:disabled .icon-hover-star {
+    opacity: 0 !important;
+    animation: none !important;
 }
 
 @keyframes neoCornerStarSpin {
@@ -1147,7 +1357,7 @@ body.neo-interface-locked .sidebar-toggle {
     padding: 0;
     border: 1px solid var(--neo-blue);
     border-radius: 18px;
-    background: var(--btn-bg);
+    background: color-mix(in srgb, var(--neo-blue) 10%, var(--control-bg, var(--btn-bg)));
     color: var(--btn-icon);
     text-decoration: none;
     isolation: isolate;
@@ -1156,8 +1366,8 @@ body.neo-interface-locked .sidebar-toggle {
 
 .neo-icon-button:hover,
 .neo-icon-button:focus-visible {
-    color: #fff;
-    background: color-mix(in srgb, var(--neo-blue) 22%, transparent);
+    color: var(--btn-icon);
+    background: color-mix(in srgb, var(--neo-blue) 20%, var(--control-bg, var(--btn-bg)));
     border-color: var(--neo-blue);
     box-shadow: 0 0 0 4px var(--neo-blue-glow);
     outline: none;
@@ -1169,7 +1379,24 @@ body.neo-interface-locked .sidebar-toggle {
     height: 22px;
 }
 
+
+.content-delete-toggle,
+.content-delete-confirm,
+.subject-delete-toggle,
+.subject-delete-confirm,
+.content-select-btn,
+.neo-delete-button,
 .neo-danger-button {
+    --hover-star-core: #ff4d5e;
+    --hover-star-shadow: #70152a;
+    --hover-star-center-stroke: #ff8ba0;
+    --hover-star-glow: rgba(255, 77, 94, .58);
+}
+.neo-danger-button {
+    --hover-star-core: #ff4d5e;
+    --hover-star-shadow: #70152a;
+    --hover-star-center-stroke: #ff8ba0;
+    --hover-star-glow: rgba(255, 77, 94, .58);
     min-height: 44px;
     display: inline-flex;
     align-items: center;
@@ -1250,10 +1477,10 @@ body.neo-interface-locked .sidebar-toggle {
 .neo-mobile-preview-viewport {
     width: min(390px, calc(100vw - 24px));
     height: min(844px, calc(100vh - 24px));
-    border: 1px solid rgba(26, 46, 255, .34);
+    border: 1px solid var(--neo-accent-ring);
     border-radius: 28px;
     background: var(--page-bg);
-    box-shadow: 0 0 0 4px rgba(26, 46, 255, .08), 0 18px 46px rgba(0, 0, 0, .34);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--neo-blue) 8%, transparent), 0 18px 46px rgba(0, 0, 0, .34);
     opacity: .96;
     transform: translateY(10px);
     transition: opacity .22s ease, transform .26s cubic-bezier(.22, 1, .36, 1);
@@ -1281,10 +1508,19 @@ body.neo-interface-locked .sidebar-toggle {
     padding: 0;
     border: 0;
     background: transparent;
-    color: var(--neo-blue);
+    color: var(--manel-color, var(--neo-blue));
     overflow: visible;
     transition: filter .18s ease, transform .18s ease, opacity .18s ease;
-    animation: neoCompanionIdleFloat 5.4s ease-in-out infinite;
+    animation: none;
+}
+
+.neo-companion-face.is-speaking,
+.neo-companion-face.is-study-talking,
+.neo-companion-face.is-thinking,
+.neo-companion-face.is-reacting,
+.neo-companion-face:hover,
+.neo-companion-face:focus-visible {
+    animation: neoCompanionIdleFloat 3.2s ease-in-out 2;
 }
 
 .neo-companion-face::before {
@@ -1295,8 +1531,8 @@ body.neo-interface-locked .sidebar-toggle {
     width: 6px;
     height: 6px;
     border-radius: 999px;
-    background: var(--neo-blue);
-    box-shadow: 12px 0 0 rgba(26, 46, 255, .32), 24px 0 0 rgba(26, 46, 255, .32);
+    background: var(--manel-color, var(--neo-blue));
+    box-shadow: 12px 0 0 var(--manel-glow, color-mix(in srgb, var(--neo-blue) 32%, transparent)), 24px 0 0 var(--manel-glow, color-mix(in srgb, var(--neo-blue) 32%, transparent));
     opacity: 0;
     transform: translateX(-15px);
     pointer-events: none;
@@ -1305,7 +1541,7 @@ body.neo-interface-locked .sidebar-toggle {
 .neo-companion-face:hover,
 .neo-companion-face:focus-visible,
 .neo-companion-face.is-reacting {
-    filter: drop-shadow(0 0 10px rgba(26, 46, 255, .5));
+    filter: drop-shadow(0 0 10px var(--manel-glow, color-mix(in srgb, var(--neo-blue) 50%, transparent)));
     outline: none;
     transform: translateY(-1px) scale(1.04);
 }
@@ -1314,7 +1550,7 @@ body.neo-interface-locked .sidebar-toggle {
 .neo-companion-face.is-curious,
 .neo-companion-face.is-surprised,
 .neo-companion-face.is-waking {
-    filter: drop-shadow(0 0 9px rgba(26, 46, 255, .42));
+    filter: drop-shadow(0 0 9px var(--manel-glow, color-mix(in srgb, var(--neo-blue) 42%, transparent)));
 }
 
 .neo-companion-svg {
@@ -1322,7 +1558,7 @@ body.neo-interface-locked .sidebar-toggle {
     height: 100%;
     overflow: visible;
     display: block;
-    filter: drop-shadow(0 0 6px rgba(26, 46, 255, .35));
+    filter: drop-shadow(0 0 6px var(--manel-glow, color-mix(in srgb, var(--neo-blue) 35%, transparent)));
     transform-origin: center;
     transition: transform .24s ease;
 }
@@ -1331,11 +1567,10 @@ body.neo-interface-locked .sidebar-toggle {
     transform: translate(var(--eye-x), var(--eye-y));
     transform-box: fill-box;
     transform-origin: center;
-    will-change: transform;
 }
 
 .neo-companion-eye {
-    fill: #1a2eff;
+    fill: var(--manel-color, #1a2eff);
     transform-box: fill-box;
     transform-origin: center;
     transition: opacity .14s ease, transform .22s cubic-bezier(.22, 1, .36, 1);
@@ -1352,7 +1587,7 @@ body.neo-interface-locked .sidebar-toggle {
 .neo-companion-eye-wink,
 .neo-companion-mouth {
     fill: none;
-    stroke: #1a2eff;
+    stroke: var(--manel-color, #1a2eff);
     stroke-width: 10;
     stroke-linecap: round;
     transition: opacity .14s ease;
@@ -1364,6 +1599,82 @@ body.neo-interface-locked .sidebar-toggle {
 
 .neo-companion-eye-wink {
     opacity: 0;
+}
+
+.neo-companion-lashes,
+.neo-companion-glasses,
+.neo-companion-freckles {
+    display: none;
+    pointer-events: none;
+}
+
+.manel-variant-lumi .neo-companion-lashes,
+.manel-variant-karol .neo-companion-lashes,
+.manel-variant-ravir .neo-companion-glasses,
+.manel-variant-ruan .neo-companion-freckles {
+    display: block;
+}
+
+.neo-companion-lashes path {
+    fill: none;
+    stroke: var(--manel-color, #1a2eff);
+    stroke-width: 7;
+    stroke-linecap: round;
+}
+
+.neo-companion-glasses circle,
+.neo-companion-glasses path {
+    fill: none;
+    stroke: color-mix(in srgb, var(--manel-color, #1a2eff) 62%, #ffffff);
+    stroke-width: 7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.neo-companion-freckles circle {
+    fill: color-mix(in srgb, var(--manel-color, #1a2eff) 48%, #ffffff);
+    stroke: none;
+}
+
+.manel-variant-ruan .neo-companion-eye,
+.manel-variant-ruan .neo-companion-mouth {
+    stroke: #8e98ad;
+    stroke-width: 4;
+}
+
+.manel-variant-ruan .neo-companion-mouth {
+    stroke-width: 18;
+}
+
+.store-manel-demo .neo-companion-lashes path {
+    fill: none;
+    stroke: var(--store-accent, var(--neo-blue));
+    stroke-width: 7;
+    stroke-linecap: round;
+}
+
+.store-manel-demo .neo-companion-glasses circle,
+.store-manel-demo .neo-companion-glasses path {
+    fill: none;
+    stroke: color-mix(in srgb, var(--store-accent, var(--neo-blue)) 62%, #ffffff);
+    stroke-width: 7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.store-manel-demo .neo-companion-freckles circle {
+    fill: color-mix(in srgb, var(--store-accent, var(--neo-blue)) 48%, #ffffff);
+    stroke: none;
+}
+
+.store-manel-demo.manel-variant-ruan rect {
+    stroke: #8e98ad;
+    stroke-width: 4;
+}
+
+.store-manel-demo.manel-variant-ruan > svg > path {
+    stroke: #8e98ad;
+    stroke-width: 18;
 }
 
 .neo-companion-face.is-happy {
@@ -1414,7 +1725,7 @@ body.neo-interface-locked .sidebar-toggle {
 }
 
 .neo-companion-face.is-sleeping .neo-companion-svg {
-    animation: neoCompanionSleepingFloat 2.8s ease-in-out infinite;
+    animation: none;
 }
 
 .neo-companion-face.is-waking {
@@ -1452,9 +1763,9 @@ body.neo-interface-locked .sidebar-toggle {
     top: calc(100% + 8px);
     min-width: 46px;
     padding: 7px 11px;
-    border: 1px solid rgba(26, 46, 255, .38);
+    border: 1px solid color-mix(in srgb, var(--manel-color, var(--neo-blue)) 38%, transparent);
     border-radius: 12px;
-    background: rgba(8, 20, 45, .97);
+    background: var(--bubble-bg);
     color: #fff;
     font-size: 12px;
     font-weight: 800;
@@ -1480,45 +1791,141 @@ body.neo-interface-locked .sidebar-toggle {
     letter-spacing: 1px;
     opacity: 0;
     pointer-events: none;
-    text-shadow: 0 0 8px rgba(26, 46, 255, .55);
+    text-shadow: 0 0 8px color-mix(in srgb, var(--neo-blue) 55%, transparent);
 }
 
 .neo-companion-face.is-sleeping::after {
-    animation: neoCompanionSleepMark 2.6s ease-in-out infinite;
+    animation: none;
 }
 
-@keyframes neoCompanionIdleFloat {
-    0%, 100% { translate: 0 0; }
-    48% { translate: 0 -1px; }
+.neo-manel-tooltip {
+    position: fixed;
+    z-index: 14020;
+    width: max-content;
+    max-width: min(330px, calc(100vw - 22px));
+    display: block;
+    padding: 11px 14px 12px;
+    border: 1px solid color-mix(in srgb, var(--neo-blue) 38%, transparent);
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--bubble-bg) 96%, transparent);
+    color: #f8f9ff;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .24), 0 0 0 1px rgba(255, 255, 255, .025) inset;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(10px) scale(.97);
+    transform-origin: right center;
+    transition: opacity .12s ease, transform .18s cubic-bezier(.22, 1, .36, 1);
 }
 
-@keyframes neoCompanionSleepingFloat {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(1px); }
+.neo-manel-tooltip[hidden] {
+    display: none;
 }
 
-@keyframes neoCompanionSleepMark {
-    0%, 100% { opacity: 0; transform: translate3d(0, 5px, 0) scale(.78); }
-    26%, 62% { opacity: .88; transform: translate3d(-4px, -4px, 0) scale(1); }
+.neo-manel-tooltip.is-visible {
+    opacity: 1;
+    transform: translateX(0) scale(1);
 }
 
-@keyframes neoCompanionThinkingDots {
-    0%, 100% {
-        background: #ffffff;
-        box-shadow: 12px 0 0 rgba(26, 46, 255, .34), 24px 0 0 rgba(26, 46, 255, .34);
-    }
-
-    33% {
-        background: rgba(26, 46, 255, .34);
-        box-shadow: 12px 0 0 #ffffff, 24px 0 0 rgba(26, 46, 255, .34);
-    }
-
-    66% {
-        background: rgba(26, 46, 255, .34);
-        box-shadow: 12px 0 0 rgba(26, 46, 255, .34), 24px 0 0 #ffffff;
-    }
+.neo-manel-tooltip::after {
+    content: '';
+    position: absolute;
+    right: -6px;
+    top: var(--tooltip-arrow-y, 50%);
+    width: 10px;
+    height: 10px;
+    border-right: 1px solid color-mix(in srgb, var(--neo-blue) 38%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--neo-blue) 38%, transparent);
+    background: color-mix(in srgb, var(--bubble-bg) 92%, transparent);
+    transform: translateY(-50%) rotate(45deg);
 }
 
+.neo-manel-tooltip.is-below {
+    transform-origin: center top;
+    transform: translateY(-5px) scale(.98);
+}
+
+.neo-manel-tooltip.is-below.is-visible {
+    transform: translateY(0) scale(1);
+}
+
+.neo-manel-tooltip.is-below::after {
+    top: -6px;
+    right: auto;
+    left: var(--tooltip-arrow-x, 50%);
+    border: 0;
+    border-left: 1px solid color-mix(in srgb, var(--neo-blue) 38%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--neo-blue) 38%, transparent);
+    transform: translateX(-50%) rotate(45deg);
+}
+
+
+.neo-manel-tooltip.is-left::after {
+    right: -6px;
+    left: auto;
+    top: var(--tooltip-arrow-y, 50%);
+    border: 0;
+    border-right: 1px solid color-mix(in srgb, var(--neo-blue) 38%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--neo-blue) 38%, transparent);
+    transform: translateY(-50%) rotate(45deg);
+}
+
+.neo-manel-tooltip.is-right {
+    transform-origin: left center;
+    transform: translateX(-10px) scale(.97);
+}
+
+.neo-manel-tooltip.is-right.is-visible {
+    transform: translateX(0) scale(1);
+}
+
+.neo-manel-tooltip.is-right::after {
+    left: -6px;
+    right: auto;
+    top: var(--tooltip-arrow-y, 50%);
+    border: 0;
+    border-left: 1px solid color-mix(in srgb, var(--neo-blue) 38%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--neo-blue) 38%, transparent);
+    transform: translateY(-50%) rotate(45deg);
+}
+.neo-manel-tooltip-copy {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+}
+
+.neo-manel-tooltip-copy b {
+    color: var(--neo-star-bright);
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .13em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.neo-manel-tooltip-copy > span {
+    min-height: 1.28em;
+    color: #ffffff;
+    font-size: 12.5px;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.neo-manel-tooltip.is-typing .neo-manel-tooltip-copy > span::after {
+    content: '';
+    display: inline-block;
+    width: 2px;
+    height: .95em;
+    margin-left: 3px;
+    border-radius: 999px;
+    background: var(--neo-star-bright);
+    vertical-align: -1px;
+    animation: neoTooltipCaret .42s steps(1, end) infinite;
+}
+
+@keyframes neoTooltipCaret {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .15; }
+}
 .manel-panel {
     position: fixed;
     right: clamp(16px, 2.4vw, 30px);
@@ -1529,9 +1936,9 @@ body.neo-interface-locked .sidebar-toggle {
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto auto;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, .08);
+    border: 1px solid var(--neo-chrome-border);
     border-radius: clamp(20px, 2.4vw, 26px);
-    background: rgba(7, 18, 41, .98);
+    background: color-mix(in srgb, var(--panel-bg) 92%, #000 8%);
     box-shadow: 0 22px 60px rgba(0, 0, 0, .42);
     opacity: 0;
     pointer-events: none;
@@ -1605,8 +2012,8 @@ body.neo-interface-locked .sidebar-toggle {
     width: 46px;
     height: 34px;
     color: var(--neo-blue);
-    filter: drop-shadow(0 0 7px rgba(26, 46, 255, .35));
-    animation: neoCompanionIdleFloat 4.8s ease-in-out infinite;
+    filter: drop-shadow(0 0 7px var(--neo-blue-glow));
+    animation: none;
 }
 
 .manel-mini-face::before {
@@ -1617,8 +2024,8 @@ body.neo-interface-locked .sidebar-toggle {
     width: 7px;
     height: 7px;
     border-radius: 999px;
-    background: rgba(26, 46, 255, .32);
-    box-shadow: 13px 0 0 rgba(26, 46, 255, .32), 26px 0 0 rgba(26, 46, 255, .32);
+    background: color-mix(in srgb, var(--neo-blue) 32%, transparent);
+    box-shadow: 13px 0 0 color-mix(in srgb, var(--neo-blue) 32%, transparent), 26px 0 0 color-mix(in srgb, var(--neo-blue) 32%, transparent);
     opacity: 0;
     transform: translateX(-16.5px);
     pointer-events: none;
@@ -1643,7 +2050,7 @@ body.neo-interface-locked .sidebar-toggle {
 }
 
 .manel-panel.is-busy .manel-mini-face {
-    animation: neoCompanionIdleFloat 4.8s ease-in-out infinite;
+    animation: neoCompanionIdleFloat 3.2s ease-in-out 2;
 }
 
 .manel-panel.is-busy .manel-mini-face::before {
@@ -1667,10 +2074,10 @@ body.neo-interface-locked .sidebar-toggle {
     position: relative;
     display: grid;
     place-items: center;
-    border: 1px solid rgba(26, 46, 255, .92);
+    border: 1px solid color-mix(in srgb, var(--neo-blue) 92%, transparent);
     background: var(--control-bg);
     color: var(--neo-blue);
-    box-shadow: inset 0 0 0 1px rgba(26, 46, 255, .08);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--neo-blue) 8%, transparent);
     transition: background-color .18s ease, border-color .18s ease, color .18s ease, transform .18s ease;
 }
 
@@ -1724,7 +2131,7 @@ body.neo-interface-locked .sidebar-toggle {
     padding: 12px 14px;
     border: 1px solid rgba(255, 255, 255, .08);
     border-radius: 18px;
-    background: rgba(10, 24, 54, .9);
+    background: var(--bubble-bg);
     color: #f7f7f7;
     font-size: 14px;
     line-height: 1.55;
@@ -1733,7 +2140,7 @@ body.neo-interface-locked .sidebar-toggle {
 
 .manel-message-user .manel-message-bubble {
     border-color: rgba(255, 255, 255, .09);
-    background: rgba(26, 46, 255, .18);
+    background: color-mix(in srgb, var(--neo-blue) 18%, transparent);
 }
 
 .manel-message-bubble p + p,
@@ -1755,9 +2162,9 @@ body.neo-interface-locked .sidebar-toggle {
 
 .manel-message-bubble code {
     padding: 2px 5px;
-    border: 1px solid rgba(26, 46, 255, .25);
+    border: 1px solid color-mix(in srgb, var(--neo-blue) 25%, transparent);
     border-radius: 7px;
-    background: rgba(26, 46, 255, .12);
+    background: color-mix(in srgb, var(--neo-blue) 12%, transparent);
     color: #fff;
 }
 
@@ -1782,9 +2189,9 @@ body.neo-interface-locked .sidebar-toggle {
 .manel-code {
     overflow: hidden;
     margin: 8px 0;
-    border: 1px solid rgba(26, 46, 255, .3);
+    border: 1px solid color-mix(in srgb, var(--neo-blue) 30%, transparent);
     border-radius: 14px;
-    background: #0a1834;
+    background: var(--bubble-bg);
 }
 
 .manel-code > span {
@@ -1800,7 +2207,7 @@ body.neo-interface-locked .sidebar-toggle {
 .manel-code button {
     float: right;
     margin: 7px 8px 0 0;
-    border: 1px solid rgba(26, 46, 255, .7);
+    border: 1px solid color-mix(in srgb, var(--neo-blue) 70%, transparent);
     border-radius: 10px;
     background: transparent;
     color: var(--neo-blue);
@@ -1862,9 +2269,9 @@ body.neo-interface-locked .sidebar-toggle {
 
 .manel-suggestions button {
     min-height: 34px;
-    border: 1px solid rgba(26, 46, 255, .52);
+    border: 1px solid color-mix(in srgb, var(--neo-blue) 52%, transparent);
     border-radius: 999px;
-    background: rgba(9, 22, 50, .84);
+    background: var(--btn-bg);
     color: #fff;
     padding: 7px 11px;
     font-size: 12px;
@@ -1900,9 +2307,9 @@ body.neo-interface-locked .sidebar-toggle {
     min-height: 48px;
     max-height: 150px;
     resize: none;
-    border: 1px solid rgba(26, 46, 255, .74);
+    border: 1px solid color-mix(in srgb, var(--neo-blue) 74%, transparent);
     border-radius: 16px;
-    background: #111;
+    background: var(--bubble-bg);
     color: #fff;
     padding: 13px 14px;
     outline: none;
@@ -1912,7 +2319,7 @@ body.neo-interface-locked .sidebar-toggle {
 
 .manel-form textarea:focus {
     border-color: var(--neo-blue);
-    box-shadow: 0 0 0 2px rgba(26, 46, 255, .16);
+    box-shadow: 0 0 0 2px var(--neo-accent-soft);
 }
 
 .manel-form textarea::placeholder {
@@ -1956,17 +2363,17 @@ body.neo-interface-locked .sidebar-toggle {
 @keyframes manelMiniThinkingDots {
     0%, 100% {
         background: #ffffff;
-        box-shadow: 13px 0 0 rgba(26, 46, 255, .34), 26px 0 0 rgba(26, 46, 255, .34);
+        box-shadow: 13px 0 0 color-mix(in srgb, var(--neo-blue) 34%, transparent), 26px 0 0 color-mix(in srgb, var(--neo-blue) 34%, transparent);
     }
 
     33% {
-        background: rgba(26, 46, 255, .34);
-        box-shadow: 13px 0 0 #ffffff, 26px 0 0 rgba(26, 46, 255, .34);
+        background: color-mix(in srgb, var(--neo-blue) 34%, transparent);
+        box-shadow: 13px 0 0 #ffffff, 26px 0 0 color-mix(in srgb, var(--neo-blue) 34%, transparent);
     }
 
     66% {
-        background: rgba(26, 46, 255, .34);
-        box-shadow: 13px 0 0 rgba(26, 46, 255, .34), 26px 0 0 #ffffff;
+        background: color-mix(in srgb, var(--neo-blue) 34%, transparent);
+        box-shadow: 13px 0 0 color-mix(in srgb, var(--neo-blue) 34%, transparent), 26px 0 0 #ffffff;
     }
 }
 
@@ -2194,3 +2601,41 @@ body.neo-interface-locked .sidebar-toggle {
         bottom: 8px;
     }
 }
+
+
+
+/* NEO color-synced hover stars */
+.neo-star-hover:not(.neo-danger-button):not(.content-delete-toggle):not(.content-delete-confirm):not(.subject-delete-toggle):not(.subject-delete-confirm):not(.content-select-btn):not(.neo-delete-button),
+.content-tab:not(.locked):not([aria-disabled="true"]),
+.recent-item {
+    --button-accent: var(--materia-cor, var(--subject-color, var(--mission-color, var(--folder-color, var(--session-color, var(--profile-accent, var(--neo-blue)))))));
+    --hover-star-core: var(--button-accent);
+    --hover-star-shadow: color-mix(in srgb, var(--button-accent) 44%, #030824);
+    --hover-star-center-stroke: color-mix(in srgb, var(--button-accent) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--button-accent) 55%, transparent);
+}
+
+.primary.neo-star-hover:not(.neo-danger-button):hover,
+.primary.neo-star-hover:not(.neo-danger-button):focus-visible,
+.save-btn.neo-star-hover:hover,
+.save-btn.neo-star-hover:focus-visible,
+.ghost.neo-star-hover:hover,
+.ghost.neo-star-hover:focus-visible,
+.back.neo-star-hover:hover,
+.back.neo-star-hover:focus-visible,
+.neo-icon-button.neo-star-hover:hover,
+.neo-icon-button.neo-star-hover:focus-visible {
+    --button-accent: var(--neo-blue);
+    color: var(--button-accent);
+    border-color: var(--button-accent);
+}
+
+.materia-theme .neo-star-hover:not(.neo-danger-button):hover,
+.materia-theme .neo-star-hover:not(.neo-danger-button):focus-visible,
+.materia-theme .content-tab:not(.locked):not([aria-disabled="true"]):hover,
+.materia-theme .content-tab:not(.locked):not([aria-disabled="true"]):focus-visible {
+    color: var(--materia-cor, var(--neo-blue));
+    border-color: var(--materia-cor, var(--neo-blue));
+}
+
+

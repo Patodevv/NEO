@@ -97,7 +97,7 @@ let server, browser, mainPage;
  if(await page.locator('[data-manel-tour]:not([hidden])').count())await page.locator('[data-tour-skip]').click();
  assert.equal(await page.locator('.level-row').isVisible(),true);
  const profile=JSON.parse(fixture('profile','lara@example.test'));assert.equal(Number(profile.personalizacao_versao),1);assert.match(profile.gostos,/Jogos/);assert.match(profile.gostos,/Música/);const saved=JSON.parse(profile.personalizacao_json);assert.deepEqual(saved.gostos.selected,['jogos','musica']);assert.equal(saved.niveis.matematica,'basico');
- assert.match(await page.locator('body').evaluate(el=>getComputedStyle(el).backgroundImage),/neo-global-bg-v2\.webp/,'The darker optimized global wallpaper is active');
+ assert.equal(await page.locator('body').evaluate(el=>getComputedStyle(el).backgroundImage),'none','The site uses a flat themed background without wallpaper');
  assert.match(await page.locator('body').evaluate(el=>getComputedStyle(el).backgroundAttachment),/^fixed(?:, fixed)*$/,'Global wallpaper remains fixed');
  assert.match(await page.locator('.shop-panel').evaluate(el=>getComputedStyle(el).backgroundImage),/store-banner-bg\.webp/,'Dashboard store button uses its optimized illustration');
  assert.equal(await page.locator('.mini-panel').count(),0,'Legacy dashboard statistic squares were removed');

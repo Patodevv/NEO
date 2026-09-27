@@ -132,8 +132,8 @@ try {
     $custom = validAnswers(['materias'=>['selected'=>['outra'],'other'=>'Música'],'niveis'=>['outra'=>'avancado']]);
     $customProgress = savedProgress($custom);
     $technical = validAnswers(['modo'=>'tecnico','ensino'=>['value'=>'fundamental'],'materias'=>['selected'=>['matematica'],'other'=>''],'niveis'=>['matematica'=>'iniciante']]);
-    check(count(neoOnboardingCurriculum($technical)) === 3, 'professional mode builds the automatic curriculum without requesting a school year');
-    check(count(neoOnboardingCurriculum($answers)) === 6, 'the curriculum is generated automatically from selected subjects');
+    check(count(neoOnboardingCurriculum($technical)) === 1, 'professional mode starts with one introduction without requesting a school year');
+    check(count(neoOnboardingCurriculum($answers)) === 2, 'the curriculum starts with one introduction per selected subject');
     $credentials = ['email'=>'lara@example.test','senha'=>'Neo-valid-1234','confirmar_senha'=>'Neo-valid-1234'];
     rejects(fn()=>neoOnboardingFinish($pdo,['answers'=>['nome'=>'Lara']],$credentials,null), 'incomplete profile cannot create an account');
     foreach ([['email'=>'invalid'],['senha'=>'123'],['senha'=>str_repeat('x',73)],['confirmar_senha'=>'different']] as $change) {
@@ -148,10 +148,10 @@ try {
     check((int)$pdo->query('SELECT COUNT(*) FROM onboarding_guest_progress')->fetchColumn() === 0 && !isset($_COOKIE['neo_onboarding_resume'],$_SESSION['neo_onboarding_guest']), 'successful registration deletes its guest draft and resume cookie');
     $userRecord = adaptiveUser($pdo,$userId);
     $profile = adaptiveProfile($userRecord);
-    check(password_verify($credentials['senha'],$userRecord['senha']) && (int)$userRecord['personalizacao_versao'] === 1 && count($profile['content_map']) === 6, 'finishing stores password hash, version and automatic curriculum together');
+    check(password_verify($credentials['senha'],$userRecord['senha']) && (int)$userRecord['personalizacao_versao'] === 1 && count($profile['content_map']) === 2, 'finishing stores password hash, version and introductory curriculum together');
     check(str_contains((string)$userRecord['gostos'],'Jogos') && str_contains((string)$userRecord['gostos'],'Música'), 'finishing stores interests in the field used by personalized content and questions');
     $recommended = 3;
-    $contentId = (int)$profile['content_map']['matematica-afim'];
+    $contentId = (int)$profile['content_map']['matematica-intro'];
     check(adaptiveDifficulty($pdo,$userId,$contentId) === $recommended, 'adaptive engine uses the declared starting level');
     rejects(fn()=>neoOnboardingFinish($pdo,$valid,$credentials,null), 'duplicate email returns a friendly validation error');
     check((int)$pdo->query('SELECT COUNT(*) FROM users')->fetchColumn() === 1, 'duplicate registration does not create another account');
@@ -171,7 +171,7 @@ try {
     check(neoOnboardingNextStep(neoOnboardingLoad($pdo,$userId)['answers']) === 'resumo', 'finished profile can be reopened for editing');
 
     $content = $pdo->query('SELECT * FROM conteudos WHERE id=' . $contentId)->fetch();
-    $secondContent = (int)$profile['content_map']['portugues-leitura'];
+    $secondContent = (int)$profile['content_map']['portugues-intro'];
     $stmt = $pdo->prepare('INSERT INTO questoes(user_id,conteudo_id,enunciado,opcao_a,opcao_b,opcao_c,opcao_d,correta,dificuldade,tipo_questao,estilo_prova,explicacao_correta,feedback_a,feedback_b) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
     $questionIds = [];
     foreach ([$contentId,$secondContent] as $cid) {
@@ -246,7 +246,7 @@ try {
     $completeRoutine=adaptiveRoutine(array_replace($profile,['dias'=>'2']),$routineMap,['2026-09-08','2026-09-09'],['sessao'=>'10','ritmo'=>'tranquilo'],$today);
     check($completeRoutine['sessions'] === [] && $completeRoutine['minutes'] === 10 && $completeRoutine['pace'] === 'tranquilo', 'completed weekly goal makes additional sessions optional and honors corrections');
     $summary = adaptiveSummary($pdo,$userId);
-    check(count($summary['map']) === 6 && $summary['stats']['answers'] === 3 && $summary['stats']['timed_answers'] === 2, 'learning map and statistics summarize recorded account evidence');
+    check(count($summary['map']) === 2 && $summary['stats']['answers'] === 3 && $summary['stats']['timed_answers'] === 2, 'learning map and statistics summarize recorded account evidence');
     check(adaptiveSummary($pdo,$otherId)['stats']['answers'] === 0, 'learning statistics cannot include another account');
     $context = adaptiveAIContext($pdo,$userId,$contentId);
     check(str_contains($context,'passo_a_passo') && str_contains($context,'dificuldade_recomendada') && str_contains($context,'jogos') && str_contains($context,'dias_por_semana') && str_contains($context,'tipo_estudo') && !str_contains($context,'\"serie\"'), 'AI context includes interests, study type, weekly target, explanation style and evidence-based difficulty');
@@ -290,7 +290,7 @@ try {
     $weeklyProfile = $reminderProfile; $weeklyProfile['lembretes']['frequency']='semanal';
     check(adaptiveReminder($weeklyProfile,[],[],$monday)['due'] && !adaptiveReminder($weeklyProfile,[],[],$monday->modify('+2 days'))['due'], 'weekly reminder runs once on the first selected day');
     $pdo->prepare('UPDATE conteudos SET removido_em=NOW() WHERE id=?')->execute([$contentId]);
-    check(count(adaptiveSummary($pdo,$userId)['map']) === 5 && adaptiveErrors($pdo,$userId) === [], 'archived content disappears from active map and error notebook');
+    check(count(adaptiveSummary($pdo,$userId)['map']) === 1 && adaptiveErrors($pdo,$userId) === [], 'archived content disappears from active map and error notebook');
     rejects(fn()=>adaptiveCreateExam($pdo,$userId,['tipo'=>'conteudo','conteudo_id'=>$contentId]), 'archived content cannot create new exams');
 } catch (Throwable $e) {
     $failures[] = get_class($e) . ': ' . $e->getMessage();

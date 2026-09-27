@@ -1,24 +1,13 @@
 .profile-summary {
     --profile-accent: var(--neo-blue);
+    contain: layout;
     min-height: clamp(150px, 16vw, 190px);
     display: grid;
-    grid-template-columns: clamp(92px, 11vw, 132px) minmax(0, 1fr) minmax(260px, 390px);
+    grid-template-columns: clamp(92px, 11vw, 132px) minmax(0, 1fr);
     align-items: center;
     gap: clamp(18px, 2.4vw, 28px);
     padding: clamp(20px, 2.4vw, 28px) clamp(18px, 2.8vw, 34px);
     overflow: visible;
-}
-
-.profile-summary.anel_ouro {
-    --profile-accent: #d7bb5f;
-}
-
-.profile-summary.anel_neon {
-    --profile-accent: #40d8ff;
-}
-
-.profile-summary.anel_foco {
-    --profile-accent: #38d16a;
 }
 
 .profile-avatar-ring {
@@ -39,7 +28,34 @@
     place-items: center;
     overflow: hidden;
     border-radius: clamp(18px, 2.5vw, 24px);
-    background: #102247;
+    background: var(--control-bg);
+}
+
+.profile-avatar-ring.has-frame-art {
+    position: relative;
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+}
+
+.profile-avatar-ring > .profile-frame-art {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 112%;
+    height: 112%;
+    object-fit: contain;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+}
+
+.profile-avatar-ring.has-frame-art .profile-avatar {
+    width: 68%;
+    height: 68%;
+    border-radius: 999px;
+    z-index: 1;
 }
 
 .profile-avatar img,
@@ -61,69 +77,37 @@
 .profile-summary-copy {
     min-width: 0;
     display: grid;
-    gap: 6px;
+    gap: clamp(10px, 1.4vw, 14px);
+    align-content: center;
+    max-width: min(100%, 720px);
 }
 
 .profile-summary-copy h1 {
     overflow: hidden;
-    color: #fff;
-    font-size: clamp(22px, 2.8vw, 29px);
+    color: var(--profile-name-color, #fff);
+    font-size: clamp(32px, 4.8vw, 54px);
     line-height: 1.08;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-.profile-equipped {
-    width: fit-content;
-    min-height: 30px;
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    margin-top: 5px;
-    padding: 0 11px;
-    border: 1px solid var(--panel-border);
-    border-radius: 999px;
-    background: var(--control-bg);
-    color: var(--muted-strong);
-    font-size: 11px;
-    font-weight: 800;
-}
-
-.profile-equipped svg {
-    width: 15px;
-    height: 15px;
-    color: var(--profile-accent);
 }
 
 .profile-level-card {
     min-width: 0;
     display: grid;
     gap: clamp(8px, 1.4vw, 10px);
-    padding: 12px 0 12px clamp(18px, 2.4vw, 28px);
-    border-left: 1px solid var(--panel-border);
+    padding: 0;
+    border: 0;
 }
 
 .profile-level-top {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     flex-wrap: wrap;
-    gap: 14px;
+    gap: 10px;
     color: #fff;
-    font-size: 14px;
+    font-size: clamp(13px, 1.7vw, 16px);
     font-weight: 900;
-}
-
-.profile-wallet {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    color: #fff;
-}
-
-.profile-wallet .coin {
-    width: 15px;
-    height: 15px;
 }
 
 .profile-stats {
@@ -160,6 +144,7 @@
 .profile-account,
 .profile-inventory,
 .profile-mastery {
+    contain: layout;
     padding: clamp(20px, 2.5vw, 28px) clamp(16px, 2.6vw, 30px);
     overflow: visible;
 }
@@ -213,7 +198,7 @@
     padding: 6px 8px;
     border: 1px solid var(--border-soft);
     border-radius: 14px;
-    background: #0c1b3b;
+    background: var(--panel-bg);
     color: var(--muted-strong);
     font-size: 12px;
 }
@@ -232,7 +217,7 @@
 
 .photo-form input[type="file"]:focus-visible {
     border-color: var(--neo-blue);
-    box-shadow: 0 0 0 4px rgba(26, 46, 255, .16);
+    box-shadow: 0 0 0 4px var(--neo-accent-soft);
     outline: none;
 }
 
@@ -260,45 +245,50 @@
 .inventory-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: clamp(10px, 1.8vw, 16px);
+    gap: clamp(12px, 2vw, 18px);
 }
 
 .inventory-item {
-    --icon-star-size: 30px;
+    --icon-star-size: 32px;
     position: relative;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: clamp(12px, 1.7vw, 16px);
+    gap: clamp(10px, 1.7vw, 15px);
+    min-height: clamp(360px, 38vw, 430px);
+    padding: clamp(14px, 2vw, 18px);
     border: 1px solid var(--panel-border);
-    border-radius: 18px;
-    background: var(--control-bg);
+    border-radius: clamp(16px, 2.2vw, 20px);
+    background: var(--panel-bg);
+    box-shadow: var(--panel-shadow);
     transition: background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 
 .inventory-item:hover,
 .inventory-item:focus-within {
     border-color: var(--neo-blue);
-    background: color-mix(in srgb, var(--neo-blue) 12%, transparent);
-    box-shadow: 0 0 0 4px var(--neo-blue-glow);
+    background: color-mix(in srgb, var(--neo-blue) 10%, var(--panel-bg));
+    box-shadow: var(--panel-shadow), 0 0 0 4px var(--neo-blue-glow);
     transform: translateY(-2px);
 }
 
 .inventory-item > .icon-hover-star {
-    left: -14px;
-    top: -14px;
+    left: calc(var(--icon-star-size, 38px) * -.42);
+    top: calc(var(--icon-star-size, 38px) * -.42);
 }
 
 .inventory-preview {
-    height: clamp(88px, 11vw, 106px);
+    height: clamp(204px, 24vw, 260px);
     display: grid;
     place-items: center;
-    margin-bottom: 3px;
     border: 1px solid var(--panel-border);
-    border-radius: 14px;
+    border-radius: clamp(13px, 2vw, 16px);
     background: #111;
     overflow: hidden;
+}
+
+.inventory-preview.inventory-frame-stage {
+    padding: clamp(20px, 3vw, 30px);
 }
 
 .inventory-preview > img {
@@ -308,27 +298,64 @@
     object-fit: contain;
 }
 
+.inventory-preview > .inventory-frame-preview {
+    width: clamp(132px, 14vw, 176px);
+    height: clamp(132px, 14vw, 176px);
+    max-width: 76%;
+    max-height: 76%;
+    object-fit: contain;
+}
+
 .inventory-avatar-demo {
     width: 66px;
     height: 66px;
+    position: relative;
     display: grid;
     place-items: center;
-    overflow: hidden;
-    border: 2px solid var(--neo-blue);
-    border-radius: 20px;
-    background: #102247;
+    overflow: visible;
+    border: 2px solid var(--profile-accent, var(--neo-blue));
+    border-radius: 999px;
+    background: var(--control-bg);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--profile-accent, var(--neo-blue)) 12%, transparent);
 }
 
-.inventory-preview.anel_ouro .inventory-avatar-demo {
-    border-color: #d7bb5f;
+.inventory-avatar-demo.has-frame-art {
+    width: 82px;
+    height: 82px;
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
 }
 
-.inventory-preview.anel_neon .inventory-avatar-demo {
-    border-color: #40d8ff;
+.inventory-avatar-demo.has-frame-art .avatar-photo,
+.inventory-avatar-demo.has-frame-art > span {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 68%;
+    height: 68%;
+    border-radius: 999px;
+    transform: translate(-50%, -50%);
+    z-index: 1;
 }
 
-.inventory-preview.anel_foco .inventory-avatar-demo {
-    border-color: #38d16a;
+.inventory-avatar-demo.has-frame-art > span {
+    display: grid;
+    place-items: center;
+    background: var(--control-bg);
+}
+
+.inventory-avatar-demo.has-frame-art > .profile-frame-art {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 112%;
+    height: 112%;
+    object-fit: contain;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 3;
 }
 
 .inventory-avatar-demo span {
@@ -336,41 +363,144 @@
 }
 
 .inventory-item > span {
-    color: var(--muted);
-    font-size: 11px;
+    color: var(--neo-blue);
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
 }
 
 .inventory-item h3 {
     overflow: hidden;
     color: #fff;
-    font-size: 16px;
+    font-size: clamp(15px, 2vw, 18px);
+    line-height: 1.18;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .inventory-item form {
     margin-top: auto;
+    padding-top: clamp(10px, 1.6vw, 14px);
+    border-top: 1px solid var(--panel-border);
 }
 
 .inventory-item button {
+    width: auto;
+    min-width: clamp(92px, 11vw, 112px);
+    margin-left: auto;
+    gap: clamp(6px, 1vw, 8px);
+}
+
+.inventory-item button svg {
+    width: clamp(15px, 1.8vw, 17px);
+    height: clamp(15px, 1.8vw, 17px);
+}
+
+.store-theme-demo,
+.store-manel-demo,
+.store-name-demo {
+    width: min(78%, 120px);
+    height: min(72%, 96px);
+    position: relative;
+    display: grid;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--store-accent, var(--neo-blue)) 48%, transparent);
+    border-radius: 20px;
+    background: linear-gradient(145deg, color-mix(in srgb, var(--store-accent, var(--neo-blue)) 20%, #071126), rgba(7, 17, 38, .96));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 0 24px color-mix(in srgb, var(--store-accent, var(--neo-blue)) 18%, transparent);
+}
+
+.store-theme-demo span,
+.store-theme-demo i,
+.store-theme-demo b {
+    display: block;
+    border-radius: 999px;
+    background: var(--store-accent, var(--neo-blue));
+}
+
+.store-theme-demo span { width: 58%; height: 10px; }
+.store-theme-demo i { width: 76%; height: 8px; opacity: .5; }
+.store-theme-demo b { width: 38%; height: 8px; opacity: .7; }
+
+.store-manel-demo {
+    width: 116px;
+    height: 86px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.store-manel-demo svg {
     width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--store-accent, var(--neo-blue)) 42%, transparent));
+}
+
+.store-manel-demo rect {
+    fill: var(--store-accent, var(--neo-blue));
+}
+
+.store-manel-demo path {
+    fill: none;
+    stroke: var(--store-accent, var(--neo-blue));
+    stroke-width: 22;
+    stroke-linecap: round;
+}
+
+.store-name-demo {
+    height: 72px;
+    color: var(--store-accent, var(--profile-name-color, #fff));
+    font-size: 34px;
+    font-weight: 950;
+    letter-spacing: 1px;
 }
 
 .mastery-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: clamp(10px, 1.6vw, 14px);
+    gap: clamp(16px, 2vw, 24px);
+    margin: calc(var(--icon-star-size, 34px) * -.55);
+    padding: calc(var(--icon-star-size, 34px) * .55);
+    overflow: visible;
 }
 
 .mastery-item {
+    --icon-star-size: 34px;
+    position: relative;
     min-width: 0;
+    overflow: visible;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
     gap: 10px 16px;
     padding: clamp(12px, 1.8vw, 16px);
     border: 1px solid var(--panel-border);
     border-radius: 16px;
     background: var(--control-bg);
+}
+
+.mastery-item.materia-theme {
+    border-color: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 34%, var(--panel-border));
+}
+
+.mastery-subject-icon {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    align-self: center;
+    border: 1px solid var(--materia-cor, var(--neo-blue));
+    border-radius: 13px;
+    background: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 10%, var(--control-bg));
+    color: var(--materia-cor, var(--neo-blue));
+}
+
+.mastery-subject-icon svg {
+    width: 24px;
+    height: 24px;
 }
 
 .mastery-item > div {
@@ -394,7 +524,7 @@
 }
 
 .mastery-item > strong {
-    color: var(--neo-blue);
+    color: var(--materia-cor, var(--neo-blue));
     font-size: 13px;
     white-space: nowrap;
 }
@@ -419,13 +549,6 @@
         width: 88px;
         height: 88px;
         border-radius: 21px;
-    }
-
-    .profile-level-card {
-        grid-column: 1 / -1;
-        padding: 18px 0 0;
-        border-top: 1px solid var(--panel-border);
-        border-left: 0;
     }
 
     .profile-info-grid {
@@ -465,7 +588,7 @@
     }
 
     .profile-summary-copy h1 {
-        font-size: clamp(19px, 5.4vw, 22px);
+        font-size: clamp(25px, 7vw, 34px);
     }
 
     .profile-account,
@@ -499,6 +622,15 @@
 
     .profile-summary-copy {
         justify-items: center;
+        width: 100%;
+    }
+
+    .profile-level-card {
+        width: 100%;
+    }
+
+    .profile-level-top {
+        justify-content: center;
     }
 
     .profile-stats,
@@ -513,5 +645,233 @@
 
     .mastery-item > strong {
         justify-self: start;
+    }
+}
+
+.mastery-item.materia-theme .neo-star-hover,
+.mastery-item.materia-theme.neo-star-hover {
+    --hover-star-core: var(--materia-cor, var(--neo-blue));
+    --hover-star-shadow: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 44%, #030824);
+    --hover-star-center-stroke: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 55%, transparent);
+}
+
+/* NEO profile color-synced stars */
+.inventory-item.neo-star-hover,
+.inventory-item .neo-star-hover,
+.mastery-item.materia-theme .neo-star-hover,
+.mastery-item.materia-theme.neo-star-hover {
+    --button-accent: var(--store-accent, var(--materia-cor, var(--profile-accent, var(--neo-blue))));
+    --hover-star-core: var(--button-accent);
+    --hover-star-shadow: color-mix(in srgb, var(--button-accent) 44%, #030824);
+    --hover-star-center-stroke: color-mix(in srgb, var(--button-accent) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--button-accent) 55%, transparent);
+}
+.inventory-item.neo-star-hover:hover,
+.inventory-item.neo-star-hover:focus-within,
+.inventory-item .neo-star-hover:hover,
+.inventory-item .neo-star-hover:focus-visible,
+.mastery-item.materia-theme .neo-star-hover:hover,
+.mastery-item.materia-theme .neo-star-hover:focus-visible {
+    color: var(--button-accent);
+    border-color: var(--button-accent);
+}
+
+
+/* Molduras de perfil normalizadas individualmente: foto atrás, anel por cima, centro único. */
+.store-avatar-demo.has-frame-art,
+.inventory-avatar-demo.has-frame-art,
+.profile-avatar-ring.has-frame-art,
+.topbar .profile.has-frame-art {
+    --frame-photo-size: 72%;
+    --frame-art-size: 132%;
+    position: relative;
+    overflow: visible;
+    contain: layout;
+    isolation: isolate;
+}
+
+.store-avatar-demo.has-frame-art .avatar-photo,
+.store-avatar-demo.has-frame-art > span,
+.inventory-avatar-demo.has-frame-art .avatar-photo,
+.inventory-avatar-demo.has-frame-art > span,
+.profile-avatar-ring.has-frame-art .profile-avatar,
+.topbar .profile.has-frame-art .topbar-profile-photo {
+    position: absolute;
+    left: 50% !important;
+    top: 50% !important;
+    width: var(--frame-photo-size) !important;
+    height: var(--frame-photo-size) !important;
+    aspect-ratio: 1 / 1;
+    overflow: hidden !important;
+    border-radius: 999px !important;
+    clip-path: circle(50% at 50% 50%);
+    transform: translate(-50%, -50%) !important;
+    z-index: 1;
+}
+
+.store-avatar-demo.has-frame-art .avatar-photo,
+.inventory-avatar-demo.has-frame-art .avatar-photo,
+.profile-avatar-ring.has-frame-art .profile-avatar img,
+.topbar .profile.has-frame-art .topbar-profile-photo img {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+    object-fit: cover;
+    object-position: center;
+}
+
+.store-avatar-demo.has-frame-art > .profile-frame-art,
+.inventory-avatar-demo.has-frame-art > .profile-frame-art,
+.profile-avatar-ring > .profile-frame-art,
+.topbar .profile.has-frame-art > .profile-frame-art {
+    position: absolute;
+    left: 50% !important;
+    top: 50% !important;
+    width: var(--frame-art-size) !important;
+    height: var(--frame-art-size) !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: contain;
+    object-position: center;
+    pointer-events: none;
+    transform: translate(-50%, -50%) !important;
+    z-index: 3;
+}
+
+.store-preview.moldura_sapo_pop .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_sapo_pop .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_sapo_pop .profile-avatar-ring,
+.topbar .profile.frame-moldura_sapo_pop,
+.store-preview.moldura_musica_neon .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_musica_neon .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_musica_neon .profile-avatar-ring,
+.topbar .profile.frame-moldura_musica_neon {
+    --frame-photo-size: 76%;
+}
+
+.store-preview.moldura_coroa_real .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_coroa_real .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_coroa_real .profile-avatar-ring,
+.topbar .profile.frame-moldura_coroa_real {
+    --frame-photo-size: 70%;
+    --frame-art-size: 136%;
+}
+
+.store-preview.moldura_asas_celestes .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_asas_celestes .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_asas_celestes .profile-avatar-ring,
+.topbar .profile.frame-moldura_asas_celestes {
+    --frame-photo-size: 68%;
+}
+
+/* Referência final: moldura inteira dentro do palco, foto circular atrás e sem cortes. */
+.store-avatar-demo.has-frame-art,
+.inventory-avatar-demo.has-frame-art,
+.profile-avatar-ring.has-frame-art,
+.topbar .profile.has-frame-art {
+    --frame-photo-size: 72%;
+    --frame-art-size: 100%;
+    position: relative;
+    overflow: visible;
+    contain: layout;
+    isolation: isolate;
+}
+
+.store-preview .store-avatar-demo.has-frame-art {
+    width: clamp(104px, 12vw, 142px) !important;
+    height: clamp(104px, 12vw, 142px) !important;
+}
+
+.inventory-preview .inventory-avatar-demo.has-frame-art {
+    width: 90px !important;
+    height: 90px !important;
+}
+
+.profile-avatar-ring.has-frame-art {
+    width: clamp(98px, 12vw, 132px) !important;
+    height: clamp(98px, 12vw, 132px) !important;
+}
+
+.topbar .profile.has-frame-art {
+    width: clamp(32px, 8vw, 38px) !important;
+    height: clamp(32px, 8vw, 38px) !important;
+    flex-basis: clamp(32px, 8vw, 38px) !important;
+}
+
+.store-avatar-demo.has-frame-art .avatar-photo,
+.store-avatar-demo.has-frame-art > span,
+.inventory-avatar-demo.has-frame-art .avatar-photo,
+.inventory-avatar-demo.has-frame-art > span,
+.profile-avatar-ring.has-frame-art .profile-avatar,
+.topbar .profile.has-frame-art .topbar-profile-photo {
+    position: absolute;
+    left: 50% !important;
+    top: 50% !important;
+    width: var(--frame-photo-size) !important;
+    height: var(--frame-photo-size) !important;
+    aspect-ratio: 1 / 1;
+    overflow: hidden !important;
+    border-radius: 999px !important;
+    clip-path: circle(50% at 50% 50%);
+    transform: translate(-50%, -50%) !important;
+    z-index: 1;
+}
+
+.store-avatar-demo.has-frame-art .avatar-photo,
+.inventory-avatar-demo.has-frame-art .avatar-photo,
+.profile-avatar-ring.has-frame-art .profile-avatar img,
+.topbar .profile.has-frame-art .topbar-profile-photo img {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+    object-fit: cover;
+    object-position: center;
+}
+
+.store-avatar-demo.has-frame-art > .profile-frame-art,
+.inventory-avatar-demo.has-frame-art > .profile-frame-art,
+.profile-avatar-ring > .profile-frame-art,
+.topbar .profile.has-frame-art > .profile-frame-art {
+    position: absolute;
+    left: 50% !important;
+    top: 50% !important;
+    width: var(--frame-art-size) !important;
+    height: var(--frame-art-size) !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: contain;
+    object-position: center;
+    pointer-events: none;
+    transform: translate(-50%, -50%) !important;
+    z-index: 3;
+}
+
+.store-preview.moldura_sapo_pop .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_sapo_pop .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_sapo_pop .profile-avatar-ring,
+.topbar .profile.frame-moldura_sapo_pop,
+.store-preview.moldura_musica_neon .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_musica_neon .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_musica_neon .profile-avatar-ring,
+.topbar .profile.frame-moldura_musica_neon {
+    --frame-photo-size: 76%;
+}
+
+.store-preview.moldura_coroa_real .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_coroa_real .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_coroa_real .profile-avatar-ring,
+.topbar .profile.frame-moldura_coroa_real,
+.store-preview.moldura_asas_celestes .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_asas_celestes .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_asas_celestes .profile-avatar-ring,
+.topbar .profile.frame-moldura_asas_celestes {
+    --frame-photo-size: 69%;
+}
+
+@supports (content-visibility: auto) {
+    .inventory-item {
+        content-visibility: auto;
+        contain-intrinsic-size: auto 430px;
     }
 }

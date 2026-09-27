@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/content.php';
+
 /** Onboarding answers are validated independently of the browser. */
 function neoOnboardingOptions(array $labels): array
 {
@@ -107,12 +109,14 @@ function neoOnboardingValidate(string $step, $value, array $answers): mixed
             if (!is_array($value)) throw new DomainException('Escolha pelo menos uma coisa de que você gosta.');
             $selected = neoOnboardingList($value['selected'] ?? null, array_keys($catalog['enums']['gostos']), 'Escolha pelo menos um interesse da lista.');
             $other = in_array('outro', $selected, true) ? neoOnboardingText($value['other'] ?? '', 2, 80, 'Me conte qual é esse outro interesse com uma palavra ou frase curta.') : '';
+            if ($other !== '' && motivoBloqueioPedidoIA($other) !== null) throw new DomainException('Escolha um interesse seguro para personalizar seus estudos.');
             $references = '';
             if (isset($value['references']) && trim((string)$value['references']) !== '') {
                 $references = neoOnboardingText($value['references'], 2, 180, 'Use nomes claros e curtos, como One Piece, Minecraft ou Fórmula 1.');
                 if (preg_match('/\b(?:ignore|prompt|sistema|instru[cç][aã]o|senha|api|chave|execute|comando|script)\b/iu', $references)) {
                     throw new DomainException('Informe apenas nomes de obras, jogos, esportes, artistas ou temas que você conhece e gosta.');
                 }
+                if (motivoBloqueioPedidoIA($references) !== null) throw new DomainException('Use apenas referências seguras que possam aparecer em exemplos educacionais.');
             }
             return ['selected' => $selected, 'other' => $other, 'references' => $references];
         case 'ensino':
@@ -122,6 +126,7 @@ function neoOnboardingValidate(string $step, $value, array $answers): mixed
             $other = '';
             if ($selected === 'outro') {
                 $other = neoOnboardingText($value['other'] ?? '', 5, 140, 'Me explique um pouco melhor como essa resposta se relaciona com seus estudos.');
+                if (motivoBloqueioPedidoIA($other) !== null) throw new DomainException('Descreva uma opção segura e ligada aos seus estudos.');
                 if (!preg_match('/estud|aprend|ensin|escol|curso|form|gradu|pesquis|educa|profiss|trein|prova|nota|revis|ler|leitura|idioma|matem|portugu|certifica|conhec|faculd|resid[eê]ncia|m[eé]dic|t[eé]cnic|programa|ci[eê]ncia|m[uú]sica|artes|desenvolv|carreira|trabalho|capacita|habilidade|alfabet|mestrad|doutorad|p[oó]s/iu', $other)) throw new DomainException('Me dê uma pista ligada ao aprendizado, como um curso, uma habilidade ou uma prova.');
             }
             return ['value' => $selected, 'other' => $other];
@@ -129,6 +134,7 @@ function neoOnboardingValidate(string $step, $value, array $answers): mixed
             if (!is_array($value)) throw new DomainException('Escolha pelo menos uma matéria.');
             $selected = neoOnboardingList($value['selected'] ?? null, array_column($catalog['materias'], 'id'), 'Escolha pelo menos uma matéria da lista.');
             $other = in_array('outra', $selected, true) ? neoOnboardingText($value['other'] ?? '', 3, 70, 'Qual é a outra matéria? Use um nome claro, como Música ou Programação.') : '';
+            if ($other !== '' && motivoBloqueioPedidoIA($other) !== null) throw new DomainException('Escolha uma matéria educacional segura.');
             return ['selected' => $selected, 'other' => $other];
         case 'meta':
             if (!is_array($value) || !isset($value['defined']) || !is_bool($value['defined'])) throw new DomainException('Você pode definir uma meta ou dizer que ainda não tem uma meta clara.');
@@ -136,6 +142,7 @@ function neoOnboardingValidate(string $step, $value, array $answers): mixed
             $kind = $value['kind'] ?? '';
             if (!in_array($kind, ['enem', 'nota', 'questoes', 'conteudo', 'prova'], true)) throw new DomainException('Escolha o tipo da sua meta para eu ajudar no planejamento.');
             $description = neoOnboardingText($value['description'] ?? '', 8, 180, 'Descreva uma meta de estudo com um pouco mais de detalhe.');
+            if (motivoBloqueioPedidoIA($description) !== null) throw new DomainException('Descreva uma meta segura e ligada aos estudos.');
             if (!preg_match('/estud|aprend|nota|enem|vestib|concurso|prova|quest|exerc|conte[uú]do|matem|portug|hist[oó]ria|geograf|biolog|f[ií]sica|qu[ií]mica|ingl[eê]s|redac|redaç|inform[aá]t|direito|administr|funç|func|equa|revis|conclu|termin|melhor|aprova|livro|ler|leitur|pontos|certifica|curso|cap[ií]tulo/iu', $description)) throw new DomainException('Vamos ligar essa meta aos estudos: uma nota, prova, quantidade de questões ou conteúdo.');
             $deadline = $value['deadline'] ?? null;
             if (!is_string($deadline)) throw new DomainException('Escolha um prazo válido para sua meta.');
@@ -286,21 +293,21 @@ function neoOnboardingResetGuest(PDO $pdo): void
 /** A starting sequence, not an official or exhaustive curriculum. */
 function neoOnboardingCurriculum(array $answers): array
 {
-    $available = neoOnboardingContents($answers);
-    $phase = $answers['ensino']['value'] ?? 'independente';
     $result = [];
     foreach ($answers['materias']['selected'] ?? [] as $subject) {
-        $subjectContents = array_filter($available, static fn($content) => $content['subject'] === $subject);
-        if ($subject === 'matematica' && $phase === 'fundamental') {
-            $ids = ['matematica-operacoes', 'matematica-razao', 'matematica-porcentagem'];
-            $subjectContents = array_intersect_key($subjectContents, array_flip($ids));
-        } elseif ($subject === 'matematica' && $phase === 'medio') {
-            $ids = ['matematica-razao', 'matematica-afim', 'matematica-quadratica'];
-            $subjectContents = array_intersect_key($subjectContents, array_flip($ids));
-        } elseif ($phase === 'fundamental') {
-            $subjectContents = array_slice($subjectContents, 0, 2, true);
+        $label = $answers['materias']['other'] ?? 'Outra matéria';
+        foreach (neoOnboardingCatalog()['materias'] as $catalogSubject) {
+            if ($catalogSubject['id'] === $subject) {
+                $label = $subject === 'outra' ? ($answers['materias']['other'] ?? 'Outra matéria') : $catalogSubject['label'];
+                break;
+            }
         }
-        $result += $subjectContents;
+        $result[$subject . '-intro'] = [
+            'id' => $subject . '-intro',
+            'subject' => $subject,
+            'subject_label' => $label,
+            'label' => tituloIntroducaoMateria($label),
+        ];
     }
     return $result;
 }
@@ -351,7 +358,29 @@ function neoOnboardingFinish(PDO $pdo, array $progress, array $credentials, ?int
             $existingPreferences = json_decode((string)$existing['preferencias_json'], true) ?: [];
             $existingProfile = json_decode((string)$existing['personalizacao_json'], true) ?: [];
         }
+        $materiasAdicionadas = is_array($existingProfile['materias_adicionadas'] ?? null)
+            ? array_values(array_filter($existingProfile['materias_adicionadas'], 'is_string'))
+            : [];
+        $answers['materias_adicionadas'] = $materiasAdicionadas;
         $contentMap = [];
+        $mapaAnterior = is_array($existingProfile['content_map'] ?? null) ? $existingProfile['content_map'] : [];
+        if ($mapaAnterior && $materiasAdicionadas) {
+            $idsMapaAnterior = array_values(array_unique(array_filter(array_map('intval', array_values($mapaAnterior)))));
+            if ($idsMapaAnterior) {
+                $marcadores = implode(',', array_fill(0, count($idsMapaAnterior), '?'));
+                $stmt = $pdo->prepare("SELECT c.id,m.nome FROM conteudos c JOIN materias m ON m.id=c.materia_id WHERE c.user_id=? AND c.removido_em IS NULL AND c.id IN ({$marcadores})");
+                $stmt->execute(array_merge([$userId], $idsMapaAnterior));
+                $permitidos = [];
+                foreach ($materiasAdicionadas as $materiaAdicionada) $permitidos[adaptiveSlug($materiaAdicionada)] = true;
+                $idsPreservados = [];
+                foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $linha) {
+                    if (isset($permitidos[adaptiveSlug((string)$linha['nome'])])) $idsPreservados[(int)$linha['id']] = true;
+                }
+                foreach ($mapaAnterior as $chave => $idAnterior) {
+                    if (isset($idsPreservados[(int)$idAnterior])) $contentMap[(string)$chave] = (int)$idAnterior;
+                }
+            }
+        }
         $curriculum = neoOnboardingCurriculum($answers);
         $levelMap = ['nao_conheco' => 1, 'iniciante' => 1, 'basico' => 3, 'intermediario' => 5, 'avancado' => 8, 'nao_sei' => 2];
         $order = 1;
@@ -362,22 +391,24 @@ function neoOnboardingFinish(PDO $pdo, array $progress, array $credentials, ?int
             $subjectId = (int)$stmt->fetchColumn();
             $title = $content['label'];
             if ($content['subject'] === 'outra') $title = str_replace('da matéria escolhida', 'de ' . $answers['materias']['other'], $title);
-            $stmt = $pdo->prepare('SELECT id FROM conteudos WHERE user_id = ? AND materia_id = ? AND titulo = ? AND removido_em IS NULL LIMIT 1');
+            $stmt = $pdo->prepare('SELECT id, removido_em FROM conteudos WHERE user_id = ? AND materia_id = ? AND titulo = ? ORDER BY removido_em IS NULL DESC, id DESC LIMIT 1');
             $stmt->execute([$userId, $subjectId, $title]);
-            $dbContentId = (int)$stmt->fetchColumn();
+            $conteudoExistente = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+            $dbContentId = (int)($conteudoExistente['id'] ?? 0);
             $difficulty = $levelMap[$answers['niveis'][$content['subject']]];
             if (!$dbContentId) {
                 $stmt = $pdo->prepare("INSERT INTO conteudos (user_id,materia_id,titulo,status,corpo,dificuldade,ordem) VALUES (?,?,?,'Não iniciado',NULL,?,?)");
                 $stmt->execute([$userId, $subjectId, $title, $difficulty, $order]);
                 $dbContentId = (int)$pdo->lastInsertId();
             } else {
-                $pdo->prepare('UPDATE conteudos SET ordem = ? WHERE id = ? AND user_id = ?')->execute([$order, $dbContentId, $userId]);
+                $pdo->prepare("UPDATE conteudos SET ordem = ?, status = CASE WHEN removido_em IS NULL THEN status ELSE 'Não iniciado' END, corpo = CASE WHEN removido_em IS NULL THEN corpo ELSE NULL END, removido_em = NULL WHERE id = ? AND user_id = ?")
+                    ->execute([$order, $dbContentId, $userId]);
             }
             $contentMap[$contentId] = $dbContentId;
             $order++;
         }
         $answers['content_map'] = $contentMap;
-        $answers['curriculum_notice'] = 'Sequência inicial de estudo, ajustável ao seu currículo e desempenho.';
+        $answers['curriculum_notice'] = 'Cada matéria começa pela introdução. Novos livros são liberados depois que você conclui esse primeiro estudo.';
         $answers['version'] = 1;
         $answers['updated_at'] = date(DATE_ATOM);
         // Preserve learning observations/corrections owned by the adaptive engine.

@@ -14,8 +14,16 @@ document.addEventListener('DOMContentLoaded', function () {
     sidebar.querySelectorAll('a.nav-btn').forEach(function (link) {
         const label = document.createElement('span');
         label.className = 'mobile-nav-label';
-        const labels = { 'index.php': 'Início', 'materias.php': 'Matérias', 'historico.php': 'Histórico', 'config.php': 'Config.' };
-        label.textContent = labels[link.getAttribute('href')] || link.getAttribute('title');
+        const labels = {
+            'index.php': 'Início',
+            'materias.php': 'Matérias',
+            'historico.php': 'Histórico',
+            'loja.php': 'Loja',
+            'aprendizado.php': 'Aprendizado',
+            'perfil.php': 'Perfil',
+            'config.php': 'Config.'
+        };
+        label.textContent = labels[link.getAttribute('href')] || link.getAttribute('aria-label') || '';
         link.appendChild(label);
         if (link.classList.contains('active')) link.setAttribute('aria-current', 'page');
     });

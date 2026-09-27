@@ -238,6 +238,7 @@
                 texts.forEach(item => { item.node.textContent = item.text; item.node.classList.remove('is-typing-line'); });
                 bubble.classList.remove('is-entering','is-typing');
                 stage.classList.remove('is-manel-typing');
+                root.classList.remove('is-manel-typing');
                 stage.setAttribute('aria-busy',String(busy));
                 if (mouth) mouth.setAttribute('d',restMouth);
                 face('neutral');
@@ -257,6 +258,7 @@
         texts.forEach(item => { item.node.textContent = ''; });
         bubble.classList.add('is-entering');
         stage.classList.add('is-manel-typing');
+        root.classList.add('is-manel-typing');
         stage.setAttribute('aria-busy','true');
         face('speaking');
         const duration = Math.min(14000,Math.max(800,total / 95 * 1000));
@@ -369,12 +371,14 @@
             input.name = name;
             input.value = String(option.id);
             input.checked = multiple ? (selected || []).map(String).includes(String(option.id)) : String(selected) === String(option.id);
+            if (input.checked) label.classList.add('is-checked');
             const text = element('span','',option.label);
             input.addEventListener('focus',() => face('thinking'));
             input.addEventListener('change',() => {
                 if (busy) return;
                 clearError();
                 face('thinking');
+                grid.querySelectorAll('.neo-setup-choice').forEach(item => item.classList.toggle('is-checked', item.querySelector('input')?.checked === true));
                 onChange(multiple ? [...grid.querySelectorAll('input:checked')].map(item => item.value) : input.value,input);
                 remember();
             });

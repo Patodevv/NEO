@@ -20,10 +20,14 @@ $stmtAcessos = $pdo->prepare("
     JOIN materias m ON m.id = ua.materia_id
     WHERE ua.user_id = ?
     ORDER BY ua.acessado_em DESC
-    LIMIT 6
+    LIMIT 30
 ");
 $stmtAcessos->execute([$usuario['id']]);
-$ultimosAcessos = $stmtAcessos->fetchAll(PDO::FETCH_ASSOC);
+$perfilDashboard = adaptiveProfile($usuario);
+$ultimosAcessos = array_slice(array_values(array_filter(
+    $stmtAcessos->fetchAll(PDO::FETCH_ASSOC),
+    static fn(array $acesso): bool => adaptiveSubjectAllowed($perfilDashboard, (string)$acesso['materia_nome'])
+)), 0, 6);
 $nivelAtual = max(1, (int)($usuario['nivel'] ?? 1));
 $xpAtual = max(0, (int)($usuario['xp'] ?? 0));
 $xpProximo = xpParaProximoNivel($nivelAtual);
@@ -48,14 +52,15 @@ require __DIR__ . '/includes/head.php';
             <section class="dash-panel personal-study-panel" aria-labelledby="routinePanelTitle">
                 <div class="personal-study-heading">
                     <span class="panel-label" id="routinePanelTitle">Rotina de estudos</span>
-                    <a class="routine-link-button neo-star-hover" href="aprendizado.php#rotina">
+                    <a class="routine-link-button neo-star-hover" href="aprendizado.php#rotina" data-manel-tip="Abre o plano completo da sua semana de estudos.">
                         <?= estrelaHoverNeo() ?>
                         <span>Ver rotina completa</span>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg>
                     </a>
                 </div>
                 <?php if ($proximaSessao): ?>
-                <a class="personal-study-next neo-star-hover <?= classeTemaMateria($proximaSessao['subject']) ?>" href="livro.php?conteudo_id=<?= (int)$proximaSessao['content_id'] ?>">
+                <?php $destinoProximaSessao = $proximaSessao['activity'] === 'Explorar conteúdo + diagnóstico' ? 'livro.php' : 'questoes.php'; ?>
+                <a class="personal-study-next neo-star-hover <?= classeTemaMateria($proximaSessao['subject']) ?>" href="<?= $destinoProximaSessao ?>?conteudo_id=<?= (int)$proximaSessao['content_id'] ?>" data-manel-tip="Começa sua próxima atividade planejada de <?= htmlspecialchars($proximaSessao['subject'], ENT_QUOTES, 'UTF-8') ?>.">
                     <?= estrelaHoverNeo() ?>
                     <span class="personal-study-icon <?= classeTemaMateria($proximaSessao['subject']) ?>"><?= iconeMateriaDashboard($proximaSessao['subject']) ?></span>
                     <strong>Próxima atividade: <?= htmlspecialchars($proximaSessao['subject']) ?></strong>
@@ -63,7 +68,8 @@ require __DIR__ . '/includes/head.php';
                 <?php else: ?><div class="personal-study-complete"><strong>Meta semanal concluída</strong><span><?= (int)$aprendizado['routine']['days_done'] ?> dias de estudo registrados</span></div><?php endif; ?>
             </section>
         <?php endif; ?>
-            <a class="dash-panel shop-panel" href="loja.php">
+            <a class="dash-panel shop-panel neo-star-hover" href="loja.php" data-manel-tip="Abre a loja para usar suas moedas em itens visuais.">
+                <?= estrelaHoverNeo() ?>
                 <span>Loja Neo</span>
                 <strong>Decore seu perfil</strong>
                 <small>Use moedas para liberar bordas, anéis e detalhes visuais.</small>
@@ -85,7 +91,7 @@ require __DIR__ . '/includes/head.php';
             </div>
             <div class="recent-grid">
                 <?php foreach ($ultimosAcessos as $acesso): ?>
-                    <a class="recent-item" href="livro.php?conteudo_id=<?= (int)$acesso['conteudo_id'] ?>">
+                    <a class="recent-item neo-star-hover <?= classeTemaMateria($acesso['materia_nome']) ?>" href="livro.php?conteudo_id=<?= (int)$acesso['conteudo_id'] ?>" data-manel-tip="Retoma o livro <?= htmlspecialchars($acesso['titulo'], ENT_QUOTES, 'UTF-8') ?>.">
                         <span class="recent-icon <?= classeTemaMateria($acesso['materia_nome']) ?>">
                             <?= estrelaHoverNeo() ?>
                             <?= iconeMateriaDashboard($acesso['materia_nome']) ?>
@@ -95,9 +101,7 @@ require __DIR__ . '/includes/head.php';
                 <?php endforeach; ?>
                 <?php for ($i = count($ultimosAcessos); $i < 6; $i++): ?>
                     <span class="recent-item recent-empty">
-                        <span class="recent-icon">
-                            <?= estrelaHoverNeo() ?>
-                        </span>
+                        <span class="recent-icon"></span>
                         <b>Nenhum acesso</b>
                     </span>
                 <?php endfor; ?>

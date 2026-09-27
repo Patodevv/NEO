@@ -11,8 +11,7 @@
         overscroll-behavior-y: none;
         -webkit-text-size-adjust: 100%;
     }
-    body.has-sidebar,
-    body:has(.sidebar) {
+    body.has-sidebar {
         min-height: 100dvh;
         padding-right: env(safe-area-inset-right, 0px);
         padding-bottom: var(--mobile-nav-space);
@@ -29,12 +28,12 @@
         height: var(--mobile-nav-height);
         padding: 8px;
         display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
+        grid-template-columns: repeat(7, minmax(0, 1fr));
         gap: 6px;
-        border: 1px solid rgba(120, 145, 255, 0.16);
+        border: 1px solid var(--neo-chrome-border, color-mix(in srgb, var(--neo-blue) 16%, transparent));
         border-radius: 26px;
-        background: rgba(4, 10, 27, 0.98);
-        box-shadow: 0 8px 24px rgba(3, 8, 23, .44), 0 0 14px rgba(26, 46, 255, .08);
+        background: var(--neo-chrome-bg, rgba(4, 10, 27, 0.98));
+        box-shadow: 0 8px 24px rgba(3, 8, 23, .44), 0 0 14px color-mix(in srgb, var(--neo-blue) 8%, transparent);
         backface-visibility: hidden;
         opacity: 1 !important;
         visibility: visible !important;
@@ -43,7 +42,6 @@
         contain: layout style;
     }
     #sidebar .nav-bottom { display: contents; }
-    #sidebar .neo-learning-nav { display: none; }
     body.neo-interface-locked #sidebar, body.neo-interface-locked #sidebar .nav-btn { pointer-events: none !important; }
     #sidebar .nav-btn {
         width: 100%;
@@ -55,7 +53,7 @@
         gap: 4px;
         border: 1px solid transparent;
         border-radius: 18px;
-        background: var(--btn-bg);
+        background: color-mix(in srgb, var(--neo-blue) 10%, var(--control-bg, var(--btn-bg)));
         box-shadow: none;
         color: var(--btn-icon);
         opacity: 1;
@@ -77,16 +75,16 @@
     }
     #sidebar .nav-btn:hover,
     #sidebar .nav-btn:focus-visible {
-        background: var(--neo-blue-hover);
-        color: #fff;
+        background: color-mix(in srgb, var(--neo-blue) 20%, var(--control-bg, var(--btn-bg)));
+        color: var(--btn-icon);
         box-shadow: 0 0 0 3px var(--neo-blue-glow);
         outline: none;
         transform: translateY(-2px) scale(1.02);
     }
     #sidebar .nav-btn.active {
-        background: var(--btn-bg);
+        background: color-mix(in srgb, var(--neo-blue) 16%, var(--control-bg, var(--btn-bg)));
         color: var(--btn-icon);
-        box-shadow: 0 0 0 3px var(--neo-blue-glow), 0 5px 12px rgba(26, 46, 255, .28);
+        box-shadow: 0 0 0 3px var(--neo-blue-glow), 0 5px 12px color-mix(in srgb, var(--neo-blue) 28%, transparent);
     }
     #sidebar .nav-btn.active::after {
         display: block;

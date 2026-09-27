@@ -67,7 +67,7 @@ function dificuldadeAdaptativa(PDO $pdo, int $userId, int $materiaId): int
         SELECT acertos, total
         FROM historico h
         JOIN conteudos c ON c.id = h.conteudo_id
-        WHERE h.user_id = ? AND c.materia_id = ?
+        WHERE h.user_id = ? AND c.materia_id = ? AND c.removido_em IS NULL
         ORDER BY h.data DESC, h.id DESC
         LIMIT 5
     ");
@@ -150,6 +150,31 @@ function inicioSemanaNeo(?DateTimeImmutable $data = null): DateTimeImmutable
 {
     $data = $data ?? new DateTimeImmutable('today');
     return $data->modify('monday this week')->setTime(0, 0);
+}
+
+function recalcularOfensivasSemanaisUsuario(PDO $pdo, int $userId, array $semanas = []): void
+{
+    if ($userId <= 0) {
+        return;
+    }
+    $semanas = array_values(array_unique(array_filter(array_map(static function ($semana): string {
+        $valor = trim((string)$semana);
+        $data = DateTimeImmutable::createFromFormat('!Y-m-d', $valor);
+        return $data && $data->format('Y-m-d') === $valor ? $valor : '';
+    }, $semanas))));
+
+    if (!$semanas) {
+        $stmt = $pdo->prepare('SELECT semana_inicio FROM ofensivas_semanais WHERE user_id = ?');
+        $stmt->execute([$userId]);
+        $semanas = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    $contar = $pdo->prepare('SELECT COUNT(DISTINCT data_atividade) FROM atividades_estudo_diarias WHERE user_id = ? AND data_atividade BETWEEN ? AND DATE_ADD(?, INTERVAL 6 DAY)');
+    $atualizar = $pdo->prepare('UPDATE ofensivas_semanais SET dias_ativos = ? WHERE user_id = ? AND semana_inicio = ?');
+    foreach ($semanas as $semana) {
+        $contar->execute([$userId, $semana, $semana]);
+        $atualizar->execute([(int)$contar->fetchColumn(), $userId, $semana]);
+    }
 }
 
 function registrarAtividadeSemanal(PDO $pdo, int $userId, int $materiaId, string $referenciaId): array
@@ -313,7 +338,7 @@ function registrarResultadoAtividade(
         $pdo->prepare("INSERT IGNORE INTO progresso_materias (user_id, materia_id) VALUES (?, ?)")->execute([$userId, $materiaId]);
         $stmt = $pdo->prepare("
             SELECT COALESCE(SUM(h.acertos), 0) acertos, COALESCE(SUM(h.total), 0) total
-            FROM (SELECT h2.acertos, h2.total FROM historico h2 JOIN conteudos c2 ON c2.id = h2.conteudo_id WHERE h2.user_id = ? AND c2.materia_id = ? ORDER BY h2.data DESC, h2.id DESC LIMIT 5) h
+            FROM (SELECT h2.acertos, h2.total FROM historico h2 JOIN conteudos c2 ON c2.id = h2.conteudo_id WHERE h2.user_id = ? AND c2.materia_id = ? AND c2.removido_em IS NULL ORDER BY h2.data DESC, h2.id DESC LIMIT 5) h
         ");
         $stmt->execute([$userId, $materiaId]);
         $recente = $stmt->fetch(PDO::FETCH_ASSOC);

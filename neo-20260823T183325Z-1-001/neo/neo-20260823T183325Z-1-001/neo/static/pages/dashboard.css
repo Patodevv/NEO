@@ -4,11 +4,11 @@
     flex-direction: column;
     justify-content: space-between;
     padding: clamp(20px, 3vw, 32px);
-    border-color: rgba(73, 105, 255, .3);
+    border-color: color-mix(in srgb, var(--neo-blue) 30%, transparent);
     background:
         linear-gradient(90deg, rgba(10, 18, 39, .98) 0%, rgba(10, 18, 39, .92) 38%, rgba(10, 18, 39, .58) 61%, rgba(10, 18, 39, .14) 100%),
         url('../images/study-routine-bg.webp') center right / cover no-repeat;
-    box-shadow: var(--panel-shadow), inset 0 0 0 1px rgba(26, 46, 255, .08);
+    box-shadow: var(--panel-shadow), inset 0 0 0 1px color-mix(in srgb, var(--neo-blue) 8%, transparent);
 }
 
 .personal-study-heading {
@@ -37,7 +37,6 @@
     padding: 0 16px;
     border: 1px solid var(--panel-border);
     border-radius: 13px;
-    background: var(--btn-bg);
     color: var(--text);
     font-size: 12px;
     font-weight: 800;
@@ -55,20 +54,24 @@
     border-color: var(--neo-blue);
     background: var(--neo-blue-hover);
     color: #fff;
-    box-shadow: 0 0 0 3px rgba(26, 46, 255, .16);
+    box-shadow: 0 0 0 3px var(--neo-accent-soft);
     outline: none;
     transform: translateY(-2px);
 }
 
 .personal-study-next {
     --icon-star-size: 32px;
+    --hover-star-core: var(--neo-blue);
+    --hover-star-shadow: color-mix(in srgb, var(--neo-blue) 44%, #030824);
+    --hover-star-center-stroke: color-mix(in srgb, var(--neo-blue) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--neo-blue) 60%, transparent);
     position: relative;
     display: flex;
     align-items: center;
     gap: 18px;
     justify-content: flex-start;
     padding: 20px;
-    border: 1px solid var(--materia-cor, var(--neo-blue));
+    border: 1px solid color-mix(in srgb, var(--neo-blue) 72%, #ffffff);
     border-radius: 18px;
     background: var(--btn-bg);
     color: inherit;
@@ -76,14 +79,14 @@
     transition: color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease;
     margin-top: 20px;
     width: min(100%, 560px);
-    background: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 6%, rgba(12, 22, 47, .88));
+    background: color-mix(in srgb, var(--neo-blue) 10%, var(--control-bg));
 }
 
 .personal-study-next:hover,
 .personal-study-next:focus-visible {
-    border-color: var(--materia-cor, var(--neo-blue));
-    background: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 18%, rgba(12, 22, 47, .92));
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 24%, transparent);
+    border-color: var(--neo-blue);
+    background: color-mix(in srgb, var(--neo-blue) 18%, var(--control-bg));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neo-blue) 24%, transparent);
     outline: none;
     transform: translateY(-2px);
 }
@@ -103,13 +106,13 @@
     flex: 0 0 48px;
     display: grid;
     place-items: center;
-    color: var(--materia-cor, var(--btn-icon));
+    color: var(--btn-icon);
     transition: color .18s ease;
 }
 
 .personal-study-next:hover .personal-study-icon,
 .personal-study-next:focus-visible .personal-study-icon {
-    color: var(--materia-cor, var(--btn-icon-hover));
+    color: var(--btn-icon-hover);
 }
 
 .personal-study-icon > svg:not(.icon-hover-star) {
@@ -121,7 +124,7 @@
     display: grid;
     gap: 6px;
     padding: 20px;
-    border: 1px solid var(--materia-cor, var(--neo-blue));
+    border: 1px solid color-mix(in srgb, var(--neo-blue) 72%, #ffffff);
     border-radius: 18px;
     background: var(--btn-bg);
     margin-top: 20px;
@@ -184,6 +187,7 @@
     align-items: stretch;
     padding-top: 4px;
     margin-top: -4px;
+    overflow: visible;
 }
 
 .dashboard-hero-grid > .personal-study-panel,
@@ -202,12 +206,23 @@
     contain-intrinsic-size: auto 190px;
 }
 
+.neo-dashboard-page .dashboard-hero-grid {
+    content-visibility: visible;
+    contain: none;
+    overflow: visible;
+}
+
 .dash-panel {
-    background: linear-gradient(145deg, rgba(13, 27, 58, .94), rgba(9, 19, 43, .9));
-    border: 1px solid rgba(93, 119, 235, .2);
+    background: linear-gradient(145deg, color-mix(in srgb, var(--panel-bg) 94%, var(--neo-blue) 6%), color-mix(in srgb, var(--control-bg) 92%, #000 8%));
+    border: 1px solid color-mix(in srgb, var(--neo-blue) 24%, transparent);
     border-radius: 18px;
     box-shadow: 0 14px 34px rgba(4, 10, 27, .2), inset 0 1px 0 rgba(132, 155, 255, .035);
     contain: layout paint;
+}
+
+.dash-panel.neo-star-hover {
+    contain: layout;
+    overflow: visible !important;
 }
 
 .panel-head {
@@ -230,7 +245,7 @@
 .recent-panel {
     min-height: clamp(0px, 17vw, 230px);
     padding: clamp(22px, 2.4vw, 30px) clamp(16px, 2.8vw, 34px);
-    border-color: rgba(73, 105, 255, .34);
+    border-color: color-mix(in srgb, var(--neo-blue) 34%, transparent);
 }
 
 .recent-grid {
@@ -269,11 +284,11 @@
     place-items: center;
     border: 1px solid color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 88%, #ffffff);
     border-radius: clamp(20px, 4.8vw, 30px);
-    background: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 7%, rgba(8, 19, 45, .78));
+    background: color-mix(in srgb, var(--neo-blue) 10%, var(--control-bg));
     color: var(--materia-cor, var(--btn-icon));
     box-shadow:
-        0 0 0 3px color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 22%, transparent),
-        inset 0 0 22px color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 5%, transparent);
+        0 0 0 3px color-mix(in srgb, var(--neo-blue) 12%, transparent),
+        inset 0 0 22px color-mix(in srgb, var(--neo-blue) 5%, transparent);
     isolation: isolate;
     transition: color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease;
 }
@@ -282,35 +297,35 @@
 .recent-item:focus-visible .recent-icon {
     border-color: var(--materia-cor, var(--neo-blue));
     color: var(--materia-cor, var(--btn-icon-hover));
-    background: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 22%, rgba(8, 19, 45, .9));
+    background: color-mix(in srgb, var(--neo-blue) 18%, var(--control-bg));
     box-shadow:
-        0 0 0 4px color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 34%, transparent),
-        0 10px 26px color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 16%, transparent);
+        0 0 0 4px color-mix(in srgb, var(--neo-blue) 24%, transparent),
+        0 10px 26px color-mix(in srgb, var(--neo-blue) 16%, transparent);
     transform: translateY(-2px) scale(1.04);
 }
 
 .recent-icon > .icon-hover-star {
-    filter: drop-shadow(0 0 8px color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 58%, transparent));
+    filter: drop-shadow(0 0 8px color-mix(in srgb, var(--neo-blue) 58%, transparent));
 }
 
 .recent-icon > .icon-hover-star .icon-hover-star-shadow {
-    fill: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 48%, #06102b);
-    stroke: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 48%, #06102b);
+    fill: color-mix(in srgb, var(--neo-blue) 48%, #06102b);
+    stroke: color-mix(in srgb, var(--neo-blue) 48%, #06102b);
 }
 
 .recent-icon > .icon-hover-star .icon-hover-star-core {
-    fill: var(--materia-cor, var(--neo-blue));
-    stroke: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 28%, #ffffff);
+    fill: var(--neo-blue);
+    stroke: color-mix(in srgb, var(--neo-blue) 28%, #ffffff);
 }
 
 .recent-icon > .icon-hover-star .icon-hover-star-center {
     fill: #ffffff;
-    stroke: color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 72%, #ffffff);
+    stroke: color-mix(in srgb, var(--neo-blue) 72%, #ffffff);
 }
 
 .recent-item:focus-visible .recent-icon > .icon-hover-star {
     opacity: 1;
-    animation: neoCornerStarSpin 1.45s cubic-bezier(.45, 0, .2, 1) infinite;
+    animation: neoCornerStarSpin .52s cubic-bezier(.22, 1, .36, 1) both;
 }
 
 .recent-icon > svg:not(.icon-hover-star) {
@@ -353,8 +368,8 @@
     height: clamp(46px, 5.2vw, 56px);
     padding: clamp(10px, 1.4vw, 12px) clamp(82px, 10vw, 116px) clamp(10px, 1.4vw, 12px) clamp(11px, 1.5vw, 14px);
     border-radius: 999px;
-    background: linear-gradient(90deg, rgba(9, 20, 46, .94), rgba(15, 29, 61, .92));
-    border: 1px solid rgba(93, 119, 235, .2);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--control-bg) 94%, transparent), color-mix(in srgb, var(--panel-bg) 92%, transparent));
+    border: 1px solid color-mix(in srgb, var(--neo-blue) 24%, transparent);
     box-shadow: 0 12px 28px rgba(4, 10, 27, .18);
     overflow: hidden;
     contain: layout paint;
@@ -368,8 +383,8 @@
     max-width: 100%;
     height: 100%;
     border-radius: 999px;
-    background: #1230ff;
-    box-shadow: 0 0 10px rgba(18, 48, 255, .38);
+    background: var(--neo-blue);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--neo-blue) 38%, transparent);
     transform: translateZ(0);
 }
 
@@ -385,7 +400,7 @@
     padding: 0 clamp(10px, 1.7vw, 18px);
     border: 1px solid rgba(255, 255, 255, .1);
     border-radius: 999px;
-    background: rgba(10, 22, 49, .88);
+    background: color-mix(in srgb, var(--control-bg) 88%, transparent);
     color: #fff;
     font-weight: 800;
     white-space: nowrap;
@@ -401,17 +416,24 @@
     padding: clamp(22px, 2.4vw, 28px) clamp(20px, 2.8vw, 34px);
     color: inherit;
     text-decoration: none;
-    overflow: hidden;
-    border-color: rgba(73, 105, 255, .34);
+    overflow: visible !important;
+    contain: layout;
+    border-color: color-mix(in srgb, var(--neo-blue) 34%, transparent);
     background:
         linear-gradient(90deg, rgba(10, 18, 39, .96) 0%, rgba(10, 18, 39, .82) 40%, rgba(10, 18, 39, .18) 72%, rgba(10, 18, 39, .06) 100%),
         url('../images/store-banner-bg.webp') center right / cover no-repeat;
     transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
 }
 
+.shop-panel > .icon-hover-star {
+    left: calc(var(--icon-star-size, 38px) * -.42);
+    right: auto;
+    top: calc(var(--icon-star-size, 38px) * -.42);
+}
+
 .shop-panel:hover {
-    border-color: rgba(92, 123, 255, .62);
-    box-shadow: 0 0 0 4px rgba(26, 46, 255, .12), 0 12px 28px rgba(0, 0, 0, .24);
+    border-color: color-mix(in srgb, var(--neo-blue) 62%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--neo-blue) 12%, transparent), 0 12px 28px rgba(0, 0, 0, .24);
     transform: translateY(-2px);
 }
 
@@ -642,4 +664,35 @@ body.neo-dashboard-revealing .topbar-actions {
         padding: 0 11px;
         font-size: 12px;
     }
+}
+
+/* NEO dashboard color-synced stars */
+.routine-link-button.neo-star-hover,
+.shop-panel.neo-star-hover {
+    --button-accent: var(--neo-blue);
+    --hover-star-core: var(--button-accent);
+    --hover-star-shadow: color-mix(in srgb, var(--button-accent) 44%, #030824);
+    --hover-star-center-stroke: color-mix(in srgb, var(--button-accent) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--button-accent) 55%, transparent);
+}
+.routine-link-button.neo-star-hover:hover,
+.routine-link-button.neo-star-hover:focus-visible,
+.shop-panel.neo-star-hover:hover,
+.shop-panel.neo-star-hover:focus-visible {
+    color: var(--button-accent);
+    border-color: var(--button-accent);
+}
+.shop-panel.neo-star-hover:hover :where(span, strong),
+.shop-panel.neo-star-hover:focus-visible :where(span, strong) {
+    color: var(--button-accent);
+}
+.personal-study-next.neo-star-hover:hover,
+.personal-study-next.neo-star-hover:focus-visible {
+    color: var(--neo-blue);
+}
+.personal-study-next.neo-star-hover:hover strong,
+.personal-study-next.neo-star-hover:focus-visible strong,
+.recent-item.neo-star-hover:hover b,
+.recent-item.neo-star-hover:focus-visible b {
+    color: var(--neo-blue);
 }

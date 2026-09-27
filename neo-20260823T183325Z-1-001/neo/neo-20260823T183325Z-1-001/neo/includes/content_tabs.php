@@ -15,8 +15,7 @@ $livroIcone = '
 ?>
 <nav class="content-tabs" aria-label="Navegação do conteúdo">
     <?php if ($conteudoBloqueadoTabs): ?>
-        <span class="<?= htmlspecialchars($classeLivroTab) ?>" title="Conteúdo bloqueado" aria-label="Conteúdo bloqueado" aria-disabled="true">
-            <?= estrelaHoverNeo() ?>
+        <span class="<?= htmlspecialchars($classeLivroTab) ?>" tabindex="0" data-manel-tip="Conclua a atividade atual para voltar à leitura do livro." aria-label="Conteúdo bloqueado" aria-disabled="true">
             <?= $livroIcone ?>
             <span class="content-tab-lock" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" focusable="false">
@@ -26,12 +25,12 @@ $livroIcone = '
             </span>
         </span>
     <?php else: ?>
-        <a class="<?= htmlspecialchars($classeLivroTab) ?>" href="livro.php?conteudo_id=<?= $conteudoIdTabs ?>" title="Conteúdo do livro" aria-label="Conteúdo do livro">
+        <a class="<?= htmlspecialchars($classeLivroTab) ?>" href="livro.php?conteudo_id=<?= $conteudoIdTabs ?>" data-manel-tip="Abre a leitura deste livro." aria-label="Conteúdo do livro">
             <?= estrelaHoverNeo() ?>
             <?= $livroIcone ?>
         </a>
     <?php endif; ?>
-    <a class="content-tab <?= $abaConteudoAtiva === 'questoes' ? 'active' : '' ?>" href="questoes.php?conteudo_id=<?= $conteudoIdTabs ?>" title="Gerar questões" aria-label="Gerar questões">
+    <a class="content-tab <?= $abaConteudoAtiva === 'questoes' ? 'active' : '' ?>" href="questoes.php?conteudo_id=<?= $conteudoIdTabs ?>" data-manel-tip="Abre a atividade de questões deste livro." aria-label="Questões do livro">
         <?= estrelaHoverNeo() ?>
         <svg class="content-tab-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
             <path d="M8 5h9a2 2 0 0 1 2 2v12H7a2 2 0 0 1-2-2V8"></path>

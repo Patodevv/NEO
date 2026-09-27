@@ -10,11 +10,11 @@
     position: relative;
     z-index: 2;
     width: min(100%, clamp(320px, 88vw, 420px));
-    border: 1px solid rgba(57, 80, 255, .34);
+    border: 1px solid color-mix(in srgb, var(--neo-blue) 34%, transparent);
     border-radius: clamp(20px, 4vw, 26px);
     padding: clamp(62px, 10vh, 72px) clamp(20px, 3.5vw, 38px) clamp(24px, 3vw, 30px);
-    background: #0c1b3b;
-    box-shadow: var(--panel-shadow), 0 0 0 3px rgba(26, 46, 255, .12);
+    background: var(--panel-bg);
+    box-shadow: var(--panel-shadow), 0 0 0 3px color-mix(in srgb, var(--neo-blue) 12%, transparent);
 }
 
 .auth-login-wrap {
@@ -99,7 +99,7 @@
 .auth-box .primary:focus-visible {
     color: #fff;
     background: var(--neo-blue-hover);
-    box-shadow: 0 0 0 3px rgba(26, 46, 255, .34);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neo-blue) 34%, transparent);
     outline: none;
     transform: translateY(-2px);
 }
@@ -120,13 +120,13 @@
     color: #fff;
     font-size: clamp(14px, 3.4vw, 15px);
     font-weight: 700;
-    box-shadow: 0 0 0 2px rgba(26, 46, 255, .28);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--neo-blue) 28%, transparent);
 }
 
 .auth-box .field input:focus {
-    border-color: #3950ff;
-    background: rgba(11, 26, 57, .94);
-    box-shadow: 0 0 0 3px rgba(26, 46, 255, .42);
+    border-color: color-mix(in srgb, var(--neo-blue) 76%, #ffffff);
+    background: color-mix(in srgb, var(--neo-blue) 10%, var(--control-bg));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neo-blue) 42%, transparent);
 }
 
 .auth-box .onboarding-panel-comet.neo-ai-loader-comet {
@@ -272,54 +272,54 @@
     width: 84px;
     height: 92px;
     overflow: visible;
-    filter: drop-shadow(0 0 8px rgba(26, 46, 255, .42));
+    filter: drop-shadow(0 0 8px color-mix(in srgb, var(--neo-transition-accent, var(--neo-blue)) 42%, transparent));
     animation: onboardingRocketWiggle 1.25s ease-in-out infinite;
 }
 
 .onboarding-shuttle-body {
     fill: #e9eeff;
-    stroke: #1230ff;
+    stroke: var(--neo-transition-accent, var(--neo-blue));
     stroke-width: 3.2;
     stroke-linejoin: round;
 }
 
 .onboarding-shuttle-wing {
-    fill: #aebcff;
-    stroke: #1230ff;
+    fill: color-mix(in srgb, var(--neo-transition-accent, var(--neo-blue)) 28%, #ffffff);
+    stroke: var(--neo-transition-accent, var(--neo-blue));
     stroke-width: 3;
     stroke-linejoin: round;
 }
 
 .onboarding-shuttle-booster {
     fill: #dce4ff;
-    stroke: #1230ff;
+    stroke: var(--neo-transition-accent, var(--neo-blue));
     stroke-width: 3;
     stroke-linejoin: round;
 }
 
 .onboarding-shuttle-booster-cap {
-    fill: #8feeff;
-    stroke: #1230ff;
+    fill: color-mix(in srgb, var(--neo-transition-accent, var(--neo-blue)) 42%, #ffffff);
+    stroke: var(--neo-transition-accent, var(--neo-blue));
     stroke-width: 2.6;
     stroke-linejoin: round;
 }
 
 .onboarding-shuttle-stripe {
-    fill: #1230ff;
-    stroke: #06116e;
+    fill: var(--neo-transition-accent, var(--neo-blue));
+    stroke: color-mix(in srgb, var(--neo-transition-accent, var(--neo-blue)) 42%, #020616);
     stroke-width: 1.5;
 }
 
 .onboarding-shuttle-window {
-    fill: #29d8ff;
-    stroke: #06116e;
+    fill: color-mix(in srgb, var(--neo-transition-accent, var(--neo-blue)) 46%, #ffffff);
+    stroke: color-mix(in srgb, var(--neo-transition-accent, var(--neo-blue)) 42%, #020616);
     stroke-width: 2.8;
     stroke-linejoin: round;
 }
 
 .onboarding-shuttle-detail {
     fill: none;
-    stroke: #8da2ff;
+    stroke: color-mix(in srgb, var(--neo-transition-accent, var(--neo-blue)) 58%, #ffffff);
     stroke-width: 2;
     stroke-linecap: round;
 }
@@ -332,8 +332,8 @@
 }
 
 .onboarding-rocket-flame {
-    fill: #29d8ff;
-    stroke: #1230ff;
+    fill: color-mix(in srgb, var(--neo-transition-accent, var(--neo-blue)) 62%, #ffffff);
+    stroke: var(--neo-transition-accent, var(--neo-blue));
     stroke-width: 2.4;
     stroke-linejoin: round;
     animation: onboardingRocketFlame .42s ease-in-out infinite alternate;
@@ -343,7 +343,7 @@
 
 .onboarding-rocket-flame-core {
     fill: #ffffff;
-    filter: drop-shadow(0 0 3px rgba(143, 238, 255, .9));
+    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--neo-transition-accent, var(--neo-blue)) 38%, #ffffff));
 }
 
 .onboarding-constellation {
@@ -352,13 +352,13 @@
     height: 110px;
     overflow: visible;
     opacity: 0;
-    filter: drop-shadow(0 0 4px rgba(18, 48, 255, .34));
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--neo-transition-accent, var(--neo-blue)) 34%, transparent));
     animation: onboardingConstellationFade 8s ease-in-out infinite;
 }
 
 .onboarding-constellation-line {
     fill: none;
-    stroke: #3950ff;
+    stroke: color-mix(in srgb, var(--neo-transition-accent, var(--neo-blue)) 76%, #ffffff);
     stroke-width: 1.6;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -366,7 +366,7 @@
 
 .onboarding-constellation-node rect {
     fill: #ffffff;
-    stroke: #1230ff;
+    stroke: var(--neo-transition-accent, var(--neo-blue));
     stroke-width: 1.7;
 }
 
@@ -404,7 +404,7 @@
 
 .onboarding-space-star::before {
     inset: 0;
-    background: #1230ff;
+    background: var(--neo-blue);
 }
 
 .onboarding-space-star i {
@@ -514,10 +514,10 @@
     display: flex;
     flex-direction: column;
     padding: clamp(60px, 10vh, 78px) clamp(18px, 4vw, 40px) clamp(108px, 16vh, 128px);
-    border: 1px solid rgba(57, 80, 255, .34);
+    border: 1px solid color-mix(in srgb, var(--neo-blue) 34%, transparent);
     border-radius: clamp(20px, 4vw, 26px);
-    background: #0c1b3b;
-    box-shadow: var(--panel-shadow), 0 0 0 4px rgba(26, 46, 255, .16);
+    background: var(--panel-bg);
+    box-shadow: var(--panel-shadow), 0 0 0 4px var(--neo-accent-soft);
     opacity: 0;
     pointer-events: none;
     transform: translate3d(108%, 0, 0) scale(.97);
@@ -598,13 +598,13 @@
     color: #fff;
     font-size: clamp(14px, 3.4vw, 15px);
     font-weight: 700;
-    box-shadow: 0 0 0 2px rgba(26, 46, 255, .28);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--neo-blue) 28%, transparent);
 }
 
 .onboarding-panel .field input:focus {
-    border-color: #3950ff;
-    background: rgba(11, 26, 57, .94);
-    box-shadow: 0 0 0 3px rgba(26, 46, 255, .42);
+    border-color: color-mix(in srgb, var(--neo-blue) 76%, #ffffff);
+    background: color-mix(in srgb, var(--neo-blue) 10%, var(--control-bg));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neo-blue) 42%, transparent);
 }
 
 .number-control {
@@ -616,14 +616,14 @@
     border: 1px solid var(--neo-blue);
     border-radius: clamp(13px, 3vw, 16px);
     background: var(--control-bg);
-    box-shadow: 0 0 0 2px rgba(26, 46, 255, .28);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--neo-blue) 28%, transparent);
     transition: border-color .18s ease, box-shadow .18s ease;
 }
 
 .number-control:focus-within {
-    border-color: #3950ff;
-    background: rgba(11, 26, 57, .94);
-    box-shadow: 0 0 0 3px rgba(26, 46, 255, .42);
+    border-color: color-mix(in srgb, var(--neo-blue) 76%, #ffffff);
+    background: color-mix(in srgb, var(--neo-blue) 10%, var(--control-bg));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neo-blue) 42%, transparent);
 }
 
 .onboarding-panel .number-control input {
@@ -762,7 +762,7 @@
     font-size: clamp(11px, 2.8vw, 12px);
     font-weight: 800;
     text-align: center;
-    box-shadow: 0 0 0 2px rgba(26, 46, 255, .22);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--neo-blue) 22%, transparent);
     transition: color .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 
@@ -777,7 +777,7 @@
 .gender-option input:focus-visible + span,
 .preference-chip input:focus-visible + span {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(26, 46, 255, .34);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neo-blue) 34%, transparent);
 }
 
 .gender-option input:checked + span,
@@ -785,7 +785,7 @@
     border-color: var(--neo-blue);
     background: var(--neo-blue-hover-strong);
     color: #fff;
-    box-shadow: 0 0 0 2px rgba(26, 46, 255, .34);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--neo-blue) 34%, transparent);
 }
 
 .preference-grid {
@@ -847,14 +847,14 @@
     color: var(--text);
     line-height: 1.55;
     resize: none;
-    box-shadow: 0 0 0 2px rgba(26, 46, 255, .28);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--neo-blue) 28%, transparent);
     transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
 }
 
 .onboarding-panel .preferences-text-field textarea:focus {
-    border-color: #3950ff;
-    background: rgba(11, 26, 57, .94);
-    box-shadow: 0 0 0 3px rgba(26, 46, 255, .42);
+    border-color: color-mix(in srgb, var(--neo-blue) 76%, #ffffff);
+    background: color-mix(in srgb, var(--neo-blue) 10%, var(--control-bg));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neo-blue) 42%, transparent);
     outline: none;
 }
 
@@ -956,7 +956,7 @@
     color: #fff;
     border-color: var(--neo-blue);
     background: var(--neo-blue-hover);
-    box-shadow: 0 0 0 3px rgba(26, 46, 255, .34);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neo-blue) 34%, transparent);
     outline: none;
     transform: translateY(-2px);
 }
@@ -986,7 +986,7 @@
 .onboarding-back:focus-visible {
     color: #fff;
     background: var(--neo-blue-hover);
-    box-shadow: 0 0 0 3px rgba(26, 46, 255, .34);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--neo-blue) 34%, transparent);
     outline: none;
     transform: translateY(-2px);
 }

@@ -25,6 +25,24 @@ function adaptiveSlug(string $text): string
     return trim((string)preg_replace('/[^a-z0-9]+/', '_', $text), '_');
 }
 
+function adaptiveSubjectAllowed(array $profile, string $subject): bool
+{
+    $selected = is_array($profile['materias']['selected'] ?? null) ? $profile['materias']['selected'] : [];
+    $other = trim((string)($profile['materias']['other'] ?? ''));
+    $added = is_array($profile['materias_adicionadas'] ?? null) ? $profile['materias_adicionadas'] : [];
+    if (!$selected && $other === '' && !$added) {
+        return true;
+    }
+
+    $subjectSlug = adaptiveSlug($subject);
+    foreach (array_merge($selected, $other !== '' ? [$other] : [], $added) as $allowed) {
+        if (is_string($allowed) && adaptiveSlug($allowed) === $subjectSlug) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function adaptiveInitialDifficulty(array $profile, string $materia): int
 {
     $slug = adaptiveSlug($materia);
@@ -365,18 +383,27 @@ function adaptiveSummary(PDO $pdo, int $userId): array
 {
     $profile = adaptiveProfile(adaptiveUser($pdo, $userId));
     $overrides = adaptiveOverrides($pdo, $userId);
+    $stmt = $pdo->prepare('SELECT c.id,c.titulo,c.materia_id,c.dificuldade,c.ordem,m.nome AS materia_nome FROM conteudos c JOIN materias m ON m.id=c.materia_id WHERE c.user_id = ? AND c.removido_em IS NULL ORDER BY m.nome,c.ordem,c.id');
+    $stmt->execute([$userId]);
+    $contents = array_values(array_filter(
+        $stmt->fetchAll(PDO::FETCH_ASSOC),
+        static fn(array $content): bool => adaptiveSubjectAllowed($profile, (string)$content['materia_nome'])
+    ));
+    $allowedContentIds = array_fill_keys(array_map(static fn(array $content): int => (int)$content['id'], $contents), true);
+
     $stmt = $pdo->prepare('SELECT e.* FROM neo_learning_events e JOIN conteudos c ON c.id=e.conteudo_id AND c.user_id=e.user_id WHERE e.user_id = ? AND c.removido_em IS NULL ORDER BY e.criado_em DESC,e.id DESC LIMIT 5000');
     $stmt->execute([$userId]);
-    $events = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $events = array_values(array_filter(
+        $stmt->fetchAll(PDO::FETCH_ASSOC),
+        static fn(array $event): bool => isset($allowedContentIds[(int)$event['conteudo_id']])
+    ));
     $byContent = [];
     foreach ($events as $event) {
         $byContent[(int)$event['conteudo_id']][] = $event;
     }
-    $stmt = $pdo->prepare('SELECT c.id,c.titulo,c.materia_id,c.dificuldade,c.ordem,m.nome AS materia_nome FROM conteudos c JOIN materias m ON m.id=c.materia_id WHERE c.user_id = ? AND c.removido_em IS NULL ORDER BY m.nome,c.ordem,c.id');
-    $stmt->execute([$userId]);
     $map = [];
     $contentKeys = array_flip($profile['content_map'] ?? []);
-    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $content) {
+    foreach ($contents as $content) {
         $observations = $byContent[(int)$content['id']] ?? [];
         $mastery = adaptiveMastery($observations);
         $due = count(array_filter($observations, static fn(array $e): bool => !$e['acertou'] && !$e['revisado_em'] && $e['revisar_em'] <= date('Y-m-d')));
@@ -506,13 +533,17 @@ function adaptiveCreateExam(PDO $pdo, int $userId, array $filters): int
         throw new DomainException('Escolha um tipo de simulado válido.');
     }
     $summary = adaptiveSummary($pdo,$userId);
+    $allowedContentIds = array_values(array_unique(array_map('intval', array_column($summary['map'], 'id'))));
+    if (!$allowedContentIds) {
+        throw new DomainException('Escolha uma matéria e crie o livro de introdução antes de montar um simulado.');
+    }
     $count = filter_var($filters['quantidade'] ?? 10,FILTER_VALIDATE_INT);
     $minutes = filter_var($filters['minutos'] ?? $summary['routine']['minutes'],FILTER_VALIDATE_INT);
     if ($count === false || $count < 1 || $count > 30 || $minutes === false || $minutes < 5 || $minutes > 150) {
         throw new DomainException('Use de 1 a 30 questões e de 5 a 150 minutos.');
     }
-    $where = ['q.user_id=?','c.user_id=?','c.removido_em IS NULL'];
-    $params = [$userId,$userId];
+    $where = ['q.user_id=?','c.user_id=?','c.removido_em IS NULL','q.conteudo_id IN (' . implode(',',array_fill(0,count($allowedContentIds),'?')) . ')'];
+    $params = array_merge([$userId,$userId], $allowedContentIds);
     if ($type === 'materia') {
         $where[]='c.materia_id=?'; $params[]=(int)($filters['materia_id'] ?? 0);
     } elseif ($type === 'conteudo') {
@@ -579,6 +610,23 @@ function adaptiveExam(PDO $pdo, int $userId, int $examId, bool $lock = false): a
     $exam['questions']=json_decode($exam['questoes_json'],true) ?: [];
     $exam['filters']=json_decode($exam['filtros_json'],true) ?: [];
     $exam['answers']=json_decode($exam['respostas_json'] ?? '',true) ?: [];
+    $contentIds = array_values(array_unique(array_filter(array_map(
+        static fn(array $question): int => (int)($question['conteudo_id'] ?? 0),
+        array_filter($exam['questions'], 'is_array')
+    ))));
+    if ($contentIds) {
+        $marcadores = implode(',',array_fill(0,count($contentIds),'?'));
+        $stmtConteudos = $pdo->prepare("SELECT c.id,m.nome AS materia_nome FROM conteudos c JOIN materias m ON m.id=c.materia_id WHERE c.user_id=? AND c.removido_em IS NULL AND c.id IN ({$marcadores})");
+        $stmtConteudos->execute(array_merge([$userId],$contentIds));
+        $perfil = adaptiveProfile(adaptiveUser($pdo,$userId));
+        $validos = [];
+        foreach ($stmtConteudos->fetchAll(PDO::FETCH_ASSOC) as $conteudo) {
+            if (adaptiveSubjectAllowed($perfil,(string)$conteudo['materia_nome'])) $validos[(int)$conteudo['id']] = true;
+        }
+        foreach ($contentIds as $contentId) {
+            if (!isset($validos[$contentId])) throw new DomainException('Este simulado usa uma matéria que não faz mais parte do seu perfil. Crie um novo desafio.');
+        }
+    }
     return $exam;
 }
 

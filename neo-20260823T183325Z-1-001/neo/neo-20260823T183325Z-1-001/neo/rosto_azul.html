@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <title>Rosto Azul Animado</title>
 <style>
+  :root {
+    --neo-face-color: #1a2eff;
+  }
+
   html, body {
     margin: 0;
     padding: 0;
@@ -22,7 +26,11 @@
     display: block;
   }
   .part {
-    fill: #1a2eff;
+    fill: var(--neo-face-color);
+  }
+
+  path {
+    stroke: var(--neo-face-color);
   }
 </style>
 </head>
@@ -31,11 +39,19 @@
 <svg viewBox="0 0 300 220" xmlns="http://www.w3.org/2000/svg">
   <rect class="part" id="eyeLeft" x="95" y="70" width="30" height="60" rx="15" ry="15"/>
   <rect class="part" id="eyeRight" x="175" y="70" width="30" height="60" rx="15" ry="15"/>
-  <path id="eyeRightWink" d="M 175 100 Q 190 84 205 100" stroke="#1a2eff" stroke-width="10" stroke-linecap="round" fill="none" opacity="0"/>
-  <path id="mouth" d="M 128 150 L 172 150" stroke="#1a2eff" stroke-width="22" stroke-linecap="round" fill="none"/>
+  <path id="eyeRightWink" d="M 175 100 Q 190 84 205 100" stroke-width="10" stroke-linecap="round" fill="none" opacity="0"/>
+  <path id="mouth" d="M 128 150 L 172 150" stroke-width="22" stroke-linecap="round" fill="none"/>
 </svg>
 
 <script>
+  try {
+    const parentStyles = window.parent.getComputedStyle(window.parent.document.documentElement);
+    const color = parentStyles.getPropertyValue('--manel-color').trim()
+      || parentStyles.getPropertyValue('--neo-transition-accent').trim()
+      || parentStyles.getPropertyValue('--neo-blue').trim();
+    if (color) document.documentElement.style.setProperty('--neo-face-color', color);
+  } catch (_) {}
+
   const eyeLeft = document.getElementById('eyeLeft');
   const eyeRight = document.getElementById('eyeRight');
   const eyeRightWink = document.getElementById('eyeRightWink');

@@ -1,109 +1,749 @@
 .reader {
+    --book-accent: var(--materia-cor, var(--neo-blue));
     position: relative;
     width: 100%;
-    min-height: clamp(260px, 32vw, 360px);
     margin: 0;
-    padding: clamp(22px, 3.2vw, 38px) clamp(18px, 3.5vw, 42px);
-    border-radius: clamp(20px, 3.4vw, 34px);
-    contain: layout paint;
+    padding: 0;
 }
 
-.reader article {
-    max-width: 940px;
-    padding-top: 14px;
-    color: #d8d8d8;
+.reader > .ai-provider-badge {
+    z-index: 40;
+    top: 28px;
+    right: 30px;
 }
 
-.reader article p {
-    margin: 0 0 clamp(11px, 1.5vw, 14px);
-    color: #d8d8d8;
-    font-size: clamp(14px, 1.6vw, 16px);
-    line-height: 1.62;
+.book-reader {
+    width: 100%;
+    margin: 0;
+    outline: none;
+    perspective: 2800px;
+}
+
+.book-shell {
+    position: relative;
+    isolation: isolate;
+    width: 100%;
+    padding: 12px 14px 17px;
+    border: 1px solid var(--panel-border);
+    border-radius: var(--panel-radius);
+    background: var(--panel-bg);
+    box-shadow: var(--panel-shadow), inset 0 -2px 0 color-mix(in srgb, var(--book-accent) 34%, transparent);
+    transition: box-shadow .2s ease;
+}
+
+.book-reader:focus-visible .book-shell {
+    border-color: var(--neo-blue);
+    box-shadow: var(--panel-shadow), 0 0 0 3px var(--neo-blue-glow);
+}
+
+.book-shell::before,
+.book-shell::after {
+    content: '';
+    position: absolute;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.book-shell::before {
+    top: 20px;
+    right: 7px;
+    bottom: 72px;
+    width: 8px;
+    border-radius: 0 12px 12px 0;
+    background: repeating-linear-gradient(to right, #4e6592 0 1px, #17294b 1px 2px);
+    opacity: .46;
+}
+
+.book-shell::after {
+    right: 16px;
+    bottom: 66px;
+    left: 16px;
+    height: 8px;
+    border-radius: 0 0 13px 13px;
+    background: repeating-linear-gradient(to bottom, #4e6592 0 1px, #142746 1px 2px);
+    opacity: .46;
+}
+
+.book-stage {
+    position: relative;
+    z-index: 4;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 15px 18px 13px 13px;
+    contain: layout;
+    transform-style: preserve-3d;
+}
+
+.book-spread {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    min-height: 430px;
+    perspective: 2800px;
+    perspective-origin: 50% 42%;
+    transform-style: preserve-3d;
+}
+
+.book-sheet {
+    position: relative;
+    min-width: 0;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid var(--panel-border);
+    color: #dce5ff;
+    background: color-mix(in srgb, var(--surface-soft) 88%, var(--panel-bg));
+    backface-visibility: hidden;
+}
+
+.book-sheet[role="button"] {
+    cursor: pointer;
+}
+
+.book-sheet[role="button"]:focus-visible {
+    outline: 2px solid var(--materia-cor, var(--neo-blue));
+    outline-offset: -5px;
+}
+
+.book-sheet-left {
+    border-radius: 15px 4px 6px 13px;
+    box-shadow: inset -18px 0 22px rgba(0, 0, 0, .15), inset 1px 0 rgba(255, 255, 255, .035);
+    cursor: w-resize;
+}
+
+.book-sheet-right {
+    border-radius: 4px 18px 13px 6px;
+    box-shadow: inset 18px 0 22px rgba(0, 0, 0, .13), inset -1px 0 rgba(255, 255, 255, .035);
+    cursor: e-resize;
+}
+
+.book-sheet::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 16px;
+    pointer-events: none;
+}
+
+.book-sheet-left::after {
+    right: 0;
+    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, .16));
+}
+
+.book-sheet-right::after {
+    left: 0;
+    background: linear-gradient(90deg, rgba(0, 0, 0, .15), transparent);
+}
+
+.book-gutter {
+    position: absolute;
+    z-index: 18;
+    top: 1px;
+    bottom: 1px;
+    left: 50%;
+    width: 18px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, .32) 46%, rgba(104, 127, 203, .12) 52%, transparent);
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.book-spine {
+    position: absolute;
+    z-index: 12;
+    top: 5px;
+    bottom: 63px;
+    left: 50%;
+    width: 24px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, transparent, #050d20 42%, color-mix(in srgb, var(--book-accent) 18%, #10254b) 52%, transparent);
+    opacity: .68;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.book-page-sources {
+    display: none !important;
+}
+
+.book-page-measurer {
+    position: fixed !important;
+    z-index: -1 !important;
+    top: 0 !important;
+    left: -10000px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    visibility: hidden !important;
+    contain: none !important;
+    pointer-events: none !important;
+}
+
+.book-page-measurer .book-page-inner {
+    min-height: 0;
+}
+
+.book-page-inner {
+    position: relative;
+    z-index: 2;
+    min-height: 100%;
+    padding: clamp(42px, 4.8vw, 62px) clamp(27px, 4vw, 58px) clamp(58px, 6vw, 76px);
+}
+
+.book-page-heading {
+    margin-bottom: clamp(20px, 2.5vw, 29px);
+    padding-bottom: 17px;
+    border-bottom: 1px solid color-mix(in srgb, var(--book-accent) 42%, transparent);
+}
+
+.book-page-heading > span {
+    display: block;
+    margin-bottom: 8px;
+    color: color-mix(in srgb, var(--book-accent) 48%, #ffffff);
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+}
+
+.book-page-heading h2 {
+    margin: 0;
+    color: #f5f7ff;
+    font-size: clamp(20px, 2.25vw, 30px);
+    line-height: 1.16;
+    text-wrap: balance;
+}
+
+.book-page-content p,
+.book-page-content li {
+    color: #d6dff4;
+    font-size: clamp(13px, 1.32vw, 16px);
+    line-height: 1.72;
+}
+
+.book-page-content p {
+    margin: 0 0 16px;
     white-space: pre-line;
 }
 
-.reader article h2 {
-    margin: clamp(18px, 2.4vw, 24px) 0 clamp(7px, 1vw, 10px);
-    color: #fff;
-    font-size: clamp(18px, 2.2vw, 22px);
-    line-height: 1.25;
+.book-page-content p:last-child {
+    margin-bottom: 0;
 }
 
-.reader article h2:first-child {
-    margin-top: 0;
+.book-page-content ul {
+    display: grid;
+    gap: 9px;
+    margin: 0 0 16px;
+    padding: 0;
+    list-style: none;
+}
+
+.book-page-content li {
+    position: relative;
+    padding-left: 20px;
+}
+
+.book-page-content li::before {
+    content: '';
+    position: absolute;
+    top: .7em;
+    left: 1px;
+    width: 6px;
+    height: 6px;
+    border-radius: 2px;
+    background: var(--book-accent);
+    transform: rotate(45deg);
+}
+
+.book-page-number {
+    position: absolute;
+    right: clamp(22px, 3vw, 40px);
+    bottom: 21px;
+    color: rgba(205, 216, 248, .5);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.book-sheet-left .book-page-number {
+    right: auto;
+    left: clamp(22px, 3vw, 40px);
+}
+
+.book-page-canvas {
+    position: absolute;
+    z-index: 36;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    contain: strict;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: opacity;
+    pointer-events: none;
+}
+
+.book-page-canvas[hidden] {
+    display: none;
+}
+
+.book-page-canvas.is-active {
+    opacity: 1;
+}
+
+.book-transition-cover {
+    position: absolute;
+    z-index: 16;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    height: 100%;
+    background:
+        radial-gradient(circle at 50% 0, color-mix(in srgb, var(--neo-transition-accent, var(--neo-blue)) 10%, transparent), transparent 58%),
+        linear-gradient(145deg, color-mix(in srgb, var(--neo-transition-accent, var(--neo-blue)) 16%, var(--book-page-bg, var(--control-bg))), var(--book-page-bg, var(--control-bg)));
+    box-shadow: inset 0 0 28px color-mix(in srgb, var(--neo-transition-accent, var(--neo-blue)) 14%, transparent);
+    pointer-events: none;
+    contain: layout paint;
+}
+
+.book-transition-cover-left { left: 0; }
+.book-transition-cover-right { right: 0; }
+
+.book-transition-cover.is-revealed {
+    visibility: hidden;
+}
+
+.book-turn-leaf {
+    position: absolute;
+    z-index: 30;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    will-change: transform;
+    pointer-events: none;
+}
+
+.book-turn-leaf-next {
+    transform-origin: 0 50%;
+}
+
+.book-turn-leaf-previous {
+    transform-origin: 100% 50%;
+}
+
+.book-turn-leaf.is-single-page {
+    left: 0;
+    width: 50%;
+    transform-origin: 100% 50%;
+}
+
+.book-turn-strip {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    height: 100%;
+    transform-origin: 0 50%;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    will-change: transform;
+}
+
+.book-turn-strip-face {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+.book-turn-strip-back {
+    transform: rotateY(180deg);
+}
+
+.book-turn-strip-page {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    height: 100%;
+    max-width: none;
+    pointer-events: none;
+}
+
+.book-turn-face {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    pointer-events: none;
+}
+
+.book-turn-face-front {
+    transform: translateZ(.4px);
+}
+
+.book-turn-face-back {
+    transform: rotateY(180deg) translateZ(.4px);
+}
+
+.book-end-page {
+    height: 100%;
+    min-height: 100%;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 8px;
+    padding: 40px;
+    color: #9eabd0;
+    text-align: center;
+}
+
+.book-end-page strong {
+    color: #eef1ff;
+    font-size: clamp(18px, 2vw, 25px);
+}
+
+.book-end-page > span:last-child {
+    font-size: 12px;
+}
+
+.book-end-symbol {
+    position: relative;
+    width: 64px;
+    height: 42px;
+    margin-bottom: 10px;
+}
+
+.book-end-symbol i {
+    position: absolute;
+    top: 8px;
+    left: 12px;
+    width: 34px;
+    height: 25px;
+    border: 2px solid var(--book-accent);
+    border-radius: 4px 10px 10px 4px;
+    background: #0b1c3d;
+}
+
+.book-end-symbol i:nth-child(2) { transform: translate(5px, 3px); opacity: .62; }
+.book-end-symbol i:nth-child(3) { transform: translate(10px, 6px); opacity: .3; }
+
+.book-navigation {
+    position: relative;
+    z-index: 16;
+    display: grid;
+    grid-template-columns: minmax(110px, 1fr) minmax(150px, 1.4fr) minmax(110px, 1fr);
+    align-items: center;
+    gap: 20px;
+    padding: 17px 6px 0;
+}
+
+.book-nav-button {
+    min-width: 112px;
+    min-height: 43px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 9px 15px;
+    border: 1px solid var(--panel-border);
+    border-radius: 13px;
+    background: var(--control-bg);
+    color: #e8ecff;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease, opacity .18s ease;
+}
+
+.book-nav-button:first-child { justify-self: start; }
+.book-nav-button:last-child { justify-self: end; }
+
+.book-nav-button svg {
+    width: 18px;
+    height: 18px;
+}
+
+.book-nav-button:hover:not(:disabled),
+.book-nav-button:focus-visible:not(:disabled) {
+    border-color: var(--neo-blue);
+    background: var(--neo-blue-hover);
+    box-shadow: 0 0 0 3px var(--neo-blue-glow);
+    transform: translateY(-2px);
+}
+
+.book-nav-button:disabled {
+    cursor: default;
+    opacity: .3;
+}
+
+.book-progress {
+    display: grid;
+    gap: 8px;
+    color: #9eabd1;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.book-progress strong { color: #fff; }
+
+.book-progress-track {
+    display: block;
+    width: 100%;
+    height: 3px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(142, 158, 213, .18);
+}
+
+.book-progress-track i {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--book-accent);
+    transition: width .28s ease;
 }
 
 .reader-actions {
-    margin-top: clamp(22px, 3vw, 30px);
-    padding-top: clamp(16px, 2.2vw, 20px);
+    width: 100%;
+    margin: clamp(28px, 4vw, 40px) 0 0;
+    padding-top: 18px;
     border-top: 1px solid var(--panel-border);
     display: flex;
     justify-content: flex-end;
 }
 
-.reader-actions form {
-    margin: 0;
-}
+.reader-actions form { margin: 0; }
 
 .reader-lock {
-    min-height: clamp(220px, 28vw, 280px);
+    min-height: clamp(260px, 34vw, 360px);
     display: grid;
     place-items: center;
     align-content: center;
-    gap: clamp(9px, 1.8vw, 12px);
+    gap: 11px;
+    padding: clamp(28px, 5vw, 50px);
     text-align: center;
 }
 
 .reader-lock-icon {
-    width: clamp(48px, 8vw, 64px);
-    height: clamp(48px, 8vw, 64px);
+    width: 58px;
+    height: 58px;
     display: grid;
     place-items: center;
     border: 1px solid var(--neo-blue);
-    border-radius: clamp(16px, 3vw, 22px);
+    border-radius: 19px;
     background: var(--btn-bg);
     color: var(--btn-icon);
     box-shadow: 0 0 0 4px var(--neo-blue-glow);
 }
 
-.reader-lock-icon svg {
-    width: clamp(22px, 3.8vw, 28px);
-    height: clamp(22px, 3.8vw, 28px);
-}
+.reader-lock-icon svg { width: 26px; height: 26px; }
+.reader-lock strong { color: #fff; font-size: 22px; line-height: 1; }
+.reader-lock p { max-width: 390px; color: var(--muted-strong); font-size: 14px; line-height: 1.45; }
+.question-btn { margin-top: 0; }
 
-.reader-lock strong {
-    color: #fff;
-    font-size: clamp(19px, 3.4vw, 24px);
-    line-height: 1;
-}
+@media (max-width: 720px) {
+    .reader > .ai-provider-badge { top: 21px; right: 22px; }
 
-.reader-lock p {
-    max-width: 390px;
-    color: var(--muted-strong);
-    font-size: clamp(12px, 2.6vw, 14px);
-    line-height: 1.45;
-}
-
-.question-btn {
-    margin-top: 0;
-}
-
-@media (max-width: 640px) {
-    .reader {
-        min-height: clamp(240px, 70vw, 300px);
-        padding: clamp(18px, 5vw, 24px);
-        border-radius: clamp(18px, 5vw, 22px);
+    .book-shell {
+        padding: 9px 10px 14px 14px;
+        border-radius: 16px 23px 23px 16px;
+        box-shadow: 0 14px 26px rgba(0, 0, 0, .24);
     }
 
-    .reader article p {
-        font-size: clamp(14px, 3.8vw, 15px);
+    .book-spread { display: block; min-height: 430px; }
+    .book-sheet-left { display: none; }
+
+    .book-sheet-right {
+        width: 100%;
+        border-radius: 8px 17px 12px 7px;
+        box-shadow: inset 14px 0 22px rgba(0, 0, 0, .15);
     }
 
-    .reader-actions {
-        justify-content: stretch;
-    }
-
-    .reader-actions .ghost {
+    .book-transition-cover-right {
+        left: 0;
         width: 100%;
     }
+
+    .book-turn-leaf.is-compact {
+        left: 0;
+        width: 100%;
+        transform-origin: 50% 50%;
+    }
+
+    .book-gutter { left: 0; width: 15px; transform: none; }
+    .book-spine { left: 5px; width: 17px; transform: none; }
+    .book-page-inner { padding: 48px 25px 62px; }
+    .book-page-heading h2 { font-size: clamp(22px, 7vw, 29px); }
+
+    .book-page-content p,
+    .book-page-content li { font-size: 15px; line-height: 1.67; }
+
+    .book-navigation {
+        grid-template-columns: 46px minmax(100px, 1fr) 46px;
+        gap: 9px;
+        padding-top: 14px;
+    }
+
+    .book-nav-button {
+        width: 46px;
+        min-width: 46px;
+        height: 42px;
+        min-height: 42px;
+        padding: 0;
+    }
+
+    .book-nav-button span {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+
+    .reader-actions { justify-content: stretch; }
+    .reader-actions form,
+    .reader-actions .ghost { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .book-progress-track i,
+    .book-nav-button {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+.lesson-page.materia-theme :where(.book-nav-button, .ghost, .lesson-icon-btn).neo-star-hover {
+    --hover-star-core: var(--materia-cor, var(--book-accent, var(--neo-blue)));
+    --hover-star-shadow: color-mix(in srgb, var(--materia-cor, var(--book-accent, var(--neo-blue))) 44%, #030824);
+    --hover-star-center-stroke: color-mix(in srgb, var(--materia-cor, var(--book-accent, var(--neo-blue))) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--materia-cor, var(--book-accent, var(--neo-blue))) 55%, transparent);
+}
+
+/* NEO book color-synced stars */
+.lesson-page.materia-theme :where(.book-nav-button, .ghost, .lesson-icon-btn, .content-tab).neo-star-hover,
+.lesson-page.materia-theme .content-tab {
+    --button-accent: var(--materia-cor, var(--book-accent, var(--neo-blue)));
+    --hover-star-core: var(--button-accent);
+    --hover-star-shadow: color-mix(in srgb, var(--button-accent) 44%, #030824);
+    --hover-star-center-stroke: color-mix(in srgb, var(--button-accent) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--button-accent) 55%, transparent);
+}
+.lesson-page.materia-theme :where(.book-nav-button, .ghost, .lesson-icon-btn, .content-tab):hover,
+.lesson-page.materia-theme :where(.book-nav-button, .ghost, .lesson-icon-btn, .content-tab):focus-visible {
+    color: var(--button-accent, var(--materia-cor, var(--book-accent, var(--neo-blue))));
+    border-color: var(--button-accent, var(--materia-cor, var(--book-accent, var(--neo-blue))));
+}
+.book-nav-button {
+    transition: color .18s ease, transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease, opacity .18s ease;
+}
+
+/* NEO: botões dos estudos internos usam o tema do site, não a cor da matéria como fundo. */
+.lesson-page.materia-theme :where(.book-nav-button, .ghost, .lesson-icon-btn, .content-tab).neo-star-hover,
+.lesson-page.materia-theme .content-tab {
+    --button-accent: var(--neo-blue);
+    --hover-star-core: var(--neo-blue);
+    --hover-star-shadow: color-mix(in srgb, var(--neo-blue) 44%, #030824);
+    --hover-star-center-stroke: color-mix(in srgb, var(--neo-blue) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--neo-blue) 55%, transparent);
+    border-color: var(--neo-blue);
+    background: color-mix(in srgb, var(--neo-blue) 10%, var(--control-bg, var(--btn-bg)));
+}
+.lesson-page.materia-theme :where(.book-nav-button, .ghost, .lesson-icon-btn, .content-tab):hover,
+.lesson-page.materia-theme :where(.book-nav-button, .ghost, .lesson-icon-btn, .content-tab):focus-visible,
+.lesson-page.materia-theme .content-tab.active {
+    color: var(--btn-icon);
+    border-color: var(--neo-blue);
+    background: color-mix(in srgb, var(--neo-blue) 20%, var(--control-bg, var(--btn-bg)));
+    box-shadow: 0 0 0 4px var(--neo-blue-glow);
+}
+.lesson-page.materia-theme .lesson-icon-btn,
+.lesson-page.materia-theme .lesson-icon-btn:hover,
+.lesson-page.materia-theme .lesson-icon-btn:focus-visible {
+    color: var(--materia-cor, var(--btn-icon));
+}
+
+/* NEO theme sync: o tema do site também pinta o miolo do livro. */
+.book-shell {
+    border-color: color-mix(in srgb, var(--neo-blue) 30%, var(--panel-border));
+    background:
+        linear-gradient(145deg, color-mix(in srgb, var(--neo-blue) 34%, #040713), color-mix(in srgb, var(--neo-blue) 18%, #050916)),
+        var(--panel-bg);
+    box-shadow: var(--panel-shadow), inset 0 -2px 0 color-mix(in srgb, var(--neo-blue) 34%, transparent);
+}
+
+.book-reader:focus-visible .book-shell {
+    border-color: var(--neo-blue);
+}
+
+.book-shell::before {
+    background: repeating-linear-gradient(
+        to right,
+        color-mix(in srgb, var(--neo-blue) 48%, #ffffff) 0 1px,
+        color-mix(in srgb, var(--neo-blue) 32%, #050713) 1px 2px
+    );
+}
+
+.book-shell::after {
+    background: repeating-linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--neo-blue) 48%, #ffffff) 0 1px,
+        color-mix(in srgb, var(--neo-blue) 32%, #050713) 1px 2px
+    );
+}
+
+.book-sheet {
+    border-color: color-mix(in srgb, var(--neo-blue) 26%, var(--panel-border));
+    background:
+        radial-gradient(circle at 50% 0, color-mix(in srgb, var(--neo-blue) 18%, transparent), transparent 56%),
+        linear-gradient(145deg, color-mix(in srgb, var(--neo-blue) 30%, #151827), color-mix(in srgb, var(--neo-blue) 18%, #101423));
+}
+
+.book-sheet-left::after {
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--neo-blue) 20%, rgba(0, 0, 0, .28)));
+}
+
+.book-sheet-right::after {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--neo-blue) 18%, rgba(0, 0, 0, .26)), transparent);
+}
+
+.book-gutter {
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(0, 0, 0, .30) 44%,
+        color-mix(in srgb, var(--neo-blue) 34%, transparent) 52%,
+        transparent
+    );
+}
+
+.book-spine {
+    background: linear-gradient(
+        90deg,
+        transparent,
+        color-mix(in srgb, var(--neo-blue) 22%, #050713) 42%,
+        color-mix(in srgb, var(--neo-blue) 40%, #0b0d18) 52%,
+        transparent
+    );
+}
+
+.book-end-symbol i:first-child {
+    background: color-mix(in srgb, var(--neo-blue) 32%, #0b0d18);
 }

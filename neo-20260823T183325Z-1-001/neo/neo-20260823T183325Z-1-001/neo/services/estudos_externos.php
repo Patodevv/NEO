@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/manel.php';
+require_once __DIR__ . '/ai_safety.php';
 
 function estudoUrlPublica(string $url): array
 {
@@ -168,6 +169,7 @@ function manelEstudoExterno(array $usuario, array $payload): array
     $message = trim($payload['message']);
     $quantity = filter_var($payload['quantity'] ?? 5, FILTER_VALIDATE_INT);
     if (mb_strlen($message) < 3 || mb_strlen($message) > 4000 || $quantity === false || $quantity < 2 || $quantity > 10) throw new InvalidArgumentException('Digite seu pedido e escolha de 2 a 10 questões.');
+    validarPedidoIASeguro($message, 'estudo externo');
     preg_match_all('~(?:https?://|www\.)[^\s<>"\x27]+~iu', $message, $matches);
     $urls = array_values(array_unique(array_map(function ($url) {
         $url = rtrim($url, '.,;!?');
@@ -191,7 +193,10 @@ function manelEstudoExterno(array $usuario, array $payload): array
                 'properties' => ['prompt' => $string, 'options' => ['type' => 'array', 'items' => $string], 'answer' => ['type' => 'integer'], 'explanation' => $string]],
         ]],
     ];
-    $system = 'Você é Manel, o tutor de estudos do NEO. Responda em português, com clareza e acolhimento. '
+    $skinManel = ($GLOBALS['pdo'] ?? null) instanceof PDO ? manelSkinAtiva($GLOBALS['pdo'], $usuario) : [];
+    $nomeManel = manelTextoSeguro(manelNomeAtivo($skinManel), 40);
+    $instrucaoPersonalidade = manelInstrucaoPersonalidade(manelPersonalidadeAtiva($skinManel));
+    $system = 'Você é ' . $nomeManel . ', o tutor de estudos do NEO. Responda em português. ' . $instrucaoPersonalidade . ' '
         . 'Crie um estudo personalizado ao pedido e ao nível atual do aluno: ' . max(1, (int)($usuario['nivel'] ?? 1)) . '. '
         . 'Entregue título curto, resumo autoral em até 450 palavras e exatamente ' . $quantity . ' questões de múltipla escolha. '
         . 'Cada questão tem quatro opções diferentes, um índice answer de 0 a 3 e uma explicação. Respeite o foco, dificuldade e objetivos pedidos pelo aluno. '

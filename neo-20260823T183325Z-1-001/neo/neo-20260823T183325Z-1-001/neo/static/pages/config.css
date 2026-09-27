@@ -1,5 +1,6 @@
 .settings-account,
 .settings-account-action {
+    contain: layout;
     display: grid;
     grid-template-columns: clamp(38px, 5vw, 52px) minmax(0, 1fr) auto;
     align-items: center;
@@ -52,6 +53,7 @@
 }
 
 .settings-panel {
+    contain: layout;
     display: grid;
     gap: clamp(15px, 2vw, 20px);
     padding: clamp(20px, 2.5vw, 26px) clamp(16px, 2.6vw, 30px);

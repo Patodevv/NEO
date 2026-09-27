@@ -219,7 +219,9 @@
                     radio.addEventListener('change', () => {
                         entry.answers = Array.isArray(entry.answers) ? entry.answers : [];
                         entry.answers[qi] = oi;
+                        field.querySelectorAll('.study-option').forEach(item => item.classList.toggle('is-checked', item.querySelector('input')?.checked === true));
                     });
+                    if (radio.checked) label.classList.add('is-checked');
                     label.append(radio, element('strong', '', String.fromCharCode(65 + oi)), element('span', '', option));
                     if (reviewed && oi === question.answer) label.classList.add('is-correct');
                     if (reviewed && answers[qi] === oi && oi !== question.answer) label.classList.add('is-wrong');
@@ -336,9 +338,21 @@
             let offset = 0;
             let lastScroll = 0;
             const duration = Math.min(14000, Math.max(800, total / 95 * 1000));
+            function resumeWhenVisible() {
+                if (settled) return;
+                if (document.hidden) return;
+                lastTime = null;
+                frame = requestAnimationFrame(tick);
+                document.removeEventListener('visibilitychange', resumeWhenVisible);
+            }
             function tick(time) {
                 if (settled) return;
-                if (document.hidden) { lastTime = null; frame = requestAnimationFrame(tick); return; }
+                if (document.hidden) {
+                    lastTime = null;
+                    frame = null;
+                    document.addEventListener('visibilitychange', resumeWhenVisible, { once: true });
+                    return;
+                }
                 elapsed += lastTime === null ? 0 : Math.min(64, time - lastTime);
                 lastTime = time;
                 const count = Math.min(total, Math.floor(total * elapsed / duration));

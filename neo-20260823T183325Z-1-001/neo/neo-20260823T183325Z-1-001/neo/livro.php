@@ -149,6 +149,57 @@ if ($corpoLivroExibicao !== '' && textoParecePromptOuMoldeIA($corpoLivroExibicao
     $erroIA = 'Erro no sistema, tente novamente mais tarde.';
     error_log('[NEO][livro] Conteúdo com linguagem interna bloqueado na exibição: ' . $conteudoId);
 }
+
+/**
+ * Converte as seções do texto didático em páginas independentes do leitor.
+ * Livros antigos sem títulos também recebem uma paginação previsível.
+ */
+function montarPaginasLivroNeo(string $corpo): array
+{
+    $blocos = array_values(array_filter(
+        array_map('trim', preg_split('/\n{2,}/u', $corpo) ?: []),
+        static fn(string $bloco): bool => $bloco !== ''
+    ));
+    if (!$blocos) {
+        return [];
+    }
+
+    $paginas = [];
+    $paginaAtual = ['titulo' => 'Introdução', 'blocos' => []];
+    $encontrouTitulo = false;
+
+    foreach ($blocos as $bloco) {
+        if (blocoEhTituloLivroIA($bloco)) {
+            if ($paginaAtual['blocos']) {
+                $paginas[] = $paginaAtual;
+            }
+            $paginaAtual = ['titulo' => $bloco, 'blocos' => []];
+            $encontrouTitulo = true;
+            continue;
+        }
+        $paginaAtual['blocos'][] = $bloco;
+    }
+    if ($paginaAtual['blocos']) {
+        $paginas[] = $paginaAtual;
+    }
+
+    if (!$encontrouTitulo && count($blocos) > 2) {
+        $paginas = [];
+        foreach (array_chunk($blocos, 2) as $indice => $grupo) {
+            $paginas[] = [
+                'titulo' => $indice === 0 ? 'Introdução' : 'Parte ' . ($indice + 1),
+                'blocos' => $grupo,
+            ];
+        }
+    }
+
+    return array_values(array_filter(
+        $paginas,
+        static fn(array $pagina): bool => !empty($pagina['blocos'])
+    ));
+}
+
+$paginasLivro = montarPaginasLivroNeo($corpoLivroExibicao);
 $prepararNoPrimeiroAcesso = $_SERVER['REQUEST_METHOD'] === 'GET'
     && $corpoLivroExibicao === ''
     && $erroIA === ''
@@ -163,7 +214,7 @@ require __DIR__ . '/includes/head.php';
 <?php require __DIR__ . '/includes/sidebar.php'; ?>
 <main class="main">
     <?php require __DIR__ . '/includes/topbar.php'; ?>
-    <section class="lesson-page">
+    <section class="lesson-page <?= classeTemaMateria((string)$conteudo['materia_nome']) ?>">
         <section class="lesson-header">
             <div class="lesson-title-panel neo-panel">
                 <h1><?= htmlspecialchars($conteudo['titulo']) ?></h1>
@@ -179,7 +230,7 @@ require __DIR__ . '/includes/head.php';
 
         <?php $contentTabActive = 'livro'; $questoesGeradasTabs = $questoesGeradasLivro; $conteudoBloqueadoTabs = $livroBloqueado; require __DIR__ . '/includes/content_tabs.php'; ?>
 
-        <section class="reader neo-panel <?= $livroBloqueado ? 'reader-locked-state' : '' ?>">
+        <section class="reader <?= $livroBloqueado ? 'reader-locked-state' : '' ?>">
             <?php if ($rotuloModeloLivro !== ''): ?>
                 <span class="ai-provider-badge" title="Livro gerado por <?= htmlspecialchars($nomeProvedorLivro) ?>" aria-label="Livro gerado por <?= htmlspecialchars($nomeProvedorLivro) ?>">
                     <?= $rotuloModeloLivro ?>
@@ -190,7 +241,7 @@ require __DIR__ . '/includes/head.php';
             <?php endif; ?>
 
             <?php if ($livroBloqueado): ?>
-                <div class="reader-lock">
+                <div class="reader-lock neo-panel">
                     <span class="reader-lock-icon" aria-hidden="true">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" focusable="false">
                             <rect x="6" y="10" width="12" height="10" rx="2"></rect>
@@ -202,26 +253,93 @@ require __DIR__ . '/includes/head.php';
                     <p>As questões deste livro já foram geradas. Continue pelo módulo de questões.</p>
                 </div>
             <?php else: ?>
-                <article>
-                    <?php if ($corpoLivroExibicao === ''): ?>
-                        <h2>Este é um dos próximos passos do seu plano.</h2>
-                        <p>O Manel vai preparar a explicação de <?= htmlspecialchars($conteudo['titulo']) ?> considerando sua fase de estudos, seu nível e o jeito de aprender que você escolheu.</p>
-                    <?php endif; ?>
-                    <?php foreach (preg_split('/\n{2,}/', $corpoLivroExibicao) ?: [] as $paragrafo): ?>
-                        <?php $tituloSecao = blocoEhTituloLivroIA($paragrafo); ?>
-                        <?php if ($tituloSecao): ?>
-                            <h2><?= htmlspecialchars($paragrafo) ?></h2>
-                        <?php else: ?>
-                            <p><?= nl2br(htmlspecialchars($paragrafo)) ?></p>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
-                </article>
+                <div class="book-reader" data-book-reader data-page-count="<?= max(1, count($paginasLivro)) ?>">
+                    <div class="book-shell">
+                        <span class="book-spine" aria-hidden="true"></span>
+                        <div class="book-stage" data-book-stage aria-live="polite">
+                            <div class="book-spread" data-book-spread>
+                                <section class="book-sheet book-sheet-left" data-book-left role="button" tabindex="0" aria-label="Voltar páginas" data-manel-tip="Volta para as páginas anteriores deste livro."></section>
+                                <section class="book-sheet book-sheet-right" data-book-right role="button" tabindex="0" aria-label="Avançar páginas" data-manel-tip="Avança para as próximas páginas deste livro."></section>
+                                <canvas class="book-page-canvas" data-book-canvas aria-hidden="true" hidden></canvas>
+                                <span class="book-gutter" aria-hidden="true"></span>
+                            </div>
+
+                            <div class="book-page-sources" data-book-sources hidden aria-hidden="true">
+                            <?php if (!$paginasLivro): ?>
+                                <article class="book-source-page" data-book-page data-page-index="0">
+                                    <div class="book-page-inner">
+                                        <header class="book-page-heading">
+                                            <span>Preparando livro</span>
+                                            <h2>Este é um dos próximos passos do seu plano.</h2>
+                                        </header>
+                                        <div class="book-page-content">
+                                            <p>O Manel vai preparar a explicação de <?= htmlspecialchars($conteudo['titulo']) ?> considerando sua fase de estudos, seu nível e o jeito de aprender que você escolheu.</p>
+                                        </div>
+                                    </div>
+                                </article>
+                            <?php else: ?>
+                                <?php foreach ($paginasLivro as $indicePagina => $pagina): ?>
+                                    <article class="book-source-page" data-book-page data-page-index="<?= $indicePagina ?>">
+                                        <div class="book-page-inner">
+                                            <header class="book-page-heading">
+                                                <span>Tópico <?= $indicePagina + 1 ?></span>
+                                                <h2><?= htmlspecialchars((string)$pagina['titulo']) ?></h2>
+                                            </header>
+                                            <div class="book-page-content">
+                                                <?php foreach ($pagina['blocos'] as $bloco): ?>
+                                                    <?php
+                                                        $linhasBloco = preg_split('/\n/u', trim((string)$bloco)) ?: [];
+                                                        $somenteTopicos = !empty($linhasBloco);
+                                                        foreach ($linhasBloco as $linhaBloco) {
+                                                            if (!preg_match('/^\s*•\s*(.+)$/u', $linhaBloco)) {
+                                                                $somenteTopicos = false;
+                                                                break;
+                                                            }
+                                                        }
+                                                    ?>
+                                                    <?php if ($somenteTopicos): ?>
+                                                        <ul>
+                                                            <?php foreach ($linhasBloco as $linhaBloco): ?>
+                                                                <li><?= htmlspecialchars(preg_replace('/^\s*•\s*/u', '', $linhaBloco) ?? $linhaBloco) ?></li>
+                                                            <?php endforeach; ?>
+                                                        </ul>
+                                                    <?php else: ?>
+                                                        <p><?= nl2br(htmlspecialchars((string)$bloco)) ?></p>
+                                                    <?php endif; ?>
+                                                <?php endforeach; ?>
+                                            </div>
+                                            <span class="book-page-number" aria-hidden="true"><?= $indicePagina + 1 ?></span>
+                                        </div>
+                                    </article>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <nav class="book-navigation" aria-label="Paginação do livro">
+                            <button type="button" class="book-nav-button neo-star-hover" data-book-prev disabled aria-label="Página anterior" data-manel-tip="Volta para as páginas anteriores.">
+                                <?= estrelaHoverNeo() ?>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+                                <span>Anterior</span>
+                            </button>
+                            <div class="book-progress" aria-label="Progresso da leitura">
+                                <span><strong data-book-current>1</strong> / <span data-book-total><?= max(1, count($paginasLivro)) ?></span></span>
+                                <span class="book-progress-track" aria-hidden="true"><i data-book-progress></i></span>
+                            </div>
+                            <button type="button" class="book-nav-button neo-star-hover" data-book-next<?= count($paginasLivro) <= 2 ? ' disabled' : '' ?> aria-label="Próximas páginas" data-manel-tip="Avança para as próximas páginas.">
+                                <?= estrelaHoverNeo() ?>
+                                <span>Próxima</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+                            </button>
+                        </nav>
+                    </div>
+                </div>
                 <div class="reader-actions">
                     <form method="post" data-ai-loading data-ai-message="<?= $corpoLivroExibicao === '' ? 'Preparando seu livro' : 'Preparando uma nova versão do livro' ?>"<?= $prepararNoPrimeiroAcesso ? ' data-auto-first-book' : '' ?>>
                         <?= campoCsrf() ?>
                         <input type="hidden" name="conteudo_id" value="<?= (int)$conteudo['id'] ?>">
                         <input type="hidden" name="acao" value="<?= $corpoLivroExibicao === '' ? 'preparar_primeiro_acesso' : 'gerar_livro' ?>">
-                        <button type="submit" class="ghost"><?= $corpoLivroExibicao === '' ? 'Preparar meu conteúdo' : 'Gerar novo livro' ?></button>
+                        <button type="submit" class="ghost neo-star-hover"><?= estrelaHoverNeo() ?><?= $corpoLivroExibicao === '' ? 'Preparar meu conteúdo' : 'Gerar novo livro' ?></button>
                     </form>
                 </div>
             <?php endif; ?>
@@ -238,5 +356,6 @@ require __DIR__ . '/includes/head.php';
     }, { once: true });
 </script>
 <?php endif; ?>
+<script src="static/pages/livro.js?v=<?= filemtime(__DIR__ . '/static/pages/livro.js') ?>" defer></script>
 </body>
 </html>

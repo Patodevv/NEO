@@ -44,7 +44,7 @@ require __DIR__ . '/includes/head.php';
                 <b><?= htmlspecialchars($nomeCompleto) ?></b>
                 <small><?= htmlspecialchars($usuario['email']) ?></small>
             </div>
-            <a href="perfil.php" class="ghost">Abrir perfil</a>
+            <a href="perfil.php" class="ghost neo-star-hover"><?= estrelaHoverNeo() ?>Abrir perfil</a>
         </section>
 
         <form method="post" class="settings-form">
@@ -64,7 +64,8 @@ require __DIR__ . '/includes/head.php';
             </section>
 
             <div class="settings-save-row">
-                <button type="submit" class="save-btn">
+                <button type="submit" class="save-btn neo-star-hover">
+                    <?= estrelaHoverNeo() ?>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h12l2 2v14H5V4Z"></path><path d="M8 4v6h8V4"></path><path d="M8 20v-6h8v6"></path></svg>
                     Salvar alterações
                 </button>
@@ -76,7 +77,8 @@ require __DIR__ . '/includes/head.php';
                 <span class="neo-page-kicker">Sessão</span>
                 <h2>Sair da conta</h2>
             </div>
-            <a href="logout.php" class="neo-danger-button">
+            <a href="logout.php" class="neo-danger-button neo-star-hover">
+                <?= estrelaHoverNeo() ?>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 5H5v14h5"></path><path d="M14 8l4 4-4 4"></path><path d="M8 12h10"></path></svg>
                 Sair
             </a>

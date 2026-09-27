@@ -1,0 +1,257 @@
+[
+  {
+    "file": "frame-01-gato-neon.png",
+    "hole": [
+      71,
+      84,
+      245,
+      246
+    ],
+    "hole_center": [
+      158.0,
+      165.0
+    ],
+    "shift": [
+      2,
+      -5
+    ]
+  },
+  {
+    "file": "frame-02-sapo-pop.png",
+    "hole": [
+      65,
+      88,
+      242,
+      260
+    ],
+    "hole_center": [
+      153.5,
+      174.0
+    ],
+    "shift": [
+      6,
+      -14
+    ]
+  },
+  {
+    "file": "frame-03-asas-celestes.png",
+    "hole": [
+      80,
+      95,
+      238,
+      249
+    ],
+    "hole_center": [
+      159.0,
+      172.0
+    ],
+    "shift": [
+      1,
+      -12
+    ]
+  },
+  {
+    "file": "frame-04-raposa-fogo.png",
+    "hole": [
+      80,
+      92,
+      252,
+      263
+    ],
+    "hole_center": [
+      166.0,
+      177.5
+    ],
+    "shift": [
+      -6,
+      -18
+    ]
+  },
+  {
+    "file": "frame-05-coroa-real.png",
+    "hole": [
+      76,
+      102,
+      245,
+      261
+    ],
+    "hole_center": [
+      160.5,
+      181.5
+    ],
+    "shift": [
+      0,
+      -22
+    ]
+  },
+  {
+    "file": "frame-06-mago-estelar.png",
+    "hole": [
+      83,
+      83,
+      251,
+      249
+    ],
+    "hole_center": [
+      167.0,
+      166.0
+    ],
+    "shift": [
+      -7,
+      -6
+    ]
+  },
+  {
+    "file": "frame-07-cristal-azul.png",
+    "hole": [
+      71,
+      79,
+      240,
+      243
+    ],
+    "hole_center": [
+      155.5,
+      161.0
+    ],
+    "shift": [
+      4,
+      -1
+    ]
+  },
+  {
+    "file": "frame-08-chama-rubi.png",
+    "hole": [
+      72,
+      84,
+      240,
+      245
+    ],
+    "hole_center": [
+      156.0,
+      164.5
+    ],
+    "shift": [
+      4,
+      -4
+    ]
+  },
+  {
+    "file": "frame-09-concha-oceano.png",
+    "hole": [
+      71,
+      83,
+      243,
+      244
+    ],
+    "hole_center": [
+      157.0,
+      163.5
+    ],
+    "shift": [
+      3,
+      -4
+    ]
+  },
+  {
+    "file": "frame-10-circuito-ciano.png",
+    "hole": [
+      74,
+      89,
+      244,
+      250
+    ],
+    "hole_center": [
+      159.0,
+      169.5
+    ],
+    "shift": [
+      1,
+      -10
+    ]
+  },
+  {
+    "file": "frame-11-lua-sonho.png",
+    "hole": [
+      80,
+      61,
+      260,
+      241
+    ],
+    "hole_center": [
+      170.0,
+      151.0
+    ],
+    "shift": [
+      -10,
+      9
+    ]
+  },
+  {
+    "file": "frame-12-musica-neon.png",
+    "hole": [
+      55,
+      50,
+      255,
+      245
+    ],
+    "hole_center": [
+      155.0,
+      147.5
+    ],
+    "shift": [
+      5,
+      12
+    ]
+  },
+  {
+    "file": "frame-13-dragao-rubi.png",
+    "hole": [
+      71,
+      71,
+      245,
+      237
+    ],
+    "hole_center": [
+      158.0,
+      154.0
+    ],
+    "shift": [
+      2,
+      6
+    ]
+  },
+  {
+    "file": "frame-14-trevo-verde.png",
+    "hole": [
+      72,
+      70,
+      244,
+      237
+    ],
+    "hole_center": [
+      158.0,
+      153.5
+    ],
+    "shift": [
+      2,
+      6
+    ]
+  },
+  {
+    "file": "frame-15-gema-real.png",
+    "hole": [
+      68,
+      69,
+      248,
+      232
+    ],
+    "hole_center": [
+      158.0,
+      150.5
+    ],
+    "shift": [
+      2,
+      10
+    ]
+  }
+]
