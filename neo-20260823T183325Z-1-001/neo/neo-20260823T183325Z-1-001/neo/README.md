@@ -4,7 +4,7 @@ Aplicação educacional em PHP 8 com MySQL, geração de conteúdo por OpenAI e 
 
 ## Configuração
 
-1. Copie `.env.example` para `.env` e configure o banco e as chaves das APIs.
+1. Copie `.env.example` para `.env` e configure o banco e as chaves das APIs. O `.env` é local e fica fora do GitHub.
 2. Crie o banco vazio ou ative `DB_AUTO_CREATE=true` apenas durante a instalação local.
 3. Execute as migrações:
 
@@ -15,7 +15,7 @@ C:\xampp\php\php.exe scripts\migrate.php
 4. Mantenha `DB_AUTO_CREATE=false` e `DB_AUTO_MIGRATE=false` durante o uso normal.
 5. Sirva a pasta `neo` pelo Apache do XAMPP.
 
-As credenciais de IA ficam somente no `.env`:
+As credenciais de IA ficam somente no `.env`. Nunca coloque chave real no código, no README ou no `.env.example`:
 
 ```dotenv
 OPENAI_API_KEY=

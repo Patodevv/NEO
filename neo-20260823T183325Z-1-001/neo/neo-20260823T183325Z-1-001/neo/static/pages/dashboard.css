@@ -256,6 +256,13 @@
 }
 
 .recent-item {
+    --recent-accent: var(--materia-cor, var(--neo-blue));
+    --button-accent: var(--recent-accent);
+    --hover-star-core: var(--recent-accent);
+    --hover-star-shadow: color-mix(in srgb, var(--recent-accent) 44%, #030824);
+    --hover-star-outline: color-mix(in srgb, var(--recent-accent) 12%, #ffffff);
+    --hover-star-center-stroke: color-mix(in srgb, var(--recent-accent) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--recent-accent) 58%, transparent);
     min-width: 0;
     min-height: clamp(112px, 13vw, 138px);
     display: grid;
@@ -277,50 +284,51 @@
 
 .recent-icon {
     --icon-star-size: clamp(28px, 7vw, 38px);
+    --recent-accent: var(--materia-cor, var(--neo-blue));
     position: relative;
     width: clamp(86px, 7.3vw, 104px);
     height: clamp(86px, 7.3vw, 104px);
     display: grid;
     place-items: center;
-    border: 1px solid color-mix(in srgb, var(--materia-cor, var(--neo-blue)) 88%, #ffffff);
+    border: 1px solid color-mix(in srgb, var(--recent-accent) 88%, #ffffff);
     border-radius: clamp(20px, 4.8vw, 30px);
-    background: color-mix(in srgb, var(--neo-blue) 10%, var(--control-bg));
-    color: var(--materia-cor, var(--btn-icon));
+    background: color-mix(in srgb, var(--recent-accent) 10%, var(--control-bg));
+    color: var(--recent-accent);
     box-shadow:
-        0 0 0 3px color-mix(in srgb, var(--neo-blue) 12%, transparent),
-        inset 0 0 22px color-mix(in srgb, var(--neo-blue) 5%, transparent);
+        0 0 0 3px color-mix(in srgb, var(--recent-accent) 12%, transparent),
+        inset 0 0 22px color-mix(in srgb, var(--recent-accent) 5%, transparent);
     isolation: isolate;
     transition: color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 
 .recent-item:hover .recent-icon,
 .recent-item:focus-visible .recent-icon {
-    border-color: var(--materia-cor, var(--neo-blue));
-    color: var(--materia-cor, var(--btn-icon-hover));
-    background: color-mix(in srgb, var(--neo-blue) 18%, var(--control-bg));
+    border-color: var(--recent-accent);
+    color: var(--recent-accent);
+    background: color-mix(in srgb, var(--recent-accent) 18%, var(--control-bg));
     box-shadow:
-        0 0 0 4px color-mix(in srgb, var(--neo-blue) 24%, transparent),
-        0 10px 26px color-mix(in srgb, var(--neo-blue) 16%, transparent);
+        0 0 0 4px color-mix(in srgb, var(--recent-accent) 24%, transparent),
+        0 10px 26px color-mix(in srgb, var(--recent-accent) 16%, transparent);
     transform: translateY(-2px) scale(1.04);
 }
 
 .recent-icon > .icon-hover-star {
-    filter: drop-shadow(0 0 8px color-mix(in srgb, var(--neo-blue) 58%, transparent));
+    filter: drop-shadow(0 0 8px color-mix(in srgb, var(--recent-accent) 58%, transparent));
 }
 
 .recent-icon > .icon-hover-star .icon-hover-star-shadow {
-    fill: color-mix(in srgb, var(--neo-blue) 48%, #06102b);
-    stroke: color-mix(in srgb, var(--neo-blue) 48%, #06102b);
+    fill: color-mix(in srgb, var(--recent-accent) 48%, #06102b);
+    stroke: color-mix(in srgb, var(--recent-accent) 48%, #06102b);
 }
 
 .recent-icon > .icon-hover-star .icon-hover-star-core {
-    fill: var(--neo-blue);
-    stroke: color-mix(in srgb, var(--neo-blue) 28%, #ffffff);
+    fill: var(--recent-accent);
+    stroke: color-mix(in srgb, var(--recent-accent) 28%, #ffffff);
 }
 
 .recent-icon > .icon-hover-star .icon-hover-star-center {
     fill: #ffffff;
-    stroke: color-mix(in srgb, var(--neo-blue) 72%, #ffffff);
+    stroke: color-mix(in srgb, var(--recent-accent) 72%, #ffffff);
 }
 
 .recent-item:focus-visible .recent-icon > .icon-hover-star {
@@ -694,5 +702,5 @@ body.neo-dashboard-revealing .topbar-actions {
 .personal-study-next.neo-star-hover:focus-visible strong,
 .recent-item.neo-star-hover:hover b,
 .recent-item.neo-star-hover:focus-visible b {
-    color: var(--neo-blue);
+    color: var(--recent-accent, var(--neo-blue));
 }

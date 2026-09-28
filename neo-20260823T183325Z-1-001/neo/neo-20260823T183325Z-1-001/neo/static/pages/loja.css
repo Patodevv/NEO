@@ -708,3 +708,38 @@
     --frame-photo-size: 69%;
 }
 
+/* Loja: toda estrela de hover dos cards e botões usa sempre a cor do tema ativo. */
+.store-page :where(.store-item.neo-star-hover, .store-item-footer button.neo-star-hover) {
+    --button-accent: var(--neo-blue) !important;
+    --hover-star-core: var(--neo-blue) !important;
+    --hover-star-shadow: color-mix(in srgb, var(--neo-blue) 44%, #030824) !important;
+    --hover-star-outline: color-mix(in srgb, var(--neo-blue) 12%, #ffffff) !important;
+    --hover-star-center: #ffffff !important;
+    --hover-star-center-stroke: color-mix(in srgb, var(--neo-blue) 62%, #ffffff) !important;
+    --hover-star-glow: color-mix(in srgb, var(--neo-blue) 58%, transparent) !important;
+}
+
+.store-page :where(.store-item.neo-star-hover, .store-item-footer button.neo-star-hover) > .icon-hover-star {
+    --hover-star-core: var(--neo-blue) !important;
+    --hover-star-shadow: color-mix(in srgb, var(--neo-blue) 44%, #030824) !important;
+    --hover-star-outline: color-mix(in srgb, var(--neo-blue) 12%, #ffffff) !important;
+    --hover-star-center: #ffffff !important;
+    --hover-star-center-stroke: color-mix(in srgb, var(--neo-blue) 62%, #ffffff) !important;
+    --hover-star-glow: color-mix(in srgb, var(--neo-blue) 58%, transparent) !important;
+}
+
+.store-page :where(.store-item.neo-star-hover, .store-item-footer button.neo-star-hover) > .icon-hover-star .icon-hover-star-shadow {
+    fill: color-mix(in srgb, var(--neo-blue) 44%, #030824) !important;
+    stroke: color-mix(in srgb, var(--neo-blue) 44%, #030824) !important;
+}
+
+.store-page :where(.store-item.neo-star-hover, .store-item-footer button.neo-star-hover) > .icon-hover-star .icon-hover-star-core {
+    fill: var(--neo-blue) !important;
+    stroke: color-mix(in srgb, var(--neo-blue) 12%, #ffffff) !important;
+}
+
+.store-page :where(.store-item.neo-star-hover, .store-item-footer button.neo-star-hover) > .icon-hover-star .icon-hover-star-center {
+    fill: #ffffff !important;
+    stroke: color-mix(in srgb, var(--neo-blue) 62%, #ffffff) !important;
+}
+

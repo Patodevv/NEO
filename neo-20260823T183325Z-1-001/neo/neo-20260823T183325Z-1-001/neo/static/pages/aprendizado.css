@@ -300,6 +300,10 @@
 .learning-shortcut-icon {
     background: color-mix(in srgb, var(--neo-blue) 10%, var(--control-bg, rgba(8, 20, 48, .88)));
 }
+.learning-week-folder {
+    --folder-color: var(--materia-cor, var(--neo-blue));
+    border-color: color-mix(in srgb, var(--folder-color) 30%, transparent);
+}
 .learning-mission-icon {
     border-color: color-mix(in srgb, var(--mission-color, var(--materia-cor, #7181ff)) 45%, transparent);
     color: var(--mission-color, var(--materia-cor, #7181ff));
@@ -316,6 +320,11 @@
 .learning-error summary:hover {
     border-color: var(--learning-theme-border-strong);
     background: var(--learning-card-strong);
+}
+.learning-week-folder:hover,
+.learning-week-folder:focus-visible {
+    border-color: var(--folder-color);
+    background: color-mix(in srgb, var(--folder-color) 12%, var(--btn-bg));
 }
 .learning-week-back,
 .learning-mission-action,
@@ -378,7 +387,7 @@
 .learning-mission-action.neo-star-hover,
 .learning-week-back.neo-star-hover,
 .learning-week-folder.neo-star-hover {
-    --button-accent: var(--neo-blue);
+    --button-accent: var(--folder-color, var(--session-color, var(--mission-color, var(--neo-blue))));
     --hover-star-core: var(--button-accent);
     --hover-star-shadow: color-mix(in srgb, var(--button-accent) 44%, #030824);
     --hover-star-center-stroke: color-mix(in srgb, var(--button-accent) 62%, #ffffff);
@@ -387,7 +396,7 @@
 .learning-week-folder.neo-star-hover:hover,
 .learning-week-folder.neo-star-hover:focus-visible {
     color: #f2f4ff;
-    border-color: var(--learning-theme-border-strong);
+    border-color: var(--folder-color);
 }
 
 @supports (content-visibility: auto) {

@@ -1,4 +1,9 @@
+# Arquivos locais com senhas, banco e chaves de API.
+# Nunca envie estes arquivos para o GitHub.
 .env
+.env.*
+!.env.example
+
 config/.schema_v2.ready
 static/uploads/perfis/*
 static/uploads/produtos/*
