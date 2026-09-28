@@ -53,8 +53,8 @@ body.neo-learning-focus .profile-wallet { display:none; }
     --neo-theme-image-filter: none;
     --neo-theme-image-tint: transparent;
     --neo-theme-image-tint-opacity: 0;
-    --manel-color: var(--neo-blue);
-    --manel-glow: color-mix(in srgb, var(--neo-blue) 42%, transparent);
+    --manel-color: #1a2eff;
+    --manel-glow: color-mix(in srgb, var(--manel-color) 42%, transparent);
     --profile-name-color: #ffffff;
     --profile-accent: var(--neo-blue);
     --profile-accent-2: var(--neo-blue);
@@ -1508,7 +1508,7 @@ button:disabled .icon-hover-star {
     padding: 0;
     border: 0;
     background: transparent;
-    color: var(--manel-color, var(--neo-blue));
+    color: var(--manel-color, #1a2eff);
     overflow: visible;
     transition: filter .18s ease, transform .18s ease, opacity .18s ease;
     animation: none;
@@ -1531,8 +1531,8 @@ button:disabled .icon-hover-star {
     width: 6px;
     height: 6px;
     border-radius: 999px;
-    background: var(--manel-color, var(--neo-blue));
-    box-shadow: 12px 0 0 var(--manel-glow, color-mix(in srgb, var(--neo-blue) 32%, transparent)), 24px 0 0 var(--manel-glow, color-mix(in srgb, var(--neo-blue) 32%, transparent));
+    background: var(--manel-color, #1a2eff);
+    box-shadow: 12px 0 0 var(--manel-glow, color-mix(in srgb, #1a2eff 32%, transparent)), 24px 0 0 var(--manel-glow, color-mix(in srgb, #1a2eff 32%, transparent));
     opacity: 0;
     transform: translateX(-15px);
     pointer-events: none;
@@ -1541,7 +1541,7 @@ button:disabled .icon-hover-star {
 .neo-companion-face:hover,
 .neo-companion-face:focus-visible,
 .neo-companion-face.is-reacting {
-    filter: drop-shadow(0 0 10px var(--manel-glow, color-mix(in srgb, var(--neo-blue) 50%, transparent)));
+    filter: drop-shadow(0 0 10px var(--manel-glow, color-mix(in srgb, #1a2eff 50%, transparent)));
     outline: none;
     transform: translateY(-1px) scale(1.04);
 }
@@ -1550,7 +1550,7 @@ button:disabled .icon-hover-star {
 .neo-companion-face.is-curious,
 .neo-companion-face.is-surprised,
 .neo-companion-face.is-waking {
-    filter: drop-shadow(0 0 9px var(--manel-glow, color-mix(in srgb, var(--neo-blue) 42%, transparent)));
+    filter: drop-shadow(0 0 9px var(--manel-glow, color-mix(in srgb, #1a2eff 42%, transparent)));
 }
 
 .neo-companion-svg {
@@ -1558,7 +1558,7 @@ button:disabled .icon-hover-star {
     height: 100%;
     overflow: visible;
     display: block;
-    filter: drop-shadow(0 0 6px var(--manel-glow, color-mix(in srgb, var(--neo-blue) 35%, transparent)));
+    filter: drop-shadow(0 0 6px var(--manel-glow, color-mix(in srgb, #1a2eff 35%, transparent)));
     transform-origin: center;
     transition: transform .24s ease;
 }
@@ -1763,7 +1763,7 @@ button:disabled .icon-hover-star {
     top: calc(100% + 8px);
     min-width: 46px;
     padding: 7px 11px;
-    border: 1px solid color-mix(in srgb, var(--manel-color, var(--neo-blue)) 38%, transparent);
+    border: 1px solid color-mix(in srgb, var(--manel-color, #1a2eff) 38%, transparent);
     border-radius: 12px;
     background: var(--bubble-bg);
     color: #fff;

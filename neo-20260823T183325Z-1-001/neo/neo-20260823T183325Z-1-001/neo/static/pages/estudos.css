@@ -22,8 +22,7 @@
     pointer-events: none;
 }
 .study-face-flight {
-    --manel-color: var(--neo-transition-accent, var(--neo-blue));
-    --manel-glow: var(--neo-transition-accent-glow, var(--neo-blue-glow));
+    --manel-glow: color-mix(in srgb, var(--manel-color) 42%, transparent);
     position: fixed !important;
     right: auto !important;
     bottom: auto !important;

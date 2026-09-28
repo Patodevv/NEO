@@ -14,11 +14,11 @@ body.neo-face-docking .neo-companion-face {
 }
 
 .neo-face-flight .part {
-    fill: var(--manel-color, var(--neo-transition-accent, var(--neo-blue)));
+    fill: var(--manel-color, #1a2eff);
 }
 
 .neo-face-flight path {
-    stroke: var(--manel-color, var(--neo-transition-accent, var(--neo-blue)));
+    stroke: var(--manel-color, #1a2eff);
 }
 
 .manel-tour[hidden] {

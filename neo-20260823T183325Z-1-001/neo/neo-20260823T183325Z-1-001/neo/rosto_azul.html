@@ -46,9 +46,7 @@
 <script>
   try {
     const parentStyles = window.parent.getComputedStyle(window.parent.document.documentElement);
-    const color = parentStyles.getPropertyValue('--manel-color').trim()
-      || parentStyles.getPropertyValue('--neo-transition-accent').trim()
-      || parentStyles.getPropertyValue('--neo-blue').trim();
+    const color = parentStyles.getPropertyValue('--manel-color').trim();
     if (color) document.documentElement.style.setProperty('--neo-face-color', color);
   } catch (_) {}
 
