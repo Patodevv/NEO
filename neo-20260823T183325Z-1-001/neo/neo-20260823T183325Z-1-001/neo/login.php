@@ -91,13 +91,6 @@ require __DIR__ . '/includes/head.php';
             </g>
         </svg>
     </div>
-    <a href="adm_login.php" class="admin-corner" aria-label="Admin" title="Admin">ADM</a>
-    <button type="button" class="admin-corner admin-mobile-test" data-mobile-preview-toggle aria-pressed="false" aria-label="Simular mobile" title="Simular mobile">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-            <rect x="7" y="3" width="10" height="18" rx="2.2"></rect>
-            <path d="M10.5 18h3"></path>
-        </svg>
-    </button>
     <div class="auth-box auth-login-box">
         <?= cometaLoginNeo('onboarding-panel-comet') ?>
         <h1>Entrar</h1>
@@ -121,5 +114,15 @@ require __DIR__ . '/includes/head.php';
         </div>
     </div>
 </main>
+<script>
+(() => {
+    document.addEventListener('keydown', (event) => {
+        if (event.ctrlKey && event.altKey && !event.shiftKey && event.key.toLowerCase() === 'd') {
+            event.preventDefault();
+            window.location.href = 'adm_login.php';
+        }
+    });
+})();
+</script>
 </body>
 </html>

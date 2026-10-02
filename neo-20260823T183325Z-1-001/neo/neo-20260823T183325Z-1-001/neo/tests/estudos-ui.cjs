@@ -43,15 +43,10 @@ fs.mkdirSync(artifacts, { recursive: true });
             async function fit() { assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, 'Horizontal overflow'); }
             await page.goto('http://neo.test/materias.php');
             await unlocked();
-            await page.locator('[data-mobile-preview-toggle]').click();
-            const preview = page.frameLocator('.neo-mobile-preview-viewport');
-            await preview.locator('[data-mobile-preview-toggle]').waitFor({ state: 'visible' });
-            await preview.locator('[data-mobile-preview-toggle]').click();
-            await page.waitForSelector('.neo-mobile-preview-stage', { state: 'detached' });
-            assert.equal(await page.locator('[data-mobile-preview-toggle]').getAttribute('aria-pressed'), 'false');
+            assert.equal(await page.locator('[data-mobile-preview-toggle]').count(), 0, 'Mobile preview toggle must stay hidden in production UI.');
             const heading = await page.locator('.user-heading').boundingBox();
             const actions = await page.locator('.topbar-actions').boundingBox();
-            assert(heading.x + heading.width <= actions.x, 'The title must not overlap the preview button.');
+            assert(heading.x + heading.width <= actions.x, 'The title must not overlap the topbar actions.');
             if (viewport.width <= 760) {
                 assert(await page.locator('#sidebarToggle').isHidden());
                 const nav = await page.locator('#sidebar').boundingBox();
@@ -208,3 +203,4 @@ fs.mkdirSync(artifacts, { recursive: true });
         }
     } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
+

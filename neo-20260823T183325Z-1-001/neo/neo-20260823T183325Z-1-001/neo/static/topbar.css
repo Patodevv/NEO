@@ -666,38 +666,6 @@
     gap: clamp(5px, 1vw, 10px);
 }
 
-.topbar-mobile-test {
-    --icon-star-size: clamp(21px, 5.8vw, 26px);
-    position: relative;
-    width: clamp(28px, 7.6vw, 34px);
-    height: clamp(28px, 7.6vw, 34px);
-    flex: 0 0 clamp(28px, 7.6vw, 34px);
-    display: grid;
-    place-items: center;
-    padding: 0;
-    border: 1px solid var(--neo-blue);
-    border-radius: clamp(11px, 3vw, 14px);
-    background: var(--btn-bg);
-    color: var(--btn-icon);
-    isolation: isolate;
-    transition: color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s ease;
-}
-
-.topbar-mobile-test:hover,
-.topbar-mobile-test:focus-visible,
-.topbar-mobile-test.is-active {
-    color: var(--btn-icon-hover);
-    background: color-mix(in srgb, var(--neo-blue) 22%, transparent);
-    box-shadow: 0 0 0 4px var(--neo-blue-glow);
-    outline: none;
-    transform: translateY(-1px) scale(1.03);
-}
-
-.topbar-mobile-test > svg:not(.icon-hover-star) {
-    width: clamp(15px, 4.4vw, 18px);
-    height: clamp(15px, 4.4vw, 18px);
-}
-
 .cossas-pill {
     height: clamp(28px, 7.6vw, 34px);
     min-height: clamp(28px, 7.6vw, 34px);
@@ -934,7 +902,6 @@
         max-width: 18vw;
     }
 
-    .topbar-mobile-test,
     .topbar .profile {
         width: 30px;
         height: 30px;
@@ -955,7 +922,6 @@
 
 
 /* NEO topbar color-synced stars */
-.topbar-mobile-test.neo-star-hover,
 .topbar .profile.neo-star-hover {
     --button-accent: var(--neo-blue);
     --hover-star-core: var(--button-accent);
@@ -963,9 +929,6 @@
     --hover-star-center-stroke: color-mix(in srgb, var(--button-accent) 62%, #ffffff);
     --hover-star-glow: color-mix(in srgb, var(--button-accent) 55%, transparent);
 }
-.topbar-mobile-test.neo-star-hover:hover,
-.topbar-mobile-test.neo-star-hover:focus-visible,
-.topbar-mobile-test.neo-star-hover.is-active,
 .topbar .profile.neo-star-hover:hover,
 .topbar .profile.neo-star-hover:focus-visible {
     color: var(--button-accent);
@@ -1163,3 +1126,4 @@
 .topbar .profile.frame-moldura_asas_celestes {
     --frame-photo-size: 69%;
 }
+

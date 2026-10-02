@@ -2,8 +2,28 @@
 
 require_once dirname(__DIR__) . '/config/env.php';
 
+$appEnvNeo = strtolower((string)ambienteNeo('APP_ENV', 'local'));
+if ($appEnvNeo === 'production') {
+    ini_set('display_errors', '0');
+    ini_set('log_errors', '1');
+}
+
+function requisicaoHttpsNeo(): bool
+{
+    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+        return true;
+    }
+
+    if (ambienteBooleanoNeo('TRUST_PROXY', false)) {
+        $proto = strtolower((string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''));
+        return $proto === 'https';
+    }
+
+    return false;
+}
+
 if (session_status() === PHP_SESSION_NONE) {
-    $segura = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    $segura = requisicaoHttpsNeo();
     ini_set('session.use_strict_mode', '1');
     ini_set('session.use_only_cookies', '1');
     session_set_cookie_params([

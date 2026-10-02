@@ -1452,44 +1452,6 @@ button:disabled .icon-hover-star {
     font-size: 18px;
 }
 
-.neo-mobile-preview-host body {
-    overflow: hidden;
-}
-
-.neo-mobile-preview-stage {
-    position: fixed;
-    inset: 0;
-    z-index: 10950;
-    display: grid;
-    place-items: center;
-    padding: 12px;
-    background: var(--page-bg);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .22s ease;
-}
-
-.neo-mobile-preview-stage.is-active {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.neo-mobile-preview-viewport {
-    width: min(390px, calc(100vw - 24px));
-    height: min(844px, calc(100vh - 24px));
-    border: 1px solid var(--neo-accent-ring);
-    border-radius: 28px;
-    background: var(--page-bg);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--neo-blue) 8%, transparent), 0 18px 46px rgba(0, 0, 0, .34);
-    opacity: .96;
-    transform: translateY(10px);
-    transition: opacity .22s ease, transform .26s cubic-bezier(.22, 1, .36, 1);
-}
-
-.neo-mobile-preview-stage.is-active .neo-mobile-preview-viewport {
-    opacity: 1;
-    transform: translateY(0);
-}
 
 .neo-companion-face {
     --eye-x: 0px;
@@ -1597,29 +1559,48 @@ button:disabled .icon-hover-star {
     stroke-width: 22;
 }
 
+.manel-variant-lumi .neo-companion-mouth,
+.manel-variant-karol .neo-companion-mouth {
+    stroke-width: 15;
+}
+
 .neo-companion-eye-wink {
     opacity: 0;
 }
 
-.neo-companion-lashes,
+.neo-companion-japanese-eyes,
 .neo-companion-glasses,
 .neo-companion-freckles {
     display: none;
     pointer-events: none;
 }
 
-.manel-variant-lumi .neo-companion-lashes,
-.manel-variant-karol .neo-companion-lashes,
+.neo-companion-japanese-eyes {
+    transform: translate(var(--eye-x, 0px), var(--eye-y, 0px)) scale(var(--eye-scale-x, 1), var(--eye-scale-y, 1));
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+.manel-variant-lumi .neo-companion-japanese-eyes,
+.manel-variant-karol .neo-companion-japanese-eyes,
 .manel-variant-ravir .neo-companion-glasses,
 .manel-variant-ruan .neo-companion-freckles {
     display: block;
 }
 
-.neo-companion-lashes path {
-    fill: none;
-    stroke: var(--manel-color, #1a2eff);
-    stroke-width: 7;
-    stroke-linecap: round;
+.manel-variant-lumi .neo-companion-eyes,
+.manel-variant-karol .neo-companion-eyes {
+    opacity: 0;
+}
+
+.store-manel-demo.manel-variant-lumi .neo-companion-eyes,
+.store-manel-demo.manel-variant-karol .neo-companion-eyes {
+    display: none !important;
+}
+
+.neo-companion-japanese-eyes path {
+    fill: var(--manel-color, #1a2eff);
+    stroke: none;
 }
 
 .neo-companion-glasses circle,
@@ -1646,11 +1627,20 @@ button:disabled .icon-hover-star {
     stroke-width: 18;
 }
 
-.store-manel-demo .neo-companion-lashes path {
-    fill: none;
-    stroke: var(--store-accent, var(--neo-blue));
-    stroke-width: 7;
-    stroke-linecap: round;
+.store-manel-demo .neo-companion-japanese-eyes path {
+    fill: var(--store-accent, var(--neo-blue)) !important;
+    stroke: none !important;
+    stroke-width: 0 !important;
+}
+
+.store-manel-demo.manel-variant-lumi > svg > path,
+.store-manel-demo.manel-variant-karol > svg > path {
+    stroke-width: 15 !important;
+}
+
+.store-manel-demo.manel-variant-lumi > svg > rect,
+.store-manel-demo.manel-variant-karol > svg > rect {
+    display: none !important;
 }
 
 .store-manel-demo .neo-companion-glasses circle,
@@ -2637,5 +2627,8 @@ button:disabled .icon-hover-star {
     color: var(--materia-cor, var(--neo-blue));
     border-color: var(--materia-cor, var(--neo-blue));
 }
+
+
+
 
 

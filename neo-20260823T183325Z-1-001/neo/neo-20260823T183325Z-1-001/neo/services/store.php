@@ -517,13 +517,9 @@ function varianteManelClasse(?string $variante): string
 function decoracoesRostoManelSvg(): string
 {
     return '
-        <g class="neo-companion-lashes" aria-hidden="true">
-            <path d="M 92 73 L 80 58"></path>
-            <path d="M 107 66 L 103 49"></path>
-            <path d="M 122 73 L 133 58"></path>
-            <path d="M 178 73 L 166 58"></path>
-            <path d="M 193 66 L 197 49"></path>
-            <path d="M 208 73 L 220 58"></path>
+        <g class="neo-companion-japanese-eyes" aria-hidden="true">
+            <path d="M 135 84 C 121 75 96 83 82 101 C 96 96 112 99 123 108 C 132 115 141 107 141 97 C 142 90 140 86 135 84 Z"></path>
+            <path d="M 165 84 C 179 75 204 83 218 101 C 204 96 188 99 177 108 C 168 115 159 107 159 97 C 158 90 160 86 165 84 Z"></path>
         </g>
         <g class="neo-companion-glasses" aria-hidden="true">
             <circle cx="110" cy="100" r="29"></circle>

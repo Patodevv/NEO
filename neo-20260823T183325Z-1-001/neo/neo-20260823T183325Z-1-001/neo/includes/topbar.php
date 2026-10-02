@@ -189,13 +189,6 @@ $tituloRecargaIa = match ($estadoIaTopbar) {
         <?php endif; ?>
     </div>
     <div class="topbar-actions">
-        <button type="button" class="topbar-mobile-test neo-star-hover" data-mobile-preview-toggle aria-pressed="false" aria-label="Simular visualização no celular" data-manel-tip="Mostra uma prévia de como esta página fica no celular.">
-            <?= estrelaHoverNeo() ?>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-                <rect x="7" y="3" width="10" height="18" rx="2.2"></rect>
-                <path d="M10.5 18h3"></path>
-            </svg>
-        </button>
         <a href="loja.php" class="cossas-pill" aria-label="Abrir loja; saldo de <?= saldoCossasVisual($usuario) ?> moedas" data-manel-tip="Abre a loja. Você tem <?= saldoCossasVisual($usuario) ?> moedas."><span class="coin"></span><span class="cossas-pill-value"><?= saldoCossasVisual($usuario) ?></span></a>
         <a href="perfil.php" class="profile<?= $decoracaoTopbarImagem !== '' ? ' has-frame-art frame-' . htmlspecialchars($decoracaoTopbarCodigo, ENT_QUOTES, 'UTF-8') : '' ?>" aria-label="Abrir meu perfil" data-manel-tip="Abre seu perfil, nível e conquistas.">
             <span class="topbar-profile-photo">
@@ -366,3 +359,4 @@ $tituloRecargaIa = match ($estadoIaTopbar) {
     window.addEventListener('neo:ai-status-refresh', refreshStatus);
 })();
 </script>
+

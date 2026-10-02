@@ -109,91 +109,6 @@
         });
     });
 
-    (function setupMobilePreview() {
-        var toggle = document.querySelector('[data-mobile-preview-toggle]');
-        if (!toggle) return;
-        var key = 'neo_mobile_preview';
-        var isFramePage = window.self !== window.top;
-        var stage = null;
-
-        if (isFramePage) {
-            toggle.classList.add('is-active');
-            toggle.setAttribute('aria-pressed', 'true');
-            toggle.addEventListener('click', function () {
-                window.parent.postMessage({ type: 'neo-mobile-preview-off' }, window.location.origin);
-            });
-            return;
-        }
-
-        function frameUrl() {
-            var url = new URL(window.location.href);
-            url.searchParams.set('neo_mobile_frame', '1');
-            return url.href;
-        }
-
-        function removeStage() {
-            if (stage) {
-                stage.classList.remove('is-active');
-                window.setTimeout(function () {
-                    if (stage && stage.parentNode) {
-                        stage.parentNode.removeChild(stage);
-                    }
-                    stage = null;
-                }, 220);
-            }
-        }
-
-        function createStage() {
-            if (stage) {
-                var currentFrame = stage.querySelector('iframe');
-                if (currentFrame) currentFrame.src = frameUrl();
-                return;
-            }
-            stage = document.createElement('div');
-            stage.className = 'neo-mobile-preview-stage';
-            stage.setAttribute('aria-label', 'Simulacao mobile');
-
-            var frame = document.createElement('iframe');
-            frame.className = 'neo-mobile-preview-viewport';
-            frame.title = 'Simulacao mobile';
-            frame.src = frameUrl();
-            stage.appendChild(frame);
-            document.body.appendChild(stage);
-            window.requestAnimationFrame(function () {
-                if (stage) stage.classList.add('is-active');
-            });
-        }
-
-        function setMobilePreview(active) {
-            document.documentElement.classList.toggle('neo-mobile-preview-host', active);
-            toggle.classList.toggle('is-active', active);
-            toggle.setAttribute('aria-pressed', active ? 'true' : 'false');
-            try {
-                localStorage.setItem(key, active ? '1' : '0');
-            } catch (e) {}
-            if (active) {
-                createStage();
-            } else {
-                removeStage();
-            }
-        }
-
-        var initial = false;
-        try {
-            initial = localStorage.getItem(key) === '1';
-        } catch (e) {}
-        setMobilePreview(initial);
-
-        toggle.addEventListener('click', function () {
-            setMobilePreview(!document.documentElement.classList.contains('neo-mobile-preview-host'));
-        });
-
-        window.addEventListener('message', function (event) {
-            if (event.origin !== window.location.origin || !event.data || event.data.type !== 'neo-mobile-preview-off') return;
-            setMobilePreview(false);
-        });
-    })();
-
     (function setupManelTooltips() {
         if (!document.querySelector('[data-neo-companion]') || document.body.classList.contains('neo-onboarding-page')) return;
 
@@ -526,7 +441,8 @@
         var lastActivitySignalAt = 0;
         var lastPointerSignalAt = 0;
         var faceRect = null;
-        var sleepDelay = randomBetween(36000, 56000);
+        var sleepDelayMs = 15000;
+        var sleepDelay = sleepDelayMs;
 
         function clamp(value, min, max) {
             return Math.max(min, Math.min(max, value));
@@ -694,7 +610,7 @@
         function registerActivity(event) {
             if (event && event.isTrusted === false) return;
             lastActivityAt = Date.now();
-            sleepDelay = randomBetween(36000, 56000);
+            sleepDelay = sleepDelayMs;
             wakeFace();
             if (lastActivityAt - lastSleepScheduleAt > 1000) {
                 lastSleepScheduleAt = lastActivityAt;
@@ -896,6 +812,8 @@
 
 
 })();
+
+
 
 
 
