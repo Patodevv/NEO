@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/neo_icon"
+        android:shortcutId="server"
+        android:shortcutShortLabel="@string/server_shortcut">
+        <intent
+            android:action="com.neomind.remote.CONFIGURE"
+            android:targetClass="com.neomind.remote.MainActivity"
+            android:targetPackage="com.neomind.remote" />
+    </shortcut>
+</shortcuts>

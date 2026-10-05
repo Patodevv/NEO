@@ -1,0 +1,23 @@
+# Ambiente local: nunca versionar senhas, banco ou chaves de API.
+**/.env
+**/.env.*
+!**/.env.example
+
+# Artefatos locais de testes e da ferramenta de desenvolvimento.
+**/.codex-tmp/
+
+# Arquivos gerados pelo Windows e pacotes de depuração.
+**/[Tt]humbs.db
+**/desktop.ini
+**/*.lnk
+*.apk
+android-app/build/
+android-app/signing/*.jks
+android-apk-inspect/
+
+# Arquivos gerados e uploads locais da aplicação.
+config/.schema_v2.ready
+static/uploads/perfis/*
+static/uploads/produtos/*
+!static/uploads/perfis/.gitkeep
+!static/uploads/produtos/.gitkeep

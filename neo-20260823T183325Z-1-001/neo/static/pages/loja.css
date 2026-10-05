@@ -1,0 +1,750 @@
+.store-heading {
+    min-height: clamp(190px, 19vw, 235px);
+    padding: clamp(24px, 3vw, 34px);
+    overflow: hidden;
+    border-color: rgba(73, 105, 255, .3);
+    background:
+        linear-gradient(90deg, rgba(10, 18, 39, .98) 0%, rgba(10, 18, 39, .92) 38%, rgba(10, 18, 39, .58) 61%, rgba(10, 18, 39, .14) 100%),
+        url('../images/store-banner-bg.webp') center right / cover no-repeat;
+    box-shadow: var(--panel-shadow), inset 0 0 0 1px color-mix(in srgb, var(--neo-blue) 8%, transparent);
+}
+
+.store-heading .neo-page-heading-copy {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 520px);
+}
+
+@media (max-width: 620px) {
+    .store-heading {
+        min-height: 210px;
+        justify-content: center;
+        background:
+            linear-gradient(90deg, rgba(10, 18, 39, .98) 0%, rgba(10, 18, 39, .9) 58%, rgba(10, 18, 39, .42) 100%),
+            url('../images/store-banner-bg.webp') 68% center / cover no-repeat;
+    }
+}
+
+.store-price {
+    display: inline-flex;
+    align-items: center;
+    gap: clamp(5px, 1vw, 8px);
+    min-width: 0;
+}
+
+.store-price .coin {
+    width: clamp(13px, 1.8vw, 16px);
+    height: clamp(13px, 1.8vw, 16px);
+    flex: 0 0 clamp(13px, 1.8vw, 16px);
+}
+
+.store-price b {
+    color: #fff;
+    overflow: hidden;
+    font-size: clamp(12px, 1.6vw, 15px);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.store-filters {
+    width: 100%;
+    max-width: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(7px, 1vw, 10px);
+    padding: clamp(5px, 1vw, 7px);
+    border: 1px solid var(--panel-border);
+    border-radius: clamp(18px, 2.4vw, 24px);
+    background: linear-gradient(145deg, color-mix(in srgb, var(--panel-bg) 88%, transparent), color-mix(in srgb, var(--control-bg) 88%, transparent));
+    box-shadow: var(--panel-shadow), inset 0 1px 0 rgba(255, 255, 255, .04);
+    overflow: visible;
+}
+
+.store-filters button {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: clamp(32px, 5vw, 38px);
+    padding: 0 clamp(8px, 1.5vw, 16px);
+    border: 1px solid transparent;
+    border-radius: clamp(12px, 2vw, 16px);
+    background: transparent;
+    color: var(--muted);
+    font-size: clamp(11px, 1.4vw, 12px);
+    font-weight: 800;
+    overflow: hidden;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.store-filters button:hover,
+.store-filters button:focus-visible {
+    color: #fff;
+    background: color-mix(in srgb, var(--neo-blue) 16%, transparent);
+    outline: none;
+}
+
+.store-filters button.is-active {
+    color: var(--neo-blue);
+    border-color: var(--neo-blue);
+    background: var(--btn-bg);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 0 0 3px color-mix(in srgb, var(--neo-blue) 18%, transparent);
+}
+
+.store-offers {
+    display: grid;
+    gap: clamp(12px, 2vw, 18px);
+    overflow: visible;
+}
+
+.store-offers .neo-section-heading {
+    margin: 0;
+}
+
+.store-offers-heading {
+    width: 100%;
+    min-height: clamp(72px, 8vw, 94px);
+    align-items: center;
+    padding: clamp(18px, 2.4vw, 26px) clamp(20px, 3vw, 32px);
+    overflow: visible;
+    border-color: color-mix(in srgb, var(--neo-blue) 34%, var(--panel-border));
+    background: linear-gradient(135deg, color-mix(in srgb, var(--panel-bg) 94%, transparent), color-mix(in srgb, var(--control-bg) 86%, transparent));
+    box-shadow: var(--panel-shadow), inset 0 1px 0 rgba(255, 255, 255, .05);
+}
+
+.store-offer-carousel {
+    width: calc(100% + (var(--icon-star-size, 32px) * 1.2));
+    margin-inline: calc(var(--icon-star-size, 32px) * -.6);
+    overflow: hidden;
+}
+
+.store-offer-track {
+    display: flex;
+    align-items: stretch;
+    transition: transform .62s cubic-bezier(.22, 1, .36, 1);
+    will-change: transform;
+}
+
+.store-offer-slide {
+    box-sizing: border-box;
+    min-width: 100%;
+    flex: 0 0 100%;
+    padding: calc(var(--icon-star-size, 32px) * .6);
+}
+
+.store-offer-card {
+    width: 100%;
+    min-height: clamp(350px, 36vw, 420px);
+    margin: 0 auto;
+}
+
+.store-offer-card .store-preview {
+    width: 100%;
+}
+
+.store-grid {
+    --store-hover-safe-space: calc(var(--icon-star-size, 32px) * .58);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(12px, 2vw, 18px);
+    padding: var(--store-hover-safe-space);
+    margin: calc(var(--store-hover-safe-space) * -1);
+    overflow: visible;
+}
+
+.store-grid > .neo-empty-state {
+    grid-column: 1 / -1;
+}
+
+.store-item[hidden] {
+    display: none;
+}
+
+.store-item {
+    --icon-star-size: 32px;
+    position: relative;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1.7vw, 15px);
+    padding: clamp(14px, 2vw, 18px);
+    border: 1px solid var(--panel-border);
+    border-radius: clamp(16px, 2.2vw, 20px);
+    background: var(--panel-bg);
+    box-shadow: var(--panel-shadow);
+    overflow: visible;
+    transition: background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.store-item:hover,
+.store-item:focus-within {
+    border-color: var(--neo-blue);
+    background: color-mix(in srgb, var(--neo-blue) 10%, var(--panel-bg));
+    box-shadow: var(--panel-shadow), 0 0 0 4px var(--neo-blue-glow);
+    transform: translateY(-2px);
+}
+
+.store-item > .icon-hover-star {
+    left: calc(var(--icon-star-size, 38px) * -.42);
+    top: calc(var(--icon-star-size, 38px) * -.42);
+}
+
+.store-preview {
+    height: clamp(204px, 24vw, 260px);
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--panel-border);
+    border-radius: clamp(13px, 2vw, 16px);
+    background: #111;
+    overflow: hidden;
+}
+
+.store-preview.store-frame-stage {
+    padding: clamp(20px, 3vw, 30px);
+}
+
+.store-preview > img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+}
+
+/* Nos cards de moldura, mostramos somente a arte, em uma área fixa e igual. */
+.store-preview > .store-frame-preview {
+    width: clamp(132px, 14vw, 176px);
+    height: clamp(132px, 14vw, 176px);
+    max-width: 76%;
+    max-height: 76%;
+    object-fit: contain;
+}
+
+.store-avatar-demo {
+    width: clamp(70px, 9vw, 92px);
+    height: clamp(70px, 9vw, 92px);
+    position: relative;
+    display: grid;
+    place-items: center;
+    border: 3px solid var(--profile-accent, var(--neo-blue));
+    border-radius: 999px;
+    background: var(--control-bg);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--profile-accent, var(--neo-blue)) 14%, transparent), 0 0 24px color-mix(in srgb, var(--profile-accent-2, var(--profile-accent, var(--neo-blue))) 20%, transparent);
+    overflow: hidden;
+}
+
+.store-avatar-demo.has-frame-art {
+    width: clamp(92px, 11vw, 122px);
+    height: clamp(92px, 11vw, 122px);
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+}
+
+.store-avatar-demo.has-frame-art .avatar-photo {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 68%;
+    height: 68%;
+    border-radius: 999px;
+    object-fit: cover;
+    transform: translate(-50%, -50%);
+}
+
+.store-avatar-demo.has-frame-art > span {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 68%;
+    height: 68%;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--control-bg);
+    transform: translate(-50%, -50%);
+}
+
+.store-avatar-demo .profile-frame-art {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 112%;
+    height: 112%;
+    object-fit: contain;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+}
+
+.store-theme-demo,
+.store-manel-demo,
+.store-name-demo {
+    width: min(78%, 120px);
+    height: min(72%, 96px);
+    position: relative;
+    display: grid;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--store-accent, var(--neo-blue)) 48%, transparent);
+    border-radius: 20px;
+    background: linear-gradient(145deg, color-mix(in srgb, var(--store-accent, var(--neo-blue)) 20%, #071126), rgba(7, 17, 38, .96));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 0 24px color-mix(in srgb, var(--store-accent, var(--neo-blue)) 18%, transparent);
+}
+
+.store-theme-demo span,
+.store-theme-demo i,
+.store-theme-demo b {
+    display: block;
+    border-radius: 999px;
+    background: var(--store-accent, var(--neo-blue));
+}
+
+.store-theme-demo span {
+    width: 58%;
+    height: 10px;
+}
+
+.store-theme-demo i {
+    width: 76%;
+    height: 8px;
+    opacity: .5;
+}
+
+.store-theme-demo b {
+    width: 38%;
+    height: 8px;
+    opacity: .7;
+}
+
+.store-manel-demo {
+    width: 116px;
+    height: 86px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.store-manel-demo svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--store-accent, var(--neo-blue)) 42%, transparent));
+}
+
+.store-manel-demo rect {
+    fill: var(--store-accent, var(--neo-blue));
+}
+
+.store-manel-demo path {
+    fill: none;
+    stroke: var(--store-accent, var(--neo-blue));
+    stroke-width: 22;
+    stroke-linecap: round;
+}
+
+.store-name-demo {
+    height: 72px;
+    color: var(--store-accent, var(--profile-name-color, #fff));
+    font-size: 34px;
+    font-weight: 950;
+    letter-spacing: 1px;
+}
+
+.store-avatar-demo img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.store-avatar-demo span {
+    color: #fff;
+    font-size: clamp(26px, 3.4vw, 34px);
+    font-weight: 900;
+}
+
+.store-avatar-demo.has-frame-art > .avatar-photo,
+.store-avatar-demo.has-frame-art > span {
+    z-index: 1;
+}
+
+.store-avatar-demo.has-frame-art > .profile-frame-art {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 112%;
+    height: 112%;
+    object-fit: contain;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+}
+
+
+.store-item-copy {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+}
+
+.store-item-copy > span {
+    color: var(--neo-blue);
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.store-item-copy h2 {
+    overflow: hidden;
+    color: #fff;
+    font-size: clamp(15px, 2vw, 18px);
+    line-height: 1.18;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.store-item-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(10px, 1.7vw, 14px);
+    margin-top: auto;
+    padding-top: clamp(10px, 1.6vw, 14px);
+    border-top: 1px solid var(--panel-border);
+}
+
+.store-price {
+    color: #fff;
+}
+
+.store-item-footer form {
+    margin: 0;
+}
+
+.store-item-footer button {
+    min-width: clamp(92px, 11vw, 112px);
+    gap: clamp(6px, 1vw, 8px);
+}
+
+.store-item-footer button svg {
+    width: clamp(15px, 1.8vw, 17px);
+    height: clamp(15px, 1.8vw, 17px);
+}
+
+.store-item-footer button:disabled {
+    opacity: .72;
+}
+
+@media (max-width: 920px) {
+    .store-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 620px) {
+    .store-offer-carousel {
+        width: 100%;
+        margin-inline: 0;
+    }
+
+    .store-filters {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .store-filters button {
+        width: 100%;
+    }
+
+    .store-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .store-item-footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .store-item-footer form,
+    .store-item-footer button {
+        width: 100%;
+    }
+}
+
+/* NEO store color-synced stars */
+.store-filters button.neo-star-hover,
+.store-item.neo-star-hover,
+.store-item-footer button.neo-star-hover {
+    --button-accent: var(--neo-blue);
+    --hover-star-core: var(--button-accent);
+    --hover-star-shadow: color-mix(in srgb, var(--button-accent) 44%, #030824);
+    --hover-star-center-stroke: color-mix(in srgb, var(--button-accent) 62%, #ffffff);
+    --hover-star-glow: color-mix(in srgb, var(--button-accent) 55%, transparent);
+}
+.store-filters button.neo-star-hover:hover,
+.store-filters button.neo-star-hover:focus-visible,
+.store-filters button.neo-star-hover.is-active,
+.store-item.neo-star-hover:hover,
+.store-item.neo-star-hover:focus-within,
+.store-item-footer button.neo-star-hover:hover,
+.store-item-footer button.neo-star-hover:focus-visible {
+    color: var(--button-accent);
+    border-color: var(--button-accent);
+}
+.store-item.neo-star-hover:hover .store-item-copy :where(span, h2),
+.store-item.neo-star-hover:focus-within .store-item-copy :where(span, h2) {
+    color: var(--button-accent);
+}
+
+
+
+
+
+
+.store-item.neo-star-hover:hover,
+.store-item.neo-star-hover:focus-within,
+.store-item-footer button.neo-star-hover:hover,
+.store-item-footer button.neo-star-hover:focus-visible {
+    color: var(--neo-blue) !important;
+    border-color: var(--neo-blue) !important;
+}
+
+.store-item.neo-star-hover:hover .store-item-copy :where(span, h2),
+.store-item.neo-star-hover:focus-within .store-item-copy :where(span, h2),
+.store-item-footer button.neo-star-hover:hover svg:not(.icon-hover-star),
+.store-item-footer button.neo-star-hover:focus-visible svg:not(.icon-hover-star) {
+    color: var(--neo-blue) !important;
+}
+
+
+/* Molduras de perfil normalizadas individualmente: foto atrás, anel por cima, centro único. */
+.store-avatar-demo.has-frame-art,
+.inventory-avatar-demo.has-frame-art,
+.profile-avatar-ring.has-frame-art,
+.topbar .profile.has-frame-art {
+    --frame-photo-size: 72%;
+    --frame-art-size: 132%;
+    position: relative;
+    overflow: visible;
+    contain: layout;
+    isolation: isolate;
+}
+
+.store-avatar-demo.has-frame-art .avatar-photo,
+.store-avatar-demo.has-frame-art > span,
+.inventory-avatar-demo.has-frame-art .avatar-photo,
+.inventory-avatar-demo.has-frame-art > span,
+.profile-avatar-ring.has-frame-art .profile-avatar,
+.topbar .profile.has-frame-art .topbar-profile-photo {
+    position: absolute;
+    left: 50% !important;
+    top: 50% !important;
+    width: var(--frame-photo-size) !important;
+    height: var(--frame-photo-size) !important;
+    aspect-ratio: 1 / 1;
+    overflow: hidden !important;
+    border-radius: 999px !important;
+    clip-path: circle(50% at 50% 50%);
+    transform: translate(-50%, -50%) !important;
+    z-index: 1;
+}
+
+.store-avatar-demo.has-frame-art .avatar-photo,
+.inventory-avatar-demo.has-frame-art .avatar-photo,
+.profile-avatar-ring.has-frame-art .profile-avatar img,
+.topbar .profile.has-frame-art .topbar-profile-photo img {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+    object-fit: cover;
+    object-position: center;
+}
+
+.store-avatar-demo.has-frame-art > .profile-frame-art,
+.inventory-avatar-demo.has-frame-art > .profile-frame-art,
+.profile-avatar-ring > .profile-frame-art,
+.topbar .profile.has-frame-art > .profile-frame-art {
+    position: absolute;
+    left: 50% !important;
+    top: 50% !important;
+    width: var(--frame-art-size) !important;
+    height: var(--frame-art-size) !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: contain;
+    object-position: center;
+    pointer-events: none;
+    transform: translate(-50%, -50%) !important;
+    z-index: 3;
+}
+
+.store-preview.moldura_sapo_pop .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_sapo_pop .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_sapo_pop .profile-avatar-ring,
+.topbar .profile.frame-moldura_sapo_pop,
+.store-preview.moldura_musica_neon .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_musica_neon .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_musica_neon .profile-avatar-ring,
+.topbar .profile.frame-moldura_musica_neon {
+    --frame-photo-size: 76%;
+}
+
+.store-preview.moldura_coroa_real .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_coroa_real .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_coroa_real .profile-avatar-ring,
+.topbar .profile.frame-moldura_coroa_real {
+    --frame-photo-size: 70%;
+    --frame-art-size: 136%;
+}
+
+.store-preview.moldura_asas_celestes .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_asas_celestes .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_asas_celestes .profile-avatar-ring,
+.topbar .profile.frame-moldura_asas_celestes {
+    --frame-photo-size: 68%;
+}
+
+/* Referência final: moldura inteira dentro do palco, foto circular atrás e sem cortes. */
+.store-avatar-demo.has-frame-art,
+.inventory-avatar-demo.has-frame-art,
+.profile-avatar-ring.has-frame-art,
+.topbar .profile.has-frame-art {
+    --frame-photo-size: 72%;
+    --frame-art-size: 100%;
+    position: relative;
+    overflow: visible;
+    contain: layout;
+    isolation: isolate;
+}
+
+.store-preview .store-avatar-demo.has-frame-art {
+    width: clamp(104px, 12vw, 142px) !important;
+    height: clamp(104px, 12vw, 142px) !important;
+}
+
+.inventory-preview .inventory-avatar-demo.has-frame-art {
+    width: 90px !important;
+    height: 90px !important;
+}
+
+.profile-avatar-ring.has-frame-art {
+    width: clamp(98px, 12vw, 132px) !important;
+    height: clamp(98px, 12vw, 132px) !important;
+}
+
+.topbar .profile.has-frame-art {
+    width: clamp(32px, 8vw, 38px) !important;
+    height: clamp(32px, 8vw, 38px) !important;
+    flex-basis: clamp(32px, 8vw, 38px) !important;
+}
+
+.store-avatar-demo.has-frame-art .avatar-photo,
+.store-avatar-demo.has-frame-art > span,
+.inventory-avatar-demo.has-frame-art .avatar-photo,
+.inventory-avatar-demo.has-frame-art > span,
+.profile-avatar-ring.has-frame-art .profile-avatar,
+.topbar .profile.has-frame-art .topbar-profile-photo {
+    position: absolute;
+    left: 50% !important;
+    top: 50% !important;
+    width: var(--frame-photo-size) !important;
+    height: var(--frame-photo-size) !important;
+    aspect-ratio: 1 / 1;
+    overflow: hidden !important;
+    border-radius: 999px !important;
+    clip-path: circle(50% at 50% 50%);
+    transform: translate(-50%, -50%) !important;
+    z-index: 1;
+}
+
+.store-avatar-demo.has-frame-art .avatar-photo,
+.inventory-avatar-demo.has-frame-art .avatar-photo,
+.profile-avatar-ring.has-frame-art .profile-avatar img,
+.topbar .profile.has-frame-art .topbar-profile-photo img {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+    object-fit: cover;
+    object-position: center;
+}
+
+.store-avatar-demo.has-frame-art > .profile-frame-art,
+.inventory-avatar-demo.has-frame-art > .profile-frame-art,
+.profile-avatar-ring > .profile-frame-art,
+.topbar .profile.has-frame-art > .profile-frame-art {
+    position: absolute;
+    left: 50% !important;
+    top: 50% !important;
+    width: var(--frame-art-size) !important;
+    height: var(--frame-art-size) !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: contain;
+    object-position: center;
+    pointer-events: none;
+    transform: translate(-50%, -50%) !important;
+    z-index: 3;
+}
+
+.store-preview.moldura_sapo_pop .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_sapo_pop .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_sapo_pop .profile-avatar-ring,
+.topbar .profile.frame-moldura_sapo_pop,
+.store-preview.moldura_musica_neon .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_musica_neon .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_musica_neon .profile-avatar-ring,
+.topbar .profile.frame-moldura_musica_neon {
+    --frame-photo-size: 76%;
+}
+
+.store-preview.moldura_coroa_real .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_coroa_real .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_coroa_real .profile-avatar-ring,
+.topbar .profile.frame-moldura_coroa_real,
+.store-preview.moldura_asas_celestes .store-avatar-demo.has-frame-art,
+.inventory-preview.moldura_asas_celestes .inventory-avatar-demo.has-frame-art,
+.profile-summary.moldura_asas_celestes .profile-avatar-ring,
+.topbar .profile.frame-moldura_asas_celestes {
+    --frame-photo-size: 69%;
+}
+
+/* Loja: toda estrela de hover dos cards e botões usa sempre a cor do tema ativo. */
+.store-page :where(.store-item.neo-star-hover, .store-item-footer button.neo-star-hover) {
+    --button-accent: var(--neo-blue) !important;
+    --hover-star-core: var(--neo-blue) !important;
+    --hover-star-shadow: color-mix(in srgb, var(--neo-blue) 44%, #030824) !important;
+    --hover-star-outline: color-mix(in srgb, var(--neo-blue) 12%, #ffffff) !important;
+    --hover-star-center: #ffffff !important;
+    --hover-star-center-stroke: color-mix(in srgb, var(--neo-blue) 62%, #ffffff) !important;
+    --hover-star-glow: color-mix(in srgb, var(--neo-blue) 58%, transparent) !important;
+}
+
+.store-page :where(.store-item.neo-star-hover, .store-item-footer button.neo-star-hover) > .icon-hover-star {
+    --hover-star-core: var(--neo-blue) !important;
+    --hover-star-shadow: color-mix(in srgb, var(--neo-blue) 44%, #030824) !important;
+    --hover-star-outline: color-mix(in srgb, var(--neo-blue) 12%, #ffffff) !important;
+    --hover-star-center: #ffffff !important;
+    --hover-star-center-stroke: color-mix(in srgb, var(--neo-blue) 62%, #ffffff) !important;
+    --hover-star-glow: color-mix(in srgb, var(--neo-blue) 58%, transparent) !important;
+}
+
+.store-page :where(.store-item.neo-star-hover, .store-item-footer button.neo-star-hover) > .icon-hover-star .icon-hover-star-shadow {
+    fill: color-mix(in srgb, var(--neo-blue) 44%, #030824) !important;
+    stroke: color-mix(in srgb, var(--neo-blue) 44%, #030824) !important;
+}
+
+.store-page :where(.store-item.neo-star-hover, .store-item-footer button.neo-star-hover) > .icon-hover-star .icon-hover-star-core {
+    fill: var(--neo-blue) !important;
+    stroke: color-mix(in srgb, var(--neo-blue) 12%, #ffffff) !important;
+}
+
+.store-page :where(.store-item.neo-star-hover, .store-item-footer button.neo-star-hover) > .icon-hover-star .icon-hover-star-center {
+    fill: #ffffff !important;
+    stroke: color-mix(in srgb, var(--neo-blue) 62%, #ffffff) !important;
+}
+

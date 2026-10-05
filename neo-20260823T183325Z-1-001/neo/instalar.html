@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#071126">
+    <title>Instalar NEO no Android</title>
+    <style>
+        :root { color-scheme: dark; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(circle at top, #172b5c 0, #071126 48%, #040817 100%);
+            color: #fff;
+            font: 16px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        main {
+            width: min(100% - 32px, 600px);
+            margin: 7vh auto;
+            padding: 30px;
+            border: 1px solid rgba(151, 179, 255, .24);
+            border-radius: 24px;
+            background: rgba(7, 17, 38, .88);
+            box-shadow: 0 24px 80px rgba(0, 0, 0, .35);
+        }
+        h1 { margin: 0 0 14px; font-size: clamp(2rem, 8vw, 3rem); line-height: 1.08; }
+        p, li { color: #cbd5ee; }
+        .kicker { margin: 0 0 10px; color: #8ca9ff; font-weight: 800; letter-spacing: .12em; }
+        .button {
+            display: block;
+            margin: 26px 0;
+            padding: 16px 20px;
+            border-radius: 14px;
+            background: #8ba7ff;
+            color: #071126;
+            text-align: center;
+            text-decoration: none;
+            font-weight: 800;
+        }
+        .server-box {
+            padding: 16px;
+            border-radius: 14px;
+            background: rgba(139, 167, 255, .1);
+            border: 1px solid rgba(139, 167, 255, .28);
+        }
+        code { display: block; margin-top: 6px; color: #dbe4ff; overflow-wrap: anywhere; }
+        button {
+            margin-top: 12px;
+            padding: 10px 14px;
+            border: 0;
+            border-radius: 10px;
+            background: #233867;
+            color: #fff;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        a { color: #afc2ff; }
+        .note { font-size: .92rem; }
+    </style>
+</head>
+<body>
+<main>
+    <p class="kicker">NEO · NO SEU CELULAR</p>
+    <h1>O mesmo NEO, dentro do aplicativo.</h1>
+    <p>O computador mantém o sistema e o banco de dados. O aplicativo Android abre esta mesma versão do NEO, com a mesma conta e os mesmos conteúdos.</p>
+
+    <a class="button" href="downloads/NEO-Remoto.apk" download>Baixar APK para Android</a>
+
+    <ol>
+        <li>Conecte o celular e o computador à mesma rede Wi-Fi.</li>
+        <li>Mantenha o Apache e o MySQL ligados no XAMPP.</li>
+        <li>Se uma versão anterior do <strong>NEO Remoto</strong> já estiver instalada, desinstale-a uma única vez. A conta e os dados salvos no computador não serão apagados.</li>
+        <li>Baixe e instale o APK. Se o Android solicitar, permita a instalação por este navegador.</li>
+        <li>Abra o <strong>NEO Remoto</strong> e informe o endereço abaixo. Se o IP mudar depois, toque no botão <strong>IP</strong>, sempre visível no canto superior direito.</li>
+    </ol>
+
+    <div class="server-box">
+        <strong>Endereço desta instalação</strong>
+        <code id="server">Carregando…</code>
+        <button id="copy-server" type="button">Copiar endereço</button>
+    </div>
+
+    <p class="note">Compatível com Android 8 ou superior. O celular precisa conseguir acessar o endereço do computador pela rede local.</p>
+    <p class="note"><a href="downloads/NEO-Remoto.sha256">Verificação SHA-256 do APK</a> · <a href="login.php">Voltar para o NEO</a></p>
+</main>
+<script>
+    (() => {
+        const server = new URL('./', window.location.href).href;
+        const output = document.getElementById('server');
+        const copy = document.getElementById('copy-server');
+        output.textContent = server;
+        copy.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(server);
+                copy.textContent = 'Endereço copiado';
+            } catch (_) {
+                const selection = window.getSelection();
+                const range = document.createRange();
+                range.selectNodeContents(output);
+                selection.removeAllRanges();
+                selection.addRange(range);
+                copy.textContent = 'Endereço selecionado';
+            }
+        });
+    })();
+</script>
+</body>
+</html>

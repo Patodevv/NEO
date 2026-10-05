@@ -1,0 +1,22 @@
+Options -Indexes
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+
+    <FilesMatch "\.php$">
+        Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+        Header always set Pragma "no-cache"
+        Header always set Expires "0"
+    </FilesMatch>
+</IfModule>
+
+<FilesMatch "^(composer\.(json|lock)|package(-lock)?\.json|README\.md|\.gitignore|\.env|\.env\..*|teste_db\.php)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(?:NEO|neo-20260823T183325Z-1-001)(?:/|$) - [R=404,L]
+    RewriteRule ^(?:config|database|docs|includes|scripts|services|tests)(?:/|$) - [R=404,L]
+</IfModule>
