@@ -250,6 +250,13 @@ try {
     check(adaptiveSummary($pdo,$otherId)['stats']['answers'] === 0, 'learning statistics cannot include another account');
     $context = adaptiveAIContext($pdo,$userId,$contentId);
     check(str_contains($context,'passo_a_passo') && str_contains($context,'dificuldade_recomendada') && str_contains($context,'jogos') && str_contains($context,'dias_por_semana') && str_contains($context,'tipo_estudo') && !str_contains($context,'\"serie\"'), 'AI context includes interests, study type, weekly target, explanation style and evidence-based difficulty');
+    $interestProfile = adaptiveInterestProfile(['personalizacao_json'=>json_encode($answers, JSON_UNESCAPED_UNICODE), 'gostos'=>'texto antigo']);
+    check(
+        $interestProfile['broad'] === ['Jogos','Música']
+        && $interestProfile['references'] === ['Minecraft','One Piece']
+        && str_contains(adaptiveInterestPrompt(['personalizacao_json'=>json_encode($answers, JSON_UNESCAPED_UNICODE)]), 'conexões reconhecíveis'),
+        'AI interests are normalized into broad labels and separate named references'
+    );
 
     foreach ([['tipo'=>'inválido'],['quantidade'=>0],['minutos'=>151],['tipo'=>'dificuldade','dificuldade'=>13],['tipo'=>'estilo','estilo'=>'inventado'],['tipo'=>'conteudo','conteudo_id'=>$otherContent],['tipo'=>'pontos_fracos']] as $filters) {
         rejects(fn()=>adaptiveCreateExam($pdo,$userId,$filters), 'exam rejects invalid filters, foreign content or insufficient weak-point evidence');

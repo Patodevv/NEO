@@ -3,6 +3,7 @@
 require_once __DIR__ . '/ai_quality.php';
 require_once __DIR__ . '/ai_usage.php';
 require_once __DIR__ . '/ai_safety.php';
+require_once __DIR__ . '/personalization.php';
 
 function openaiApiKey(): string
 {
@@ -336,23 +337,97 @@ function normalizarCorpoLivroIA(string $texto, string $tituloConfiavel = ''): st
     return trim($resultado);
 }
 
-function livroRefleteGostosIA(string $texto, string $gostos): bool
+function perfilInteressesAtualIA(string $gostos = ''): array
 {
-    $texto = normalizarTextoIA($texto);
-    $itens = preg_split('/[,;|\n]+/u', $gostos, -1, PREG_SPLIT_NO_EMPTY) ?: [];
-    foreach ($itens as $item) {
-        $item = normalizarTextoIA($item);
-        if ($item !== '' && str_contains($texto, $item)) {
-            return true;
+    $usuario = $GLOBALS['neo_personalization_user'] ?? [];
+    $perfil = is_array($usuario) ? adaptiveInterestProfile($usuario) : ['codes'=>[], 'broad'=>[], 'references'=>[], 'text'=>''];
+    $diretos = adaptiveInterestProfile(['gostos'=>$gostos]);
+    $perfil['broad'] = adaptiveInterestItems(array_merge($perfil['broad'] ?? [], $diretos['broad'] ?? []));
+    $perfil['references'] = adaptiveInterestItems($perfil['references'] ?? [], 10);
+    $perfil['text'] = implode(', ', $perfil['broad']);
+    return $perfil;
+}
+
+function contextoInteressesIA(string $gostos = '', int $conexoes = 2): string
+{
+    $perfil = perfilInteressesAtualIA($gostos);
+    if (!$perfil['broad'] && !$perfil['references']) {
+        return 'Não há interesses pessoais informados. Não invente gostos nem referências.';
+    }
+    $partes = [];
+    if ($perfil['broad']) $partes[] = 'Interesses amplos informados: ' . implode(', ', $perfil['broad']) . '.';
+    $partes[] = $perfil['references']
+        ? 'Referências nomeadas autorizadas: ' . implode(', ', $perfil['references']) . '.'
+        : 'Não há referências nomeadas autorizadas; use cenários genéricos ligados aos interesses amplos.';
+    $quantidade = min(max(1, $conexoes), max(1, count($perfil['broad'])));
+    $partes[] = 'Inclua ' . ($quantidade === 1 ? 'uma conexão reconhecível' : $quantidade . ' conexões reconhecíveis, de preferência com interesses diferentes') .
+        ' somente quando ajudarem a explicar ou praticar o conteúdo. Não diga que está usando o perfil e não altere fatos ou gabaritos para personalizar.';
+    return implode(' ', $partes);
+}
+
+function vocabularioInteressesIA(): array
+{
+    return [
+        'jogos'=>['jogo','jogos','videogame','fase','fases','missão','missões','pontuação','tabuleiro','controle','estratégia de jogo'],
+        'esportes'=>['esporte','esportes','futebol','partida','placar','gol','gols','time','campeonato','treino','atleta'],
+        'musica'=>['música','ritmo','melodia','batida','playlist','instrumento','acorde','canção','refrão','nota musical'],
+        'filmes_series'=>['filme','filmes','série','séries','cena','roteiro','episódio','temporada','cinema'],
+        'livros_historias'=>['livro','livros','narrativa','personagem','capítulo','enredo','conto','romance literário'],
+        'tecnologia'=>['tecnologia','aplicativo','app','celular','computador','software','código','programação','algoritmo','internet','rede digital'],
+        'arte'=>['arte','desenho','pintura','ilustração','criatividade','obra visual','paleta de cores'],
+        'natureza_animais'=>['natureza','animal','animais','ecossistema','habitat','espécie','fauna','flora'],
+        'ciencia_espaco'=>['ciência','espaço','planeta','órbita','universo','experimento','astronomia','foguete','galáxia'],
+        'culinaria'=>['culinária','receita','ingrediente','cozinha','porção','prato','forno','temperatura de preparo'],
+        'viagens_culturas'=>['viagem','viagens','cultura','culturas','país','cidade','mapa','roteiro turístico','fuso horário'],
+    ];
+}
+
+function interessesReconhecidosNoTextoIA(string $texto, string $gostos = ''): array
+{
+    $perfil = perfilInteressesAtualIA($gostos);
+    if (!$perfil['broad'] && !$perfil['references']) return [];
+    $haystack = '_' . adaptiveSlug($texto) . '_';
+    $catalog = adaptiveInterestCatalog();
+    $reverse = [];
+    foreach ($catalog as $code=>$label) $reverse[adaptiveSlug($label)] = $code;
+    $vocabulary = vocabularioInteressesIA();
+    $matched = [];
+
+    foreach ($perfil['references'] as $reference) {
+        $needle = adaptiveSlug($reference);
+        if ($needle !== '' && str_contains($haystack, '_' . $needle . '_')) $matched[] = $reference;
+    }
+    foreach ($perfil['broad'] as $interest) {
+        $interestSlug = adaptiveSlug($interest);
+        $code = $reverse[$interestSlug] ?? null;
+        $terms = $code !== null ? ($vocabulary[$code] ?? []) : [$interest];
+        if ($code === null) {
+            $terms = array_merge($terms, array_filter(
+                preg_split('/\s+/u', $interest, -1, PREG_SPLIT_NO_EMPTY) ?: [],
+                static fn(string $word): bool => mb_strlen($word, 'UTF-8') >= 5
+            ));
         }
-        $palavras = preg_split('/\s+/u', $item, -1, PREG_SPLIT_NO_EMPTY) ?: [];
-        foreach ($palavras as $palavra) {
-            if (mb_strlen($palavra) >= 4 && str_contains($texto, $palavra)) {
-                return true;
+        foreach ($terms as $term) {
+            $needle = adaptiveSlug($term);
+            if ($needle !== '' && str_contains($haystack, '_' . $needle . '_')) {
+                $matched[] = $interest;
+                break;
             }
         }
     }
-    return trim($gostos) === '';
+    return adaptiveInterestItems($matched);
+}
+
+function livroRefleteGostosIA(string $texto, string $gostos): bool
+{
+    $perfil = perfilInteressesAtualIA($gostos);
+    return (!$perfil['broad'] && !$perfil['references']) || interessesReconhecidosNoTextoIA($texto, $gostos) !== [];
+}
+
+function questoesRefletemGostosIA(array $questoes, string $gostos): bool
+{
+    $texto = json_encode($questoes, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
+    return livroRefleteGostosIA($texto, $gostos);
 }
 
 function blocoEhTituloLivroIA(string $bloco): bool
@@ -1215,9 +1290,7 @@ function gerarQuestoes(
         'additionalProperties' => false
     ];
 
-    $preferencias = trim($gostos) !== ''
-        ? "Preferencias do estudante: {$gostos}"
-        : 'Sem preferencias informadas.';
+    $preferencias = contextoInteressesIA($gostos, 2);
 
     $chamarGeracao = static function (string $textoBase, int $maxTokens, bool $compacto = false) use ($materia, $titulo, $preferencias, $nivel, $schema): array {
         $limites = $compacto
@@ -1240,6 +1313,7 @@ function gerarQuestoes(
                         "Nivel: {$nivel}\n" .
                         "Texto-base:\n{$textoBase}\n\n" .
                         "Gere exatamente 5 questoes diferentes baseadas no texto. Cada uma precisa de enunciado, opcao_a, opcao_b, opcao_c, opcao_d, correta, dificuldade, habilidade, tipo_questao, estilo_prova e explicacao_correta. " .
+                        "Quando houver interesses informados, contextualize uma ou duas questões com cenários reconhecíveis ligados a interesses diferentes. A personalização deve ficar somente no cenário; conceito, dados e resposta precisam continuar sustentados pelo texto-base. " .
                         "{$limites} Use JSON com a chave questoes."
                 ]
             ],
@@ -1286,7 +1360,7 @@ function gerarQuestoes(
     }
 
     try {
-        $revisadas = revisarQuestoesIA($materia, $titulo, $corpo, $nivel, $resultado['questoes']);
+        $revisadas = revisarQuestoesIA($materia, $titulo, $corpo, $nivel, $resultado['questoes'], $gostos);
     } catch (Throwable $e) {
         error_log('[NEO][revisao-questoes] ' . $e->getMessage());
         $revisadas = array_values($resultado['questoes']);
@@ -1295,6 +1369,17 @@ function gerarQuestoes(
     $completas = completarQuestoesGeradasIA($revisadas);
     if (count($completas) !== 5 || problemasQuestoesLocal($completas)) {
         throw new RuntimeException('Erro no sistema, tente novamente mais tarde.');
+    }
+
+    $perfilInteresses = perfilInteressesAtualIA($gostos);
+    if (($perfilInteresses['broad'] || $perfilInteresses['references']) && !questoesRefletemGostosIA($completas, $gostos)) {
+        try {
+            $revisadas = revisarQuestoesIA($materia, $titulo, $corpo, $nivel, $revisadas, $gostos, true);
+            $candidatas = completarQuestoesGeradasIA($revisadas);
+            if (count($candidatas) === 5 && !problemasQuestoesLocal($candidatas)) $completas = $candidatas;
+        } catch (Throwable $e) {
+            error_log('[NEO][reforco-personalizacao-questoes] ' . $e->getMessage());
+        }
     }
 
     return anexarOrigemListaIA($completas, $origemGeracao);
@@ -1486,6 +1571,32 @@ function diretrizesGeracaoLivroTextoIA(): string
         'Quando houver preferências pessoais, integre naturalmente uma ou duas delas em exemplos ou analogias corretas, úteis e factualmente seguras.';
 }
 
+function reforcarPersonalizacaoLivroIA(string $materia, int $nivel, array $livro, string $gostos): array
+{
+    $titulo = limitarEntradaPromptIA((string)($livro['titulo'] ?? ''), 300);
+    $corpo = limitarEntradaPromptIA((string)($livro['corpo'] ?? ''), 20000);
+    $personalizacao = contextoInteressesIA($gostos, 2);
+    $revisado = conversarTextoIA([
+        [
+            'role'=>'system',
+            'content'=>diretrizesRevisaoLivroCompactaIA() .
+                "\nMantenha a explicação e os fatos corretos. Torne a personalização reconhecível reescrevendo exemplos ou aplicações, sem mencionar perfil, preferências ou estas instruções.",
+        ],
+        [
+            'role'=>'user',
+            'content'=>"Matéria: {$materia}\nNível: {$nivel}\nTítulo confiável: {$titulo}\n{$personalizacao}\n\nCorpo a personalizar:\n{$corpo}",
+        ],
+    ], 1650);
+    $candidato = [
+        'titulo'=>$titulo,
+        'corpo'=>normalizarCorpoLivroIA((string)($revisado['texto'] ?? ''), $titulo),
+    ];
+    if (problemasTextoEducacional((string)$candidato['corpo'], 350)) {
+        throw new RuntimeException('O reforço de personalização não preservou a qualidade do livro.');
+    }
+    return $candidato;
+}
+
 function gerarLivro(
     string $materia,
     string $titulo,
@@ -1497,9 +1608,7 @@ function gerarLivro(
     $titulo = limitarEntradaPromptIA($titulo, 300);
     validarPedidoIASeguro($materia . ' ' . $titulo, 'livro');
     $gostos = limitarEntradaPromptIA($gostos, 1000);
-    $preferencias = trim($gostos) !== ''
-        ? "Preferencias do estudante: {$gostos}"
-        : 'Sem preferencias informadas.';
+    $preferencias = contextoInteressesIA($gostos, 2);
 
     try {
         $geracao = conversarTextoIA(
@@ -1519,6 +1628,7 @@ function gerarLivro(
                         "{$preferencias}\n" .
                         "Nivel do estudante: {$nivel}\n" .
                         "Gere uma versao completa e personalizada desse conteudo. " .
+                        "Quando houver ao menos dois interesses, use dois deles em pontos diferentes: um exemplo resolvido e uma aplicação ou prática guiada. As conexões precisam ser fáceis de reconhecer e ajudar a compreensão. " .
                         "Use gostos apenas quando melhorarem a compreensao. Referencias nomeadas exigem autorizacao explicita no perfil e alta confianca factual. " .
                         "Comece diretamente pelo conteudo didatico."
                 ]
@@ -1534,8 +1644,14 @@ function gerarLivro(
         }
 
         $livroRevisado = revisarLivroIA($materia, $nivel, $resultado, $gostos);
-        if (trim($gostos) !== '' && !livroRefleteGostosIA((string)$livroRevisado['corpo'], $gostos)) {
-            throw new RuntimeException('A personalização do livro não foi preservada.');
+        $perfilInteresses = perfilInteressesAtualIA($gostos);
+        $temInteresses = (bool)($perfilInteresses['broad'] || $perfilInteresses['references']);
+        if ($temInteresses && !livroRefleteGostosIA((string)$livroRevisado['corpo'], $gostos)) {
+            $livroRevisado = reforcarPersonalizacaoLivroIA($materia, $nivel, $livroRevisado, $gostos);
+            $livroRevisado = revisarLivroIA($materia, $nivel, $livroRevisado, $gostos);
+        }
+        if ($temInteresses && !livroRefleteGostosIA((string)$livroRevisado['corpo'], $gostos)) {
+            throw new RuntimeException('A personalização do livro não foi preservada após a correção.');
         }
         return anexarOrigemIA($livroRevisado, $origemGeracao);
     } catch (Exception $e) {

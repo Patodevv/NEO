@@ -31,6 +31,9 @@ fs.mkdirSync(artifacts, { recursive: true });
                         questions: [{ prompt: 'Qual relação beneficia os dois organismos?', options: ['Predação', 'Mutualismo', 'Competição', 'Parasitismo'], answer: 1, explanation: 'No mutualismo, ambos se beneficiam.' }, { prompt: 'Qual alternativa descreve a predação?', options: ['Um organismo se alimenta de outro.', 'Ambos se beneficiam.', 'Nenhum é afetado.', 'Ambos produzem seu alimento.'], answer: 0, explanation: 'O predador se alimenta da presa.' }],
                     } }) });
                 }
+                if (file.endsWith('ai_status.php')) {
+                    return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ ok: true, estado: 'pronto', segundos: 0, porcentagem: 100, rotulo: '100%', titulo: 'IA liberada.' }) });
+                }
                 if (file.endsWith('.php')) {
                     const body = execFileSync('C:/xampp/php/php.exe', [path.join(__dirname, 'welcome-render.php'), path.basename(file, '.php'), '', user], { encoding: 'utf8' });
                     assert(!body.includes('Fatal error') && !body.includes('Warning:'), body);
@@ -75,6 +78,14 @@ fs.mkdirSync(artifacts, { recursive: true });
             assert(await page.locator('[data-neo-companion]').evaluate(el => el.classList.contains('is-smiling')), 'Central Manel must keep its smiling state.');
             assert((await page.locator('.neo-companion-mouth').getAttribute('d')).includes('Q'), 'Central Manel must display a curved smile.');
             const shell = await page.locator('.study-shell').boundingBox();
+            const topControls = await page.locator('.study-heading .neo-icon-button:visible').evaluateAll(nodes => nodes.map(node => {
+                const rect = node.getBoundingClientRect();
+                return { left: rect.left, right: rect.right };
+            }));
+            const controlsLeft = Math.min(...topControls.map(control => control.left));
+            const controlsRight = Math.max(...topControls.map(control => control.right));
+            assert(Math.abs((controlsLeft + controlsRight) / 2 - (shell.x + shell.width / 2)) <= 2, 'Top study buttons must be centered in the panel.');
+            assert(controlsLeft >= shell.x && controlsRight <= shell.x + shell.width, 'Top study buttons must not be clipped by the panel.');
             const companion = await page.locator('[data-neo-companion]').boundingBox();
             const headingBottom = await page.locator('.study-heading').boundingBox();
             assert(companion.x >= shell.x && companion.x + companion.width <= shell.x + shell.width, 'Face must fit the balloon');
@@ -92,19 +103,26 @@ fs.mkdirSync(artifacts, { recursive: true });
             await page.locator('[data-study-starter]').first().click();
             assert.equal(await page.locator('#study-request').inputValue(), 'Quero estudar ');
             assert.equal(requests.length, 0, 'A suggestion must not submit automatically');
+            await page.locator('[data-study-kind="site"]').click();
+            assert.equal(await page.locator('#study-request').inputValue(), 'Resuma este site e prepare questões sobre ele: ');
             await page.screenshot({ path: path.join(artifacts, `${viewport.width}-empty.png`), fullPage: true });
             await fit();
-            await page.locator('#study-request').fill('Quero estudar ecologia: https://example.org/ecologia');
+            await page.locator('#study-request').fill('Resuma este site e prepare questões sobre ele: example.org/ecologia');
             await page.locator('#study-quantity').selectOption('2');
             await page.locator('#study-request').press('Shift+Enter');
             assert.equal(requests.length, 0, 'Shift+Enter must not submit');
             await page.locator('#study-request').press('Enter');
             await page.waitForSelector('[data-neo-companion].is-thinking');
+            await page.waitForSelector('[data-study-status]:not([hidden])');
+            assert((await page.locator('[data-study-status]').textContent()).includes('Abrindo o site'));
             assert.equal(await page.locator('[data-study-loading]').count(), 0);
             await page.waitForSelector('.study-book');
             assert.equal(requests[0].userId, 101);
             assert.equal(requests[0].quantity, 2);
             assert.equal(requests[0].mode, 'study');
+            assert.equal(requests[0].intent, 'site');
+            assert(requests[0].message.includes('https://example.org/ecologia'), 'A bare site address must be normalized before sending.');
+            assert(await page.locator('[data-study-status]').isHidden());
             assert.equal(await page.evaluate(() => window.UNSAFE), undefined, 'Untrusted markup must not execute');
             assert.equal(await page.locator('.study-provider').textContent(), 'OP');
             await page.locator('[data-study-back]').click();
@@ -125,6 +143,10 @@ fs.mkdirSync(artifacts, { recursive: true });
             await page.locator('.study-quiz button').click();
             assert.equal(await page.locator('.study-explanation').count(), 0);
             assert.equal(await page.locator('.study-quiz input:disabled').count(), 0);
+            await page.locator('[data-study-kind="site"]').click();
+            await page.locator('[data-study-send]').click();
+            assert((await page.locator('[data-study-error]').textContent()).includes('Cole o link do site'));
+            assert.equal(requests.length, 1, 'A site request without a link must not reach the server.');
             responseMode = 'error';
             await page.locator('#study-request').fill('Quero aprofundar esse assunto');
             await page.locator('[data-study-send]').click();

@@ -491,14 +491,14 @@ function revisarLivroIA(string $materia, int $nivel, array $livro, string $gosto
     $titulo = limitarEntradaPromptIA((string)($livro['titulo'] ?? ''), 300);
     $corpo = limitarEntradaPromptIA((string)($livro['corpo'] ?? ''), 20000);
     $gostos = limitarEntradaPromptIA($gostos, 1000);
-    $personalizacao = $gostos !== ''
-        ? "Interesses autorizados: {$gostos}. Preserve uma ou duas conexões úteis e corretas com esses interesses."
-        : 'Não há interesses informados; não invente preferências.';
+    $personalizacao = function_exists('contextoInteressesIA')
+        ? contextoInteressesIA($gostos, 2)
+        : ($gostos !== '' ? "Interesses autorizados: {$gostos}." : 'Não há interesses informados; não invente preferências.');
     $revisado = conversarTextoIA([
         [
             'role' => 'system',
             'content' => diretrizesRevisaoLivroCompactaIA() .
-                "\nPreserve de 9 a 12 parágrafos ou seções curtas e todos os pontos didáticos úteis do rascunho.",
+                "\nPreserve de 9 a 12 parágrafos ou seções curtas e todos os pontos didáticos úteis do rascunho. Preserve as conexões corretas com os interesses e, se estiverem ausentes, adapte um exemplo resolvido e uma aplicação sem mexer no conceito ensinado.",
         ],
         [
             'role' => 'user',
@@ -515,7 +515,7 @@ function revisarLivroIA(string $materia, int $nivel, array $livro, string $gosto
     return $candidato;
 }
 
-function revisarQuestoesIA(string $materia, string $titulo, string $corpo, int $nivel, array $questoes): array
+function revisarQuestoesIA(string $materia, string $titulo, string $corpo, int $nivel, array $questoes, string $gostos = '', bool $reforcarPersonalizacao = false): array
 {
     $schema = [
         'type' => 'object',
@@ -527,10 +527,17 @@ function revisarQuestoesIA(string $materia, string $titulo, string $corpo, int $
     ];
     $problemas = problemasNucleoQuestoesLocal($questoes);
     $corpo = compactarTextoBaseQuestoesIA($corpo, 5200);
+    $gostos = limitarEntradaPromptIA($gostos, 1000);
+    $personalizacao = function_exists('contextoInteressesIA')
+        ? contextoInteressesIA($gostos, 2)
+        : ($gostos !== '' ? "Interesses autorizados: {$gostos}." : 'Não há interesses informados; não invente preferências.');
+    $reforco = $reforcarPersonalizacao
+        ? ' A versão anterior não tornou a personalização reconhecível: adapte obrigatoriamente o cenário de duas questões, usando interesses diferentes quando possível.'
+        : '';
     $json = json_encode($questoes, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     $revisao = chamarIA([
-        ['role' => 'system', 'content' => 'Faça duas verificações silenciosas. Primeiro confira cada fato e gabarito somente contra o texto-base. Depois corrija clareza, ambiguidade, dificuldade e qualidade dos distratores. Complete ou substitua itens inválidos até haver exatamente cinco questões, sem inventar informação. Preserve o formato JSON e não inclua relatórios.'],
-        ['role' => 'user', 'content' => "Matéria: {$materia}\nConteúdo: {$titulo}\nDificuldade: {$nivel}\nFalhas detectadas: " . implode(', ', $problemas) . "\nTexto-base:\n{$corpo}\n\nQuestões a revisar:\n{$json}"],
+        ['role' => 'system', 'content' => 'Faça duas verificações silenciosas. Primeiro confira cada fato e gabarito somente contra o texto-base. Depois corrija clareza, ambiguidade, dificuldade e qualidade dos distratores. Complete ou substitua itens inválidos até haver exatamente cinco questões, sem inventar informação. Quando houver interesses informados, preserve ou crie cenários reconhecíveis em uma ou duas questões; a personalização nunca pode mudar o conhecimento avaliado nem a resposta correta.' . $reforco . ' Preserve o formato JSON e não inclua relatórios.'],
+        ['role' => 'user', 'content' => "Matéria: {$materia}\nConteúdo: {$titulo}\nDificuldade: {$nivel}\n{$personalizacao}\nFalhas detectadas: " . implode(', ', $problemas) . "\nTexto-base:\n{$corpo}\n\nQuestões a revisar:\n{$json}"],
     ], $schema, 'verificacao_dupla_questoes', 2600, 'low');
     $candidatas = $revisao['questoes'] ?? null;
     if (!is_array($candidatas)) throw new RuntimeException('A revisão não devolveu questões válidas.');

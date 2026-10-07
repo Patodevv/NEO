@@ -2,7 +2,7 @@
 .study-page { display: flex; flex-direction: column; gap: 0; padding-bottom: clamp(40px, 5vw, 55px); }
 .study-shell { width: 100%; height: min(720px, calc(100dvh - 170px)); min-height: 560px; flex: 0 0 auto; display: flex; flex-direction: column; padding: 24px; border: 1px solid var(--panel-border); border-radius: 24px; background: var(--panel-bg); box-shadow: var(--panel-shadow); }
 .study-page .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.study-heading { display: flex; justify-content: center; align-items: center; gap: 12px; flex-shrink: 0; }
+.study-heading { display: flex; justify-content: center; align-items: center; gap: 12px; width: 100%; min-width: 0; padding-inline: 4px; flex-shrink: 0; }
 .study-heading > .neo-icon-button { background: var(--panel-bg); width: 44px; height: 44px; flex: 0 0 44px; padding: 0; border-radius: 14px; }
 .study-workspace { min-height: 0; flex: 1; display: flex; flex-direction: column; }
 .study-thread { min-height: 0; flex: 1; display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; padding: 24px 12px; scroll-padding: 24px; }
@@ -40,7 +40,7 @@
 .study-page.has-studies .neo-companion-face { width: 88px; height: 64px; }
 .study-page.has-studies .study-heading > a[href="materias.php"] { display: none; }
 .study-page.is-replying .neo-companion-face { animation: none; transform: none; transform-origin: top left; }
-.study-starters { display: flex; justify-content: flex-start; gap: 12px; flex: 0 0 auto; flex-wrap: nowrap; margin: 0; }
+.study-starters { display: flex; justify-content: center; gap: 12px; width: auto; max-width: 100%; flex: 0 0 auto; flex-wrap: nowrap; margin: 0; }
 .study-starters .neo-icon-button { width: 44px; height: 44px; flex: 0 0 44px; display: grid; place-items: center; padding: 0; border-radius: 14px; font-size: 13px; }
 .study-starters .neo-icon-button:hover { transform: translateY(-2px); }
 .study-starters .neo-icon-button > svg:not(.icon-hover-star) { width: 18px; height: 18px; flex-shrink: 0; }
@@ -85,7 +85,13 @@
 .study-loading > span { display: block; color: var(--muted-strong); overflow-wrap: anywhere; }
 .study-loading-track { position: relative; height: 40px; margin: 20px auto; max-width: 400px; }
 .study-loading-track .neo-progress-comet { right: 0; animation: study-comet 1.8s ease-in-out infinite alternate; }
-.study-error { color: #ff929a; padding: 16px 0; }
+.study-feedback { display: grid; gap: 10px; width: min(100%, 760px); margin: 14px auto 0; flex: 0 0 auto; }
+.study-status,
+.study-error { width: 100%; margin: 0; padding: 13px 16px; border: 1px solid var(--panel-border); border-radius: 14px; background: color-mix(in srgb, var(--neo-blue) 8%, var(--control-bg)); text-align: center; line-height: 1.45; overflow-wrap: anywhere; }
+.study-status { display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted-strong); }
+.study-status::before { content: ''; width: 9px; height: 9px; flex: 0 0 9px; border-radius: 50%; background: var(--neo-blue); box-shadow: 0 0 0 0 var(--neo-blue-glow); animation: study-status-pulse 1.25s ease-out infinite; }
+.study-error { color: #ffb5ba; border-color: color-mix(in srgb, var(--danger) 58%, var(--panel-border)); background: color-mix(in srgb, var(--danger) 9%, var(--control-bg)); }
+@keyframes study-status-pulse { 70%, 100% { box-shadow: 0 0 0 9px transparent; } }
 @keyframes study-comet { from { transform: translateX(-160px); } to { transform: translateX(0); } }
 @media (max-width: 760px) {
     .study-page { height: calc(100dvh - var(--mobile-nav-space)); padding-top: 66px; padding-bottom: 8px; }
@@ -122,7 +128,10 @@
     .study-starters .neo-icon-button { width: 44px; padding: 0; }
     .study-starters span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 }
-@media (prefers-reduced-motion: reduce) { .study-loading-track .neo-progress-comet { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+    .study-loading-track .neo-progress-comet,
+    .study-status::before { animation: none; }
+}
 
 /* NEO: botões de estudos externos seguem o tema sem apagar a cor dos ícones. */
 .study-page .neo-icon-button {
@@ -167,10 +176,13 @@
 .study-shell,
 .study-thread,
 .study-book,
-.study-composer,
-.study-starters {
+.study-composer {
     width: 100%;
     max-width: 100%;
+}
+
+.study-starters {
+    width: auto;
 }
 
 @media (max-width: 760px) {
@@ -204,11 +216,13 @@
     .study-heading,
     .study-page.has-studies .study-heading {
         display: flex !important;
-        justify-content: center;
+        justify-content: safe center;
         align-items: center;
         width: 100%;
         gap: 8px;
         overflow-x: auto;
+        padding-inline: 2px;
+        scroll-padding-inline: 2px;
     }
 
     .study-heading > .neo-icon-button {
@@ -256,6 +270,16 @@
     .study-page select {
         font-size: 16px;
         touch-action: manipulation;
+    }
+
+    .study-feedback {
+        margin-top: 8px;
+    }
+
+    .study-status,
+    .study-error {
+        padding: 11px 12px;
+        font-size: 14px;
     }
 }
 

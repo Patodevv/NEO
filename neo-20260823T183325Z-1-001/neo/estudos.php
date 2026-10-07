@@ -19,9 +19,9 @@ require __DIR__ . '/includes/head.php';
     <header class="study-heading">
         <h1 class="sr-only">Estudos externos</h1>
         <div class="study-starters" aria-label="Começar um estudo">
-            <button type="button" class="neo-icon-button neo-star-hover" data-study-starter="Quero estudar "><?= estrelaHoverNeo() ?><?= iconeMateriaDashboard('portugues') ?><span>Estudar um tema</span></button>
-            <button type="button" class="neo-icon-button neo-star-hover" data-study-starter="Resuma este site e prepare questões sobre ele: "><?= estrelaHoverNeo() ?><?= iconeMateriaDashboard('geografia') ?><span>Resumir um site</span></button>
-            <button type="button" class="neo-icon-button neo-star-hover" data-study-starter="Quero revisar este texto: "><?= estrelaHoverNeo() ?><?= iconeMateriaDashboard('historia') ?><span>Revisar um texto</span></button>
+            <button type="button" class="neo-icon-button neo-star-hover" data-study-kind="topic" data-study-starter="Quero estudar "><?= estrelaHoverNeo() ?><?= iconeMateriaDashboard('portugues') ?><span>Estudar um tema</span></button>
+            <button type="button" class="neo-icon-button neo-star-hover" data-study-kind="site" data-study-starter="Resuma este site e prepare questões sobre ele: "><?= estrelaHoverNeo() ?><?= iconeMateriaDashboard('geografia') ?><span>Resumir um site</span></button>
+            <button type="button" class="neo-icon-button neo-star-hover" data-study-kind="text" data-study-starter="Quero revisar este texto: "><?= estrelaHoverNeo() ?><?= iconeMateriaDashboard('historia') ?><span>Revisar um texto</span></button>
         </div>
         <button class="neo-icon-button neo-star-hover" type="button" data-study-back hidden title="Voltar ao início do estudo" aria-label="Voltar ao início do estudo">
             <?= estrelaHoverNeo() ?>
@@ -40,7 +40,10 @@ require __DIR__ . '/includes/head.php';
         <div class="study-thread" data-study-thread>
         <div class="study-face-slot"><?php require __DIR__ . '/includes/companion_face.php'; ?></div>
         <div class="study-messages" data-study-messages aria-label="Conversa de estudo"></div>
-        <p class="study-error" data-study-error role="alert" hidden></p>
+        <div class="study-feedback">
+            <p class="study-status" data-study-status role="status" aria-live="polite" hidden></p>
+            <p class="study-error" data-study-error role="alert" hidden></p>
+        </div>
         </div>
         <form class="study-composer" data-study-form>
             <label class="sr-only" for="study-request">O que você quer estudar?</label>

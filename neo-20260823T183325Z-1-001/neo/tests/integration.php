@@ -191,8 +191,17 @@ try {
         && blocoEhTituloLivroIA('1. O que é uma célula?')
         && !blocoEhTituloLivroIA('A célula é a menor unidade viva capaz de manter as funções vitais.')
         && livroRefleteGostosIA('Um exemplo usa jogos para explicar o conceito.', 'Jogos, Tecnologia')
+        && livroRefleteGostosIA('O placar da partida ajuda a visualizar a proporção.', 'Esportes')
+        && livroRefleteGostosIA('A sequência repete um ritmo como em uma playlist.', 'Música')
         && !livroRefleteGostosIA('Um exemplo usa música para explicar o conceito.', 'Jogos, Tecnologia'),
-        'livros são normalizados para títulos e tópicos limpos e preservam interesses reais do perfil'
+        'livros são normalizados e reconhecem conexões semânticas com interesses reais do perfil'
+    );
+    $questoesPersonalizadas = $nucleosQuestoes;
+    $questoesPersonalizadas[0]['enunciado'] = 'Como o placar de uma partida representa a proporção descrita no texto?';
+    $ok(
+        questoesRefletemGostosIA($questoesPersonalizadas, 'Esportes')
+        && !questoesRefletemGostosIA($nucleosQuestoes, 'Esportes'),
+        'validação reconhece personalização também nos cenários das questões'
     );
     $ok(
         str_contains(diretrizesAuditoriaFactualIA(), 'Luffy')

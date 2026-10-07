@@ -7,6 +7,7 @@
     const form = page.querySelector('[data-study-form]');
     const input = form.elements.message;
     const messages = page.querySelector('[data-study-messages]');
+    const status = page.querySelector('[data-study-status]');
     const error = page.querySelector('[data-study-error]');
     const back = page.querySelector('[data-study-back]');
     let atStart = false;
@@ -34,6 +35,7 @@
     face.addEventListener('click', () => { if (!input.disabled) input.focus(); });
     let request = null;
     let entries = [];
+    let statusTimers = [];
     // Discard history saved by older versions; conversations now live only in this page.
     try { localStorage.removeItem(storageKey); } catch (_) {}
     function validStudy(study) {
@@ -58,6 +60,48 @@
     function showError(message) {
         error.textContent = message;
         error.hidden = !message;
+        if (message) requestAnimationFrame(() => error.scrollIntoView({ block: 'nearest' }));
+    }
+    function stopStatus() {
+        statusTimers.forEach(timer => clearTimeout(timer));
+        statusTimers = [];
+        status.textContent = '';
+        status.hidden = true;
+    }
+    function startStatus(hasUrl) {
+        stopStatus();
+        const phases = hasUrl ? [
+            'Abrindo o site e verificando o conteúdo…',
+            'Lendo a página e separando as ideias principais…',
+            'Montando o resumo e preparando as questões…',
+        ] : [
+            'Organizando o seu pedido de estudo…',
+            'Preparando uma explicação clara e personalizada…',
+            'Montando as questões para praticar…',
+        ];
+        status.textContent = phases[0];
+        status.hidden = false;
+        statusTimers.push(setTimeout(() => { status.textContent = phases[1]; }, 2600));
+        statusTimers.push(setTimeout(() => { status.textContent = phases[2]; }, 7600));
+        requestAnimationFrame(() => status.scrollIntoView({ block: 'nearest' }));
+    }
+    function prepareMessage(rawMessage) {
+        let message = rawMessage.trim();
+        const kind = input.dataset.studyKind || '';
+        const asksForSite = kind === 'site' || /\b(?:resum\w*|ler|leia|analis\w*)\b[^\n]{0,45}\b(?:site|link|p[aá]gina)\b/iu.test(message);
+        let hasUrl = /(?:https?:\/\/|www\.)[^\s<>"']+/iu.test(message);
+
+        if (asksForSite && !hasUrl) {
+            const bareDomain = message.match(/(^|\s)((?:[a-z0-9](?:[a-z0-9-]{0,62})\.)+[a-z]{2,63}(?::\d{2,5})?(?:\/[^\s<>"']*)?)/iu);
+            if (!bareDomain) {
+                throw new Error('Cole o link do site que você quer resumir. Exemplo: https://exemplo.com/artigo');
+            }
+            const original = bareDomain[2];
+            message = message.replace(original, 'https://' + original);
+            hasUrl = true;
+        }
+
+        return { message, hasUrl, kind };
     }
     function busy(active) {
         page.classList.toggle('is-busy', active);
@@ -409,12 +453,22 @@
         event.preventDefault();
         leaveWithFace(destination.href);
     }, true);
-    input.addEventListener('input', () => { document.getElementById('study-request-count').textContent = input.value.length + '/4000'; });
+    input.addEventListener('input', () => {
+        document.getElementById('study-request-count').textContent = input.value.length + '/4000';
+        const prefix = input.dataset.studyPrefix || '';
+        if (prefix && !input.value.startsWith(prefix)) {
+            const resemblesSite = /(?:https?:\/\/|www\.|(?:[a-z0-9-]+\.)+[a-z]{2,})(?:\/|\s|$)/iu.test(input.value.trim());
+            if (!(input.dataset.studyKind === 'site' && resemblesSite)) delete input.dataset.studyKind;
+            delete input.dataset.studyPrefix;
+        }
+    });
     page.querySelectorAll('[data-study-starter]').forEach(button => {
         button.title = button.textContent.trim();
         button.addEventListener('click', () => {
             if (request) return;
             input.value = button.dataset.studyStarter;
+            input.dataset.studyKind = button.dataset.studyKind || '';
+            input.dataset.studyPrefix = button.dataset.studyStarter;
             input.dispatchEvent(new Event('input'));
             input.focus();
         });
@@ -431,6 +485,7 @@
         atStart = !atStart;
         render();
         showError('');
+        stopStatus();
         thread.scrollTop = 0;
         input.focus();
     });
@@ -440,15 +495,30 @@
         atStart = false;
         render();
         showError('');
+        stopStatus();
         input.value = '';
+        delete input.dataset.studyKind;
+        delete input.dataset.studyPrefix;
         input.dispatchEvent(new Event('input'));
         input.focus();
     });
     form.addEventListener('submit', async event => {
         event.preventDefault();
         if (request || !form.reportValidity()) return;
-        const message = input.value.trim();
+        let prepared;
+        try {
+            prepared = prepareMessage(input.value);
+        } catch (failure) {
+            showError(failure.message);
+            input.focus();
+            return;
+        }
+        const { message, hasUrl, kind } = prepared;
         if (message.length < 3) { showError('Digite o que você quer estudar.'); return; }
+        if (message !== input.value.trim()) {
+            input.value = message;
+            input.dispatchEvent(new Event('input'));
+        }
         const controller = new AbortController();
         request = controller;
         const quantity = Number(form.elements.quantity.value);
@@ -458,6 +528,7 @@
         ]);
         showError('');
         busy(true);
+        startStatus(hasUrl);
         face.scrollIntoView({ block: 'nearest' });
         let timedOut = false;
         const timeout = setTimeout(() => { timedOut = true; controller.abort(); }, 210000);
@@ -465,7 +536,7 @@
             const response = await fetch('manel.php', {
                 method: 'POST', signal: controller.signal,
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content },
-                body: JSON.stringify({ mode: 'study', userId: Number(userId), message, quantity, history }),
+                body: JSON.stringify({ mode: 'study', userId: Number(userId), message, quantity, history, intent: kind }),
             });
             if (response.redirected) throw new Error('Sua sessão terminou. Entre novamente para continuar.');
             let data;
@@ -473,19 +544,24 @@
             if (!response.ok) throw new Error(data.reply || 'Não consegui preparar seu estudo.');
             if (!validStudy(data.study) || data.study.questions.length !== quantity) throw new Error('O estudo veio incompleto. Tente novamente.');
             clearTimeout(timeout);
+            stopStatus();
             const previousRect = face.getBoundingClientRect();
             entries.push({ message, study: data.study, answers: [], reviewed: false });
             entries = entries.slice(-6);
             atStart = false;
             render();
             input.value = '';
+            delete input.dataset.studyKind;
+            delete input.dataset.studyPrefix;
             input.dispatchEvent(new Event('input'));
             await presentReply(previousRect);
             messages.querySelector('.study-book:last-child h2').focus({ preventScroll: true });
         } catch (failure) {
+            stopStatus();
             showError(failure.name === 'AbortError' ? (timedOut ? 'O pedido demorou demais. Tente novamente.' : 'Pedido cancelado.') : failure.message);
         } finally {
             clearTimeout(timeout);
+            stopStatus();
             request = null;
             busy(false);
         }
